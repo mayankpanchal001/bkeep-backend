@@ -1,11 +1,11 @@
-import type { QueryBuilder } from 'objection'
+import type { QueryBuilder } from "objection";
 
-import { BaseModel } from '@models/BaseModel'
+import { BaseModel } from "@models/BaseModel";
 
 export enum TaxType {
-  NORMAL = 'normal',
-  COMPOUND = 'compound',
-  WITHHOLDING = 'withholding',
+  NORMAL = "normal",
+  COMPOUND = "compound",
+  WITHHOLDING = "withholding",
 }
 
 /**
@@ -15,43 +15,43 @@ export enum TaxType {
  */
 export class Tax extends BaseModel {
   static override get tableName(): string {
-    return 'taxes'
+    return "taxes";
   }
 
   // Properties
-  declare id: string
-  declare tenantId: string
-  declare createdBy: string
-  declare name: string
-  declare type: TaxType
-  declare rate: number
-  declare isActive: boolean
-  declare createdAt: Date
-  declare updatedAt: Date
-  declare deletedAt?: Date | null
+  declare id: string;
+  declare tenantId: string;
+  declare createdBy: string;
+  declare name: string;
+  declare type: TaxType;
+  declare rate: number;
+  declare isActive: boolean;
+  declare createdAt: Date;
+  declare updatedAt: Date;
+  declare deletedAt?: Date | null;
 
   // JSON Schema
   static override get jsonSchema() {
     return {
-      type: 'object',
-      required: ['tenantId', 'createdBy', 'name', 'type', 'rate'],
+      type: "object",
+      required: ["tenantId", "createdBy", "name", "type", "rate"],
       properties: {
-        id: { type: 'string', format: 'uuid' },
-        tenantId: { type: 'string', format: 'uuid' },
-        createdBy: { type: 'string', format: 'uuid' },
-        name: { type: 'string', minLength: 1, maxLength: 255 },
+        id: { type: "string", format: "uuid" },
+        tenantId: { type: "string", format: "uuid" },
+        createdBy: { type: "string", format: "uuid" },
+        name: { type: "string", minLength: 1, maxLength: 255 },
         type: {
-          type: 'string',
-          enum: ['normal', 'compound', 'withholding'],
-          default: 'normal',
+          type: "string",
+          enum: ["normal", "compound", "withholding"],
+          default: "normal",
         },
-        rate: { type: 'number', minimum: 0, maximum: 100 },
-        isActive: { type: 'boolean', default: true },
-        createdAt: { type: 'string', format: 'date-time' },
-        updatedAt: { type: 'string', format: 'date-time' },
-        deletedAt: { type: ['string', 'null'], format: 'date-time' },
+        rate: { type: "number", minimum: 0, maximum: 100 },
+        isActive: { type: "boolean", default: true },
+        createdAt: { type: "string", format: "date-time" },
+        updatedAt: { type: "string", format: "date-time" },
+        deletedAt: { type: ["string", "null"], format: "date-time" },
       },
-    }
+    };
   }
 
   // Query modifiers
@@ -59,15 +59,15 @@ export class Tax extends BaseModel {
     return {
       ...super.modifiers,
       active(query: QueryBuilder<Tax>) {
-        query.where('is_active', true)
+        query.where("is_active", true);
       },
       byTenant(query: QueryBuilder<Tax>, tenantId: string) {
-        query.where('tenant_id', tenantId)
+        query.where("tenant_id", tenantId);
       },
       byType(query: QueryBuilder<Tax>, type: TaxType) {
-        query.where('type', type)
+        query.where("type", type);
       },
-    }
+    };
   }
 
   /**
@@ -76,7 +76,7 @@ export class Tax extends BaseModel {
    * @returns Tax amount
    */
   calculateTax(amount: number): number {
-    return (amount * this.rate) / 100
+    return (amount * this.rate) / 100;
   }
 
   /**
@@ -85,7 +85,7 @@ export class Tax extends BaseModel {
    * @returns Amount including tax
    */
   getAmountWithTax(amount: number): number {
-    return amount + this.calculateTax(amount)
+    return amount + this.calculateTax(amount);
   }
 
   /**
@@ -94,6 +94,6 @@ export class Tax extends BaseModel {
    * @returns Base amount without tax
    */
   getAmountWithoutTax(amountWithTax: number): number {
-    return amountWithTax / (1 + this.rate / 100)
+    return amountWithTax / (1 + this.rate / 100);
   }
 }

@@ -1,20 +1,20 @@
-import type { RequestHandler } from 'express'
-import { Response } from 'express'
+import type { RequestHandler } from "express";
+import { Response } from "express";
 
 import type {
   PermissionData,
   RoleData,
   RolePermission,
   RoleWithPermissions,
-} from '@/types/auth.type'
-import type { JwtUser } from '@/types/jwt.type'
-import type { UserListData, UserListItem } from '@/types/user.type'
-import logger from '@config/logger'
-import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from '@constants/audit'
-import { ERROR_MESSAGES } from '@constants/errors'
-import { HTTP_STATUS } from '@constants/http'
-import { SUCCESS_MESSAGES } from '@constants/success'
-import type { AuthenticatedRequest } from '@middlewares/auth.middleware'
+} from "@/types/auth.type";
+import type { JwtUser } from "@/types/jwt.type";
+import type { UserListData, UserListItem } from "@/types/user.type";
+import logger from "@config/logger";
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from "@constants/audit";
+import { ERROR_MESSAGES } from "@constants/errors";
+import { HTTP_STATUS } from "@constants/http";
+import { SUCCESS_MESSAGES } from "@constants/success";
+import type { AuthenticatedRequest } from "@middlewares/auth.middleware";
 import {
   deleteUser,
   getUserStatistics as fetchUserStatistics,
@@ -23,16 +23,16 @@ import {
   restoreUser,
   updateUserActivationStatus,
   updateUserRoles,
-} from '@queries/user.queries'
-import { getPaginationMetadata } from '@schema/shared.schema'
+} from "@queries/user.queries";
+import { getPaginationMetadata } from "@schema/shared.schema";
 import {
   auditDelete,
   auditUpdate,
   extractRequestContext,
-} from '@services/audit.service'
-import { ApiError } from '@utils/ApiError'
-import { ApiResponse } from '@utils/ApiResponse'
-import asyncHandler from '@utils/asyncHandler'
+} from "@services/audit.service";
+import { ApiError } from "@utils/ApiError";
+import { ApiResponse } from "@utils/ApiResponse";
+import asyncHandler from "@utils/asyncHandler";
 
 /**
  * Get all users controller
@@ -41,23 +41,23 @@ import asyncHandler from '@utils/asyncHandler'
  */
 export const getAllUsers: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser
+    const user = req.user as JwtUser;
 
     // Get validated query parameters
     const filters = (
       req as AuthenticatedRequest & {
-        validatedData: Parameters<typeof findUsers>[0]
+        validatedData: Parameters<typeof findUsers>[0];
       }
-    ).validatedData
+    ).validatedData;
 
     // Filter by selected tenant (tenant context required)
-    const tenantId = user.selectedTenantId
+    const tenantId = user.selectedTenantId;
 
     if (!tenantId) {
       throw new ApiError(
         HTTP_STATUS.FORBIDDEN,
-        ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED
-      )
+        ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED,
+      );
     }
 
     // Fetch users with filters (exclude the requesting user)
@@ -65,17 +65,17 @@ export const getAllUsers: RequestHandler = asyncHandler(
       filters,
       tenantId,
       user.role,
-      user.id
-    )
+      user.id,
+    );
 
     // Transform users to response format (exclude sensitive fields)
     const usersData: UserListItem[] = users.map((user) => {
       // Extract roles and permissions
-      const roles: RoleWithPermissions[] = user.roles ?? []
-      const allPermissionsMap = new Map<string, RolePermission>()
+      const roles: RoleWithPermissions[] = user.roles ?? [];
+      const allPermissionsMap = new Map<string, RolePermission>();
 
       // Get primary role (first role)
-      const primaryRole = roles[0]
+      const primaryRole = roles[0];
 
       roles.forEach((role) => {
         if (role.permissions) {
@@ -83,21 +83,21 @@ export const getAllUsers: RequestHandler = asyncHandler(
             // Only include active, non-deleted permissions
             if (permission.isActive && !permission.deletedAt) {
               if (!allPermissionsMap.has(permission.name)) {
-                allPermissionsMap.set(permission.name, permission)
+                allPermissionsMap.set(permission.name, permission);
               }
             }
-          })
+          });
         }
-      })
+      });
 
       // Convert to detailed permission objects for response
       const permissionsData: PermissionData[] = Array.from(
-        allPermissionsMap.values()
+        allPermissionsMap.values(),
       ).map((permission) => ({
         id: permission.id,
         name: permission.name,
         displayName: permission.displayName,
-      }))
+      }));
 
       // Extract primary role data
       const roleData: RoleData = primaryRole
@@ -106,7 +106,7 @@ export const getAllUsers: RequestHandler = asyncHandler(
             name: primaryRole.name,
             displayName: primaryRole.displayName,
           }
-        : { id: '', name: '', displayName: '' }
+        : { id: "", name: "", displayName: "" };
 
       return {
         id: user.id,
@@ -121,17 +121,21 @@ export const getAllUsers: RequestHandler = asyncHandler(
         updatedAt: user.updatedAt,
         role: roleData,
         permissions: permissionsData,
-      }
-    })
+      };
+    });
 
     // Get pagination metadata
-    const pagination = getPaginationMetadata(filters.page, filters.limit, total)
+    const pagination = getPaginationMetadata(
+      filters.page,
+      filters.limit,
+      total,
+    );
 
     // Prepare response data
     const responseData: UserListData = {
       items: usersData,
       pagination,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -139,11 +143,11 @@ export const getAllUsers: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.USERS_RETRIEVED,
-          responseData
-        )
-      )
-  }
-)
+          responseData,
+        ),
+      );
+  },
+);
 
 /**
  * Get user by ID controller
@@ -151,17 +155,17 @@ export const getAllUsers: RequestHandler = asyncHandler(
  */
 export const getUserById: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const id = req.params['id'] as string
+    const id = req.params["id"] as string;
 
     // Fetch user by ID with all relations
-    const user = await findUserById(id)
+    const user = await findUserById(id);
 
     // Extract roles and permissions
-    const roles: RoleWithPermissions[] = user.roles ?? []
-    const allPermissionsMap = new Map<string, RolePermission>()
+    const roles: RoleWithPermissions[] = user.roles ?? [];
+    const allPermissionsMap = new Map<string, RolePermission>();
 
     // Get primary role (first role)
-    const primaryRole = roles[0]
+    const primaryRole = roles[0];
 
     roles.forEach((role) => {
       if (role.permissions) {
@@ -169,21 +173,21 @@ export const getUserById: RequestHandler = asyncHandler(
           // Only include active, non-deleted permissions
           if (permission.isActive && !permission.deletedAt) {
             if (!allPermissionsMap.has(permission.name)) {
-              allPermissionsMap.set(permission.name, permission)
+              allPermissionsMap.set(permission.name, permission);
             }
           }
-        })
+        });
       }
-    })
+    });
 
     // Convert to detailed permission objects for response
     const permissionsData: PermissionData[] = Array.from(
-      allPermissionsMap.values()
+      allPermissionsMap.values(),
     ).map((permission) => ({
       id: permission.id,
       name: permission.name,
       displayName: permission.displayName,
-    }))
+    }));
 
     // Extract primary role data
     const roleData: RoleData = primaryRole
@@ -192,7 +196,7 @@ export const getUserById: RequestHandler = asyncHandler(
           name: primaryRole.name,
           displayName: primaryRole.displayName,
         }
-      : { id: '', name: '', displayName: '' }
+      : { id: "", name: "", displayName: "" };
 
     // Transform user to response format (exclude sensitive fields)
     const userData: UserListItem = {
@@ -208,7 +212,7 @@ export const getUserById: RequestHandler = asyncHandler(
       updatedAt: user.updatedAt,
       role: roleData,
       permissions: permissionsData,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -216,11 +220,11 @@ export const getUserById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.USER_RETRIEVED,
-          userData
-        )
-      )
-  }
-)
+          userData,
+        ),
+      );
+  },
+);
 
 /**
  * Get user statistics controller
@@ -229,17 +233,17 @@ export const getUserById: RequestHandler = asyncHandler(
  */
 export const getUserStatistics: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser
+    const user = req.user as JwtUser;
 
     if (!user.selectedTenantId) {
       throw new ApiError(
         HTTP_STATUS.FORBIDDEN,
-        ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED
-      )
+        ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED,
+      );
     }
 
     // Fetch user statistics filtered by selected tenant
-    const statistics = await fetchUserStatistics(user.selectedTenantId)
+    const statistics = await fetchUserStatistics(user.selectedTenantId);
 
     res
       .status(HTTP_STATUS.OK)
@@ -247,11 +251,11 @@ export const getUserStatistics: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.USER_STATISTICS_RETRIEVED,
-          statistics
-        )
-      )
-  }
-)
+          statistics,
+        ),
+      );
+  },
+);
 
 /**
  * Delete user controller
@@ -259,15 +263,15 @@ export const getUserStatistics: RequestHandler = asyncHandler(
  */
 export const deleteUserById: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const id = req.params['id'] as string
-    const requestContext = extractRequestContext(req)
-    const tenantId = req.user?.selectedTenantId
+    const id = req.params["id"] as string;
+    const requestContext = extractRequestContext(req);
+    const tenantId = req.user?.selectedTenantId;
 
     // Get user before deletion for audit
-    const userToDelete = await findUserById(id)
+    const userToDelete = await findUserById(id);
 
     // Delete user (soft delete)
-    await deleteUser(id)
+    await deleteUser(id);
 
     // Audit log
     try {
@@ -277,22 +281,22 @@ export const deleteUserById: RequestHandler = asyncHandler(
         id,
         {
           requestContext,
-          tenantId: tenantId ?? '',
+          tenantId: tenantId ?? "",
           metadata: {
             email: userToDelete.email,
             name: userToDelete.name,
           },
-        }
-      )
+        },
+      );
     } catch (error) {
-      logger.error('Failed to create audit log for user deletion:', error)
+      logger.error("Failed to create audit log for user deletion:", error);
     }
 
     res
       .status(HTTP_STATUS.OK)
-      .json(new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.USER_DELETED, {}))
-  }
-)
+      .json(new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.USER_DELETED, {}));
+  },
+);
 
 /**
  * Update user activation status controller
@@ -300,15 +304,15 @@ export const deleteUserById: RequestHandler = asyncHandler(
  */
 export const updateUserActivation: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.params['id'] as string
-    const { isActive } = req.body
-    const requestContext = extractRequestContext(req)
-    const tenantId = req.user?.selectedTenantId
+    const userId = req.params["id"] as string;
+    const { isActive } = req.body;
+    const requestContext = extractRequestContext(req);
+    const tenantId = req.user?.selectedTenantId;
 
     // Get user before update for audit
-    const userBeforeUpdate = await findUserById(userId)
+    const userBeforeUpdate = await findUserById(userId);
 
-    const updatedUser = await updateUserActivationStatus(userId, isActive)
+    const updatedUser = await updateUserActivationStatus(userId, isActive);
 
     // Audit log
     try {
@@ -323,17 +327,17 @@ export const updateUserActivation: RequestHandler = asyncHandler(
         },
         {
           requestContext,
-          tenantId: tenantId ?? '',
-        }
-      )
+          tenantId: tenantId ?? "",
+        },
+      );
     } catch (error) {
-      logger.error('Failed to create audit log for user activation:', error)
+      logger.error("Failed to create audit log for user activation:", error);
       // Don't fail the request if audit logging fails
     }
 
     const message = isActive
       ? SUCCESS_MESSAGES.USER_ACTIVATED
-      : SUCCESS_MESSAGES.USER_DEACTIVATED
+      : SUCCESS_MESSAGES.USER_DEACTIVATED;
 
     res.status(HTTP_STATUS.OK).json(
       new ApiResponse(HTTP_STATUS.OK, message, {
@@ -341,10 +345,10 @@ export const updateUserActivation: RequestHandler = asyncHandler(
         email: updatedUser.email,
         name: updatedUser.name,
         isActive: updatedUser.isActive,
-      })
-    )
-  }
-)
+      }),
+    );
+  },
+);
 
 /**
  * Restore user controller
@@ -352,10 +356,10 @@ export const updateUserActivation: RequestHandler = asyncHandler(
  */
 export const restoreUserById: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const id = req.params['id'] as string
+    const id = req.params["id"] as string;
 
     // Restore user (un-delete)
-    const restoredUser = await restoreUser(id)
+    const restoredUser = await restoreUser(id);
 
     res.status(HTTP_STATUS.OK).json(
       new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.USER_RESTORED, {
@@ -364,10 +368,10 @@ export const restoreUserById: RequestHandler = asyncHandler(
         name: restoredUser.name,
         isActive: restoredUser.isActive,
         deletedAt: restoredUser.deletedAt,
-      })
-    )
-  }
-)
+      }),
+    );
+  },
+);
 
 /**
  * Update user roles controller
@@ -375,20 +379,20 @@ export const restoreUserById: RequestHandler = asyncHandler(
  */
 export const updateUserRolesController: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const userId = req.params['id'] as string
+    const userId = req.params["id"] as string;
 
     // Get body data
-    const { roleIds } = req.body
+    const { roleIds } = req.body;
 
     // Update user roles
-    const updatedUser = await updateUserRoles(userId, roleIds)
+    const updatedUser = await updateUserRoles(userId, roleIds);
 
     // Extract roles and permissions
-    const roles: RoleWithPermissions[] = updatedUser.roles ?? []
-    const allPermissionsMap = new Map<string, RolePermission>()
+    const roles: RoleWithPermissions[] = updatedUser.roles ?? [];
+    const allPermissionsMap = new Map<string, RolePermission>();
 
     // Get primary role (first role)
-    const primaryRole = roles[0]
+    const primaryRole = roles[0];
 
     roles.forEach((role) => {
       if (role.permissions) {
@@ -396,21 +400,21 @@ export const updateUserRolesController: RequestHandler = asyncHandler(
           // Only include active, non-deleted permissions
           if (permission.isActive && !permission.deletedAt) {
             if (!allPermissionsMap.has(permission.name)) {
-              allPermissionsMap.set(permission.name, permission)
+              allPermissionsMap.set(permission.name, permission);
             }
           }
-        })
+        });
       }
-    })
+    });
 
     // Convert to detailed permission objects for response
     const permissionsData: PermissionData[] = Array.from(
-      allPermissionsMap.values()
+      allPermissionsMap.values(),
     ).map((permission) => ({
       id: permission.id,
       name: permission.name,
       displayName: permission.displayName,
-    }))
+    }));
 
     // Extract primary role data
     const roleData: RoleData = primaryRole
@@ -419,7 +423,7 @@ export const updateUserRolesController: RequestHandler = asyncHandler(
           name: primaryRole.name,
           displayName: primaryRole.displayName,
         }
-      : { id: '', name: '', displayName: '' } // Fallback (should not happen)
+      : { id: "", name: "", displayName: "" }; // Fallback (should not happen)
 
     res.status(HTTP_STATUS.OK).json(
       new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.USER_ROLES_UPDATED, {
@@ -428,7 +432,7 @@ export const updateUserRolesController: RequestHandler = asyncHandler(
         name: updatedUser.name,
         role: roleData,
         permissions: permissionsData,
-      })
-    )
-  }
-)
+      }),
+    );
+  },
+);

@@ -1,16 +1,16 @@
-import type { RequestHandler } from 'express'
-import { Response } from 'express'
-import * as XLSX from 'xlsx'
+import type { RequestHandler } from "express";
+import { Response } from "express";
+import * as XLSX from "xlsx";
 
-import type { JwtUser } from '@/types/jwt.type'
-import { CHART_OF_ACCOUNT_SAMPLE } from '@constants/chartOfAccount'
-import { HTTP_STATUS } from '@constants/http'
-import { SUCCESS_MESSAGES } from '@constants/success'
+import type { JwtUser } from "@/types/jwt.type";
+import { CHART_OF_ACCOUNT_SAMPLE } from "@constants/chartOfAccount";
+import { HTTP_STATUS } from "@constants/http";
+import { SUCCESS_MESSAGES } from "@constants/success";
 import {
   getTenantContext,
   type TenantContext,
   type TenantRequest,
-} from '@middlewares/tenantContext.middleware'
+} from "@middlewares/tenantContext.middleware";
 import {
   createChartOfAccount,
   deleteChartOfAccount,
@@ -20,10 +20,10 @@ import {
   restoreChartOfAccount,
   updateChartOfAccount,
   updateChartOfAccountActivationStatus,
-} from '@queries/chartOfAccount.queries'
-import { getPaginationMetadata } from '@schema/shared.schema'
-import { ApiResponse } from '@utils/ApiResponse'
-import asyncHandler from '@utils/asyncHandler'
+} from "@queries/chartOfAccount.queries";
+import { getPaginationMetadata } from "@schema/shared.schema";
+import { ApiResponse } from "@utils/ApiResponse";
+import asyncHandler from "@utils/asyncHandler";
 
 /**
  * Get all chart of accounts controller
@@ -32,21 +32,21 @@ import asyncHandler from '@utils/asyncHandler'
  */
 export const getAllChartOfAccounts: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext
+    const tenantContext = getTenantContext(req) as TenantContext;
 
     // Get validated query parameters
     const filters = (
       req as TenantRequest & {
-        validatedData: Parameters<typeof findChartOfAccounts>[2]
+        validatedData: Parameters<typeof findChartOfAccounts>[2];
       }
-    ).validatedData
+    ).validatedData;
 
     // Fetch accounts
     const { accounts, total } = await findChartOfAccounts(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      filters
-    )
+      filters,
+    );
 
     // Transform accounts to response format (exclude internal fields)
     const accountsData = accounts.map((account) => ({
@@ -65,16 +65,20 @@ export const getAllChartOfAccounts: RequestHandler = asyncHandler(
       trackTax: account.trackTax,
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
-    }))
+    }));
 
     // Get pagination metadata
-    const pagination = getPaginationMetadata(filters.page, filters.limit, total)
+    const pagination = getPaginationMetadata(
+      filters.page,
+      filters.limit,
+      total,
+    );
 
     // Prepare response data
     const responseData = {
       items: accountsData,
       pagination,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -82,11 +86,11 @@ export const getAllChartOfAccounts: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.CHART_OF_ACCOUNTS_FETCHED,
-          responseData
-        )
-      )
-  }
-)
+          responseData,
+        ),
+      );
+  },
+);
 
 /**
  * Get chart of account hierarchy controller
@@ -94,13 +98,13 @@ export const getAllChartOfAccounts: RequestHandler = asyncHandler(
  */
 export const getChartOfAccountHierarchy: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext
+    const tenantContext = getTenantContext(req) as TenantContext;
 
     // Fetch hierarchy
     const hierarchy = await getAccountHierarchy(
       tenantContext.tenantId,
-      tenantContext.schemaName
-    )
+      tenantContext.schemaName,
+    );
 
     // Transform accounts to response format
     const hierarchyData = hierarchy.map((account) => ({
@@ -121,7 +125,7 @@ export const getChartOfAccountHierarchy: RequestHandler = asyncHandler(
         currencyCode: child.currencyCode,
         isActive: child.isActive,
       })),
-    }))
+    }));
 
     res
       .status(HTTP_STATUS.OK)
@@ -129,11 +133,11 @@ export const getChartOfAccountHierarchy: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.CHART_OF_ACCOUNTS_FETCHED,
-          hierarchyData
-        )
-      )
-  }
-)
+          hierarchyData,
+        ),
+      );
+  },
+);
 
 /**
  * Get chart of account by ID controller
@@ -141,17 +145,17 @@ export const getChartOfAccountHierarchy: RequestHandler = asyncHandler(
  */
 export const getChartOfAccountById: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext
+    const tenantContext = getTenantContext(req) as TenantContext;
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params
+    const { id } = (req as TenantRequest & { params: { id: string } }).params;
 
     // Fetch account
     const account = await findChartOfAccountById(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      id
-    )
+      id,
+    );
 
     // Transform account to response format (exclude internal fields)
     const accountData = {
@@ -174,7 +178,7 @@ export const getChartOfAccountById: RequestHandler = asyncHandler(
       bankRoutingNumber: account.bankRoutingNumber ?? null,
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -182,11 +186,11 @@ export const getChartOfAccountById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.CHART_OF_ACCOUNT_FETCHED,
-          accountData
-        )
-      )
-  }
-)
+          accountData,
+        ),
+      );
+  },
+);
 
 /**
  * Create chart of account controller
@@ -194,23 +198,23 @@ export const getChartOfAccountById: RequestHandler = asyncHandler(
  */
 export const createChartOfAccountController: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext
-    const user = req.user as JwtUser
+    const tenantContext = getTenantContext(req) as TenantContext;
+    const user = req.user as JwtUser;
 
     // Get validated body data
     const accountData = (
       req as TenantRequest & {
-        validatedData: Parameters<typeof createChartOfAccount>[3]
+        validatedData: Parameters<typeof createChartOfAccount>[3];
       }
-    ).validatedData
+    ).validatedData;
 
     // Create account
     const account = await createChartOfAccount(
       tenantContext.tenantId,
       tenantContext.schemaName,
       user.id,
-      accountData
-    )
+      accountData,
+    );
 
     // Transform account to response format
     const responseData = {
@@ -225,7 +229,7 @@ export const createChartOfAccountController: RequestHandler = asyncHandler(
       isActive: account.isActive,
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
-    }
+    };
 
     res
       .status(HTTP_STATUS.CREATED)
@@ -233,11 +237,11 @@ export const createChartOfAccountController: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.CREATED,
           SUCCESS_MESSAGES.CHART_OF_ACCOUNT_CREATED,
-          responseData
-        )
-      )
-  }
-)
+          responseData,
+        ),
+      );
+  },
+);
 
 /**
  * Update chart of account controller
@@ -245,24 +249,24 @@ export const createChartOfAccountController: RequestHandler = asyncHandler(
  */
 export const updateChartOfAccountController: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext
+    const tenantContext = getTenantContext(req) as TenantContext;
 
     // Get validated params and body
-    const { id } = (req as TenantRequest & { params: { id: string } }).params
+    const { id } = (req as TenantRequest & { params: { id: string } }).params;
 
     const updateData = (
       req as TenantRequest & {
-        validatedData: Parameters<typeof updateChartOfAccount>[3]
+        validatedData: Parameters<typeof updateChartOfAccount>[3];
       }
-    ).validatedData
+    ).validatedData;
 
     // Update account
     const updatedAccount = await updateChartOfAccount(
       tenantContext.tenantId,
       tenantContext.schemaName,
       id,
-      updateData
-    )
+      updateData,
+    );
 
     // Transform account to response format
     const responseData = {
@@ -273,7 +277,7 @@ export const updateChartOfAccountController: RequestHandler = asyncHandler(
       currentBalance: updatedAccount.currentBalance,
       isActive: updatedAccount.isActive,
       updatedAt: updatedAccount.updatedAt,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -281,11 +285,11 @@ export const updateChartOfAccountController: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.CHART_OF_ACCOUNT_UPDATED,
-          responseData
-        )
-      )
-  }
-)
+          responseData,
+        ),
+      );
+  },
+);
 
 /**
  * Delete chart of account controller
@@ -293,17 +297,17 @@ export const updateChartOfAccountController: RequestHandler = asyncHandler(
  */
 export const deleteChartOfAccountById: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext
+    const tenantContext = getTenantContext(req) as TenantContext;
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params
+    const { id } = (req as TenantRequest & { params: { id: string } }).params;
 
     // Delete account
     const deletedAccount = await deleteChartOfAccount(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      id
-    )
+      id,
+    );
 
     // Transform account to response format
     const responseData = {
@@ -312,7 +316,7 @@ export const deleteChartOfAccountById: RequestHandler = asyncHandler(
       accountName: deletedAccount.accountName,
       accountType: deletedAccount.accountType,
       deletedAt: deletedAccount.deletedAt,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -320,11 +324,11 @@ export const deleteChartOfAccountById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.CHART_OF_ACCOUNT_DELETED,
-          responseData
-        )
-      )
-  }
-)
+          responseData,
+        ),
+      );
+  },
+);
 
 /**
  * Enable chart of account controller
@@ -332,18 +336,18 @@ export const deleteChartOfAccountById: RequestHandler = asyncHandler(
  */
 export const enableChartOfAccount: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext
+    const tenantContext = getTenantContext(req) as TenantContext;
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params
+    const { id } = (req as TenantRequest & { params: { id: string } }).params;
 
     // Enable account
     const updatedAccount = await updateChartOfAccountActivationStatus(
       tenantContext.tenantId,
       tenantContext.schemaName,
       id,
-      true
-    )
+      true,
+    );
 
     // Transform account to response format
     const responseData = {
@@ -352,7 +356,7 @@ export const enableChartOfAccount: RequestHandler = asyncHandler(
       accountType: updatedAccount.accountType,
       isActive: updatedAccount.isActive,
       updatedAt: updatedAccount.updatedAt,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -360,11 +364,11 @@ export const enableChartOfAccount: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.CHART_OF_ACCOUNT_ENABLED,
-          responseData
-        )
-      )
-  }
-)
+          responseData,
+        ),
+      );
+  },
+);
 
 /**
  * Disable chart of account controller
@@ -372,18 +376,18 @@ export const enableChartOfAccount: RequestHandler = asyncHandler(
  */
 export const disableChartOfAccount: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext
+    const tenantContext = getTenantContext(req) as TenantContext;
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params
+    const { id } = (req as TenantRequest & { params: { id: string } }).params;
 
     // Disable account
     const updatedAccount = await updateChartOfAccountActivationStatus(
       tenantContext.tenantId,
       tenantContext.schemaName,
       id,
-      false
-    )
+      false,
+    );
 
     // Transform account to response format
     const responseData = {
@@ -392,7 +396,7 @@ export const disableChartOfAccount: RequestHandler = asyncHandler(
       accountType: updatedAccount.accountType,
       isActive: updatedAccount.isActive,
       updatedAt: updatedAccount.updatedAt,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -400,11 +404,11 @@ export const disableChartOfAccount: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.CHART_OF_ACCOUNT_DISABLED,
-          responseData
-        )
-      )
-  }
-)
+          responseData,
+        ),
+      );
+  },
+);
 
 /**
  * Restore chart of account controller
@@ -412,17 +416,17 @@ export const disableChartOfAccount: RequestHandler = asyncHandler(
  */
 export const restoreChartOfAccountById: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext
+    const tenantContext = getTenantContext(req) as TenantContext;
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params
+    const { id } = (req as TenantRequest & { params: { id: string } }).params;
 
     // Restore account
     const restoredAccount = await restoreChartOfAccount(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      id
-    )
+      id,
+    );
 
     // Transform account to response format
     const responseData = {
@@ -433,7 +437,7 @@ export const restoreChartOfAccountById: RequestHandler = asyncHandler(
       isActive: restoredAccount.isActive,
       createdAt: restoredAccount.createdAt,
       updatedAt: restoredAccount.updatedAt,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -441,11 +445,11 @@ export const restoreChartOfAccountById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.CHART_OF_ACCOUNT_UPDATED,
-          responseData
-        )
-      )
-  }
-)
+          responseData,
+        ),
+      );
+  },
+);
 
 /**
  * Download chart of account sample file controller
@@ -454,7 +458,7 @@ export const restoreChartOfAccountById: RequestHandler = asyncHandler(
 export const downloadChartOfAccountSample: RequestHandler = asyncHandler(
   async (_req: TenantRequest, res: Response) => {
     // Prepare sample data
-    const sampleData = CHART_OF_ACCOUNT_SAMPLE.SAMPLE_DATA
+    const sampleData = CHART_OF_ACCOUNT_SAMPLE.SAMPLE_DATA;
 
     // Prepare worksheet data with headers
     const worksheetData = [
@@ -462,11 +466,11 @@ export const downloadChartOfAccountSample: RequestHandler = asyncHandler(
       [...CHART_OF_ACCOUNT_SAMPLE.HEADERS],
       // Data rows
       ...sampleData.map((row) => [
-        row.accountNumber ?? '',
+        row.accountNumber ?? "",
         row.accountName,
         row.type,
-        row.detailType ?? '',
-        row.openingBalance ?? '',
+        row.detailType ?? "",
+        row.openingBalance ?? "",
       ]),
       // Empty row
       [],
@@ -474,40 +478,40 @@ export const downloadChartOfAccountSample: RequestHandler = asyncHandler(
       ...CHART_OF_ACCOUNT_SAMPLE.INSTRUCTIONS.map((instruction) => [
         instruction,
       ]),
-    ]
+    ];
 
     // Create workbook and worksheet
-    const workbook = XLSX.utils.book_new()
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
 
     // Set column widths for better readability
-    worksheet['!cols'] = [...CHART_OF_ACCOUNT_SAMPLE.COLUMN_WIDTHS]
+    worksheet["!cols"] = [...CHART_OF_ACCOUNT_SAMPLE.COLUMN_WIDTHS];
 
     // Add worksheet to workbook
     XLSX.utils.book_append_sheet(
       workbook,
       worksheet,
-      CHART_OF_ACCOUNT_SAMPLE.WORKSHEET_NAME
-    )
+      CHART_OF_ACCOUNT_SAMPLE.WORKSHEET_NAME,
+    );
 
     // Generate XLSX buffer
     const xlsxBuffer = XLSX.write(workbook, {
-      type: 'buffer',
-      bookType: 'xlsx',
-    })
+      type: "buffer",
+      bookType: "xlsx",
+    });
 
     // Set response headers for XLSX download
-    res.setHeader('Content-Type', CHART_OF_ACCOUNT_SAMPLE.CONTENT_TYPE)
+    res.setHeader("Content-Type", CHART_OF_ACCOUNT_SAMPLE.CONTENT_TYPE);
     res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${CHART_OF_ACCOUNT_SAMPLE.FILENAME}"`
-    )
-    res.setHeader('Content-Length', xlsxBuffer.length)
+      "Content-Disposition",
+      `attachment; filename="${CHART_OF_ACCOUNT_SAMPLE.FILENAME}"`,
+    );
+    res.setHeader("Content-Length", xlsxBuffer.length);
 
     // Send XLSX content
-    res.status(HTTP_STATUS.OK).send(xlsxBuffer)
-  }
-)
+    res.status(HTTP_STATUS.OK).send(xlsxBuffer);
+  },
+);
 
 /**
  * Get available import fields controller
@@ -519,7 +523,7 @@ export const getImportFields: RequestHandler = asyncHandler(
       key: field.key,
       label: field.label,
       required: field.required,
-    }))
+    }));
 
     res
       .status(HTTP_STATUS.OK)
@@ -527,8 +531,8 @@ export const getImportFields: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.CHART_OF_ACCOUNT_IMPORT_FIELDS_FETCHED,
-          importFields
-        )
-      )
-  }
-)
+          importFields,
+        ),
+      );
+  },
+);

@@ -1,28 +1,28 @@
-import type { NextFunction, Response } from 'express'
+import type { NextFunction, Response } from "express";
 
-import logger from '@config/logger'
-import { ERROR_MESSAGES } from '@constants/errors'
-import { HTTP_STATUS } from '@constants/http'
-import { findTenantById } from '@queries/tenant.queries'
-import { ApiError } from '@utils/ApiError'
+import logger from "@config/logger";
+import { ERROR_MESSAGES } from "@constants/errors";
+import { HTTP_STATUS } from "@constants/http";
+import { findTenantById } from "@queries/tenant.queries";
+import { ApiError } from "@utils/ApiError";
 
-import type { AuthenticatedRequest } from './auth.middleware'
+import type { AuthenticatedRequest } from "./auth.middleware";
 
 /**
  * Tenant context interface
  * Contains tenant information
  */
 export interface TenantContext {
-  tenantId: string
-  tenantName: string
-  schemaName: string
+  tenantId: string;
+  tenantName: string;
+  schemaName: string;
 }
 
 /**
  * Extended Request interface with tenant context
  */
 export interface TenantRequest extends AuthenticatedRequest {
-  tenantContext?: TenantContext
+  tenantContext?: TenantContext;
 }
 
 /**
@@ -49,27 +49,27 @@ export interface TenantRequest extends AuthenticatedRequest {
 export const setTenantContext = async (
   req: TenantRequest,
   _res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
-    const user = req.user
+    const user = req.user;
     if (!user) {
       // User not authenticated, continue without tenant context
-      return next()
+      return next();
     }
 
     // Get tenantId from JWT user
     if (!user.selectedTenantId) {
       // User doesn't have a tenant assigned, continue without tenant context
-      return next()
+      return next();
     }
 
     // Fetch tenant from database
-    const tenant = await findTenantById(user.selectedTenantId)
+    const tenant = await findTenantById(user.selectedTenantId);
 
     if (!tenant?.isActive) {
       // Tenant is inactive or doesn't exist, continue without tenant context
-      return next()
+      return next();
     }
 
     // Set tenant context
@@ -77,16 +77,16 @@ export const setTenantContext = async (
       tenantId: tenant.id,
       tenantName: tenant.name,
       schemaName: tenant.schemaName,
-    }
+    };
 
-    next()
+    next();
   } catch (error) {
     // Log error but don't fail the request
     // This allows routes that don't require tenant context to continue
-    logger.error('Error setting tenant context:', error)
-    next()
+    logger.error("Error setting tenant context:", error);
+    next();
   }
-}
+};
 
 /**
  * Require tenant context middleware
@@ -106,16 +106,16 @@ export const setTenantContext = async (
 export const requireTenantContext = (
   req: TenantRequest,
   _res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   if (!req.tenantContext) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
-      ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED
-    )
+      ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED,
+    );
   }
-  next()
-}
+  next();
+};
 
 /**
  * Get tenant context from request
@@ -135,7 +135,7 @@ export const requireTenantContext = (
  * }
  */
 export const getTenantContext = (
-  req: TenantRequest
+  req: TenantRequest,
 ): TenantContext | undefined => {
-  return req.tenantContext
-}
+  return req.tenantContext;
+};

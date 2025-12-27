@@ -1,17 +1,17 @@
-import { Router, type Router as RouterType } from 'express'
+import { Router, type Router as RouterType } from "express";
 
-import { ROLES } from '@constants/roles'
+import { ROLES } from "@constants/roles";
 import {
   getAllAuditLogs,
   getAuditLogById,
   getAuditLogsByActor,
   getAuditLogsByTarget,
-} from '@controllers/audit.controller'
-import { authenticate, authorize } from '@middlewares/auth.middleware'
-import { validate } from '@middlewares/validate.middleware'
-import { auditLogIdSchema, auditLogListSchema } from '@schema/audit.schema'
+} from "@controllers/audit.controller";
+import { authenticate, authorize } from "@middlewares/auth.middleware";
+import { validate } from "@middlewares/validate.middleware";
+import { auditLogIdSchema, auditLogListSchema } from "@schema/audit.schema";
 
-const router: RouterType = Router()
+const router: RouterType = Router();
 
 /**
  * @swagger
@@ -181,12 +181,12 @@ const router: RouterType = Router()
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  '/',
+  "/",
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
-  validate(auditLogListSchema, 'query'),
-  getAllAuditLogs
-)
+  validate(auditLogListSchema, "query"),
+  getAllAuditLogs,
+);
 
 /**
  * @swagger
@@ -268,12 +268,12 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  '/:id',
+  "/:id",
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
-  validate(auditLogIdSchema, 'params'),
-  getAuditLogById
-)
+  validate(auditLogIdSchema, "params"),
+  getAuditLogById,
+);
 
 /**
  * @swagger
@@ -370,11 +370,11 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  '/target/:targetType/:targetId',
+  "/target/:targetType/:targetId",
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
-  getAuditLogsByTarget
-)
+  getAuditLogsByTarget,
+);
 
 /**
  * @swagger
@@ -472,10 +472,10 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  '/actor/:actorType/:actorId',
+  "/actor/:actorType/:actorId",
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
-  getAuditLogsByActor
-)
+  getAuditLogsByActor,
+);
 
-export default router
+export default router;

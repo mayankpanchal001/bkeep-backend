@@ -7,10 +7,10 @@
  * User Role Data - what's stored in the database
  */
 export interface UserRoleData {
-  userId: string
-  roleId: string
-  tenantId: string
-  createdAt: Date
+  userId: string;
+  roleId: string;
+  tenantId: string;
+  createdAt: Date;
 }
 
 /**
@@ -18,12 +18,12 @@ export interface UserRoleData {
  */
 export interface UserRoleWithRole extends UserRoleData {
   role: {
-    id: string
-    name: string
-    displayName: string
-    description?: string | null
-    isActive: boolean
-  }
+    id: string;
+    name: string;
+    displayName: string;
+    description?: string | null;
+    isActive: boolean;
+  };
 }
 
 /**
@@ -31,11 +31,11 @@ export interface UserRoleWithRole extends UserRoleData {
  */
 export interface UserRoleWithUser extends UserRoleData {
   user: {
-    id: string
-    name: string
-    email: string
-    isActive: boolean
-  }
+    id: string;
+    name: string;
+    email: string;
+    isActive: boolean;
+  };
 }
 
 /**
@@ -43,59 +43,59 @@ export interface UserRoleWithUser extends UserRoleData {
  */
 export interface UserRoleWithDetails extends UserRoleData {
   user: {
-    id: string
-    name: string
-    email: string
-    isActive: boolean
-  }
+    id: string;
+    name: string;
+    email: string;
+    isActive: boolean;
+  };
   role: {
-    id: string
-    name: string
-    displayName: string
-    description?: string | null
-    isActive: boolean
-  }
+    id: string;
+    name: string;
+    displayName: string;
+    description?: string | null;
+    isActive: boolean;
+  };
   tenant: {
-    id: string
-    name: string
-    schemaName: string
-    isActive: boolean
-  }
+    id: string;
+    name: string;
+    schemaName: string;
+    isActive: boolean;
+  };
 }
 
 /**
  * Input for assigning a role to a user
  */
 export interface AssignRoleInput {
-  userId: string
-  roleId: string
-  tenantId: string
+  userId: string;
+  roleId: string;
+  tenantId: string;
 }
 
 /**
  * Input for removing a role from a user
  */
 export interface RemoveRoleInput {
-  userId: string
-  roleId: string
-  tenantId: string
+  userId: string;
+  roleId: string;
+  tenantId: string;
 }
 
 /**
  * Input for syncing user roles in a tenant
  */
 export interface SyncUserRolesInput {
-  userId: string
-  tenantId: string
-  roleIds: string[]
+  userId: string;
+  tenantId: string;
+  roleIds: string[];
 }
 
 /**
  * User Role Query Result
  */
 export interface UserRoleQueryResult {
-  userRoles: UserRoleWithDetails[]
-  total: number
+  userRoles: UserRoleWithDetails[];
+  total: number;
 }
 
 /**
@@ -103,37 +103,37 @@ export interface UserRoleQueryResult {
  */
 export interface UserRolesByTenant {
   [tenantId: string]: {
-    tenantId: string
-    tenantName: string
-    schemaName: string
+    tenantId: string;
+    tenantName: string;
+    schemaName: string;
     roles: Array<{
-      roleId: string
-      roleName: string
-      roleDisplayName: string
-      assignedAt: Date
-    }>
-  }
+      roleId: string;
+      roleName: string;
+      roleDisplayName: string;
+      assignedAt: Date;
+    }>;
+  };
 }
 
 /**
  * Permission Data in User-Tenant-Role-Permission Relationship
  */
 export interface PermissionInRelationship {
-  id: string
-  name: string
-  displayName: string
-  description: string | null
+  id: string;
+  name: string;
+  displayName: string;
+  description: string | null;
 }
 
 /**
  * Role Data in User-Tenant-Role-Permission Relationship
  */
 export interface RoleInRelationship {
-  id: string
-  name: string
-  displayName: string
-  assignedAt: Date
-  permissions: PermissionInRelationship[]
+  id: string;
+  name: string;
+  displayName: string;
+  assignedAt: Date;
+  permissions: PermissionInRelationship[];
 }
 
 /**
@@ -141,12 +141,12 @@ export interface RoleInRelationship {
  * This represents the full chain: User → Tenant → Roles → Permissions
  */
 export interface UserTenantRolePermissions {
-  userId: string
-  userName: string
-  userEmail: string
-  tenantId: string
-  tenantName: string
-  roles: RoleInRelationship[]
-  permissions: PermissionInRelationship[]
-  permissionNames: string[]
+  userId: string;
+  userName: string;
+  userEmail: string;
+  tenantId: string;
+  tenantName: string;
+  roles: RoleInRelationship[];
+  permissions: PermissionInRelationship[];
+  permissionNames: string[];
 }

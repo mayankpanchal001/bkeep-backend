@@ -4,8 +4,8 @@
  */
 
 export interface BaseError {
-  message: string
-  statusCode: number
-  isOperational: boolean
-  stack?: string
+  message: string;
+  statusCode: number;
+  isOperational: boolean;
+  stack?: string;
 }

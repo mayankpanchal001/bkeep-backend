@@ -1,9 +1,9 @@
-import { Model, snakeCaseMappers } from 'objection'
+import { Model, snakeCaseMappers } from "objection";
 
-import { Role } from '@models/Role'
-import { Tenant } from '@models/Tenant'
-import { User } from '@models/User'
-import { getCurrentDate } from '@utils/date'
+import { Role } from "@models/Role";
+import { Tenant } from "@models/Tenant";
+import { User } from "@models/User";
+import { getCurrentDate } from "@utils/date";
 
 /**
  * UserRole Model
@@ -14,46 +14,46 @@ import { getCurrentDate } from '@utils/date'
 export class UserRole extends Model {
   // Table name
   static override get tableName(): string {
-    return 'user_roles'
+    return "user_roles";
   }
 
   // Model properties
-  userId!: string
-  roleId!: string
-  tenantId!: string
-  createdAt!: Date
+  userId!: string;
+  roleId!: string;
+  tenantId!: string;
+  createdAt!: Date;
 
   // Relations
-  user?: User
-  role?: Role
-  tenant?: Tenant
+  user?: User;
+  role?: Role;
+  tenant?: Tenant;
 
   // JSON Schema for validation
   static override get jsonSchema() {
     return {
-      type: 'object',
-      required: ['userId', 'roleId', 'tenantId'],
+      type: "object",
+      required: ["userId", "roleId", "tenantId"],
       properties: {
-        userId: { type: 'string', format: 'uuid' },
-        roleId: { type: 'string', format: 'uuid' },
-        tenantId: { type: 'string', format: 'uuid' },
-        createdAt: { type: 'string', format: 'date-time' },
+        userId: { type: "string", format: "uuid" },
+        roleId: { type: "string", format: "uuid" },
+        tenantId: { type: "string", format: "uuid" },
+        createdAt: { type: "string", format: "date-time" },
       },
-    }
+    };
   }
 
   /**
    * Map JS camelCase properties <-> DB snake_case columns
    */
   static override get columnNameMappers() {
-    return snakeCaseMappers()
+    return snakeCaseMappers();
   }
 
   /**
    * Composite primary key (user_id + role_id + tenant_id)
    */
   static override get idColumn() {
-    return ['user_id', 'role_id', 'tenant_id']
+    return ["user_id", "role_id", "tenant_id"];
   }
 
   /**
@@ -65,27 +65,27 @@ export class UserRole extends Model {
         relation: Model.BelongsToOneRelation,
         modelClass: User,
         join: {
-          from: 'user_roles.user_id',
-          to: 'users.id',
+          from: "user_roles.user_id",
+          to: "users.id",
         },
       },
       role: {
         relation: Model.BelongsToOneRelation,
         modelClass: Role,
         join: {
-          from: 'user_roles.role_id',
-          to: 'roles.id',
+          from: "user_roles.role_id",
+          to: "roles.id",
         },
       },
       tenant: {
         relation: Model.BelongsToOneRelation,
         modelClass: Tenant,
         join: {
-          from: 'user_roles.tenant_id',
-          to: 'tenants.id',
+          from: "user_roles.tenant_id",
+          to: "tenants.id",
         },
       },
-    }
+    };
   }
 
   /**
@@ -93,7 +93,7 @@ export class UserRole extends Model {
    */
   override $beforeInsert(): void {
     if (!this.createdAt) {
-      this.createdAt = getCurrentDate()
+      this.createdAt = getCurrentDate();
     }
   }
 
@@ -105,12 +105,12 @@ export class UserRole extends Model {
    */
   static async findByUserAndTenant(
     userId: string,
-    tenantId: string
+    tenantId: string,
   ): Promise<UserRole[]> {
     return this.query()
-      .where('user_id', userId)
-      .where('tenant_id', tenantId)
-      .withGraphFetched('role')
+      .where("user_id", userId)
+      .where("tenant_id", tenantId)
+      .withGraphFetched("role");
   }
 
   /**
@@ -121,12 +121,12 @@ export class UserRole extends Model {
    */
   static async findByRoleAndTenant(
     roleId: string,
-    tenantId: string
+    tenantId: string,
   ): Promise<UserRole[]> {
     return this.query()
-      .where('role_id', roleId)
-      .where('tenant_id', tenantId)
-      .withGraphFetched('user')
+      .where("role_id", roleId)
+      .where("tenant_id", tenantId)
+      .withGraphFetched("user");
   }
 
   /**
@@ -136,8 +136,8 @@ export class UserRole extends Model {
    */
   static async findByUser(userId: string): Promise<UserRole[]> {
     return this.query()
-      .where('user_id', userId)
-      .withGraphFetched('[role, tenant]')
+      .where("user_id", userId)
+      .withGraphFetched("[role, tenant]");
   }
 
   /**
@@ -150,15 +150,15 @@ export class UserRole extends Model {
   static async hasRole(
     userId: string,
     roleId: string,
-    tenantId: string
+    tenantId: string,
   ): Promise<boolean> {
     const userRole = await this.query()
-      .where('user_id', userId)
-      .where('role_id', roleId)
-      .where('tenant_id', tenantId)
-      .first()
+      .where("user_id", userId)
+      .where("role_id", roleId)
+      .where("tenant_id", tenantId)
+      .first();
 
-    return !!userRole
+    return !!userRole;
   }
 
   /**
@@ -171,17 +171,17 @@ export class UserRole extends Model {
   static async assignRole(
     userId: string,
     roleId: string,
-    tenantId: string
+    tenantId: string,
   ): Promise<UserRole> {
     // Check if assignment already exists
     const existing = await this.query()
-      .where('user_id', userId)
-      .where('role_id', roleId)
-      .where('tenant_id', tenantId)
-      .first()
+      .where("user_id", userId)
+      .where("role_id", roleId)
+      .where("tenant_id", tenantId)
+      .first();
 
     if (existing) {
-      return existing
+      return existing;
     }
 
     // Create new assignment
@@ -189,7 +189,7 @@ export class UserRole extends Model {
       userId,
       roleId,
       tenantId,
-    })
+    });
   }
 
   /**
@@ -202,13 +202,13 @@ export class UserRole extends Model {
   static async removeRole(
     userId: string,
     roleId: string,
-    tenantId: string
+    tenantId: string,
   ): Promise<number> {
     return this.query()
       .delete()
-      .where('user_id', userId)
-      .where('role_id', roleId)
-      .where('tenant_id', tenantId)
+      .where("user_id", userId)
+      .where("role_id", roleId)
+      .where("tenant_id", tenantId);
   }
 
   /**
@@ -219,12 +219,12 @@ export class UserRole extends Model {
    */
   static async removeAllUserRolesInTenant(
     userId: string,
-    tenantId: string
+    tenantId: string,
   ): Promise<number> {
     return this.query()
       .delete()
-      .where('user_id', userId)
-      .where('tenant_id', tenantId)
+      .where("user_id", userId)
+      .where("tenant_id", tenantId);
   }
 
   /**
@@ -236,10 +236,10 @@ export class UserRole extends Model {
   static async syncUserRolesInTenant(
     userId: string,
     tenantId: string,
-    roleIds: string[]
+    roleIds: string[],
   ): Promise<void> {
     // Remove all existing roles for this user in this tenant
-    await this.removeAllUserRolesInTenant(userId, tenantId)
+    await this.removeAllUserRolesInTenant(userId, tenantId);
 
     // Assign new roles
     if (roleIds.length > 0) {
@@ -247,8 +247,8 @@ export class UserRole extends Model {
         userId,
         roleId,
         tenantId,
-      }))
-      await this.query().insert(userRoles)
+      }));
+      await this.query().insert(userRoles);
     }
   }
 }

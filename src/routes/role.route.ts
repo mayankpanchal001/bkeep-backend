@@ -1,22 +1,22 @@
-import { Router, type Router as RouterType } from 'express'
+import { Router, type Router as RouterType } from "express";
 
-import { ROLES } from '@constants/roles'
+import { ROLES } from "@constants/roles";
 import {
   getAllRoles,
   getRoleById,
   getRoleStatistics,
   getRoleWithPermissions,
   updateRolePermissionsController,
-} from '@controllers/role.controller'
-import { authenticate, authorize } from '@middlewares/auth.middleware'
-import { validate } from '@middlewares/validate.middleware'
+} from "@controllers/role.controller";
+import { authenticate, authorize } from "@middlewares/auth.middleware";
+import { validate } from "@middlewares/validate.middleware";
 import {
   roleIdSchema,
   roleListSchema,
   updateRolePermissionsSchema,
-} from '@schema/role.schema'
+} from "@schema/role.schema";
 
-const router: RouterType = Router()
+const router: RouterType = Router();
 
 /**
  * @swagger
@@ -99,12 +99,12 @@ const router: RouterType = Router()
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  '/',
+  "/",
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
-  validate(roleListSchema, 'query'),
-  getAllRoles
-)
+  validate(roleListSchema, "query"),
+  getAllRoles,
+);
 
 /**
  * @swagger
@@ -145,11 +145,11 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  '/statistics',
+  "/statistics",
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
-  getRoleStatistics
-)
+  getRoleStatistics,
+);
 
 /**
  * @swagger
@@ -210,12 +210,12 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  '/:id',
+  "/:id",
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
-  validate(roleIdSchema, 'params'),
-  getRoleById
-)
+  validate(roleIdSchema, "params"),
+  getRoleById,
+);
 
 /**
  * @swagger
@@ -276,12 +276,12 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  '/:id/permissions',
+  "/:id/permissions",
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
-  validate(roleIdSchema, 'params'),
-  getRoleWithPermissions
-)
+  validate(roleIdSchema, "params"),
+  getRoleWithPermissions,
+);
 
 /**
  * @swagger
@@ -360,12 +360,12 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put(
-  '/:id/permissions',
+  "/:id/permissions",
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN] }),
-  validate(roleIdSchema, 'params'),
+  validate(roleIdSchema, "params"),
   validate(updateRolePermissionsSchema),
-  updateRolePermissionsController
-)
+  updateRolePermissionsController,
+);
 
-export default router
+export default router;

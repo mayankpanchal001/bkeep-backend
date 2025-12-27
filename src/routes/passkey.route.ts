@@ -1,4 +1,4 @@
-import { Router, type Router as RouterType } from 'express'
+import { Router, type Router as RouterType } from "express";
 
 import {
   generateRegistrationOptions,
@@ -10,9 +10,9 @@ import {
   enablePasskey,
   disablePasskey,
   getPasskeysStats,
-} from '@controllers/passkey.controller'
-import { authenticate } from '@middlewares/auth.middleware'
-import { validate } from '@middlewares/validate.middleware'
+} from "@controllers/passkey.controller";
+import { authenticate } from "@middlewares/auth.middleware";
+import { validate } from "@middlewares/validate.middleware";
 import {
   passkeyRegistrationOptionsSchema,
   passkeyRegistrationVerifySchema,
@@ -24,9 +24,9 @@ import {
   passkeyEnableSchema,
   passkeyDisableSchema,
   passkeyStatsSchema,
-} from '@schema/passkey.schema'
+} from "@schema/passkey.schema";
 
-const router: RouterType = Router()
+const router: RouterType = Router();
 
 /**
  * @swagger
@@ -61,11 +61,11 @@ const router: RouterType = Router()
  *         description: User not authenticated
  */
 router.post(
-  '/register/options',
+  "/register/options",
   authenticate,
   validate(passkeyRegistrationOptionsSchema),
-  generateRegistrationOptions
-)
+  generateRegistrationOptions,
+);
 
 /**
  * @swagger
@@ -102,11 +102,11 @@ router.post(
  *         description: User not authenticated
  */
 router.post(
-  '/register/verify',
+  "/register/verify",
   authenticate,
   validate(passkeyRegistrationVerifySchema),
-  verifyRegistration
-)
+  verifyRegistration,
+);
 
 /**
  * @swagger
@@ -136,11 +136,11 @@ router.post(
  *         description: User not authenticated
  */
 router.get(
-  '/',
+  "/",
   authenticate,
-  validate(passkeyListSchema, 'query'),
-  listPasskeys
-)
+  validate(passkeyListSchema, "query"),
+  listPasskeys,
+);
 
 /**
  * @swagger
@@ -158,11 +158,11 @@ router.get(
  *         description: User not authenticated
  */
 router.get(
-  '/stats',
+  "/stats",
   authenticate,
-  validate(passkeyStatsSchema, 'query'),
-  getPasskeysStats
-)
+  validate(passkeyStatsSchema, "query"),
+  getPasskeysStats,
+);
 
 /**
  * @swagger
@@ -192,11 +192,11 @@ router.get(
  *         description: Passkey not found
  */
 router.get(
-  '/:id',
+  "/:id",
   authenticate,
-  validate(passkeyGetSchema, 'params'),
-  getPasskey
-)
+  validate(passkeyGetSchema, "params"),
+  getPasskey,
+);
 
 /**
  * @swagger
@@ -240,12 +240,12 @@ router.get(
  *         description: Passkey not found
  */
 router.patch(
-  '/:id/rename',
+  "/:id/rename",
   authenticate,
-  validate(passkeyRenameParamsSchema, 'params'),
+  validate(passkeyRenameParamsSchema, "params"),
   validate(passkeyRenameSchema),
-  updatePasskeyName
-)
+  updatePasskeyName,
+);
 
 /**
  * @swagger
@@ -275,11 +275,11 @@ router.patch(
  *         description: Passkey not found
  */
 router.patch(
-  '/:id/enable',
+  "/:id/enable",
   authenticate,
-  validate(passkeyEnableSchema, 'params'),
-  enablePasskey
-)
+  validate(passkeyEnableSchema, "params"),
+  enablePasskey,
+);
 
 /**
  * @swagger
@@ -309,11 +309,11 @@ router.patch(
  *         description: Passkey not found
  */
 router.patch(
-  '/:id/disable',
+  "/:id/disable",
   authenticate,
-  validate(passkeyDisableSchema, 'params'),
-  disablePasskey
-)
+  validate(passkeyDisableSchema, "params"),
+  disablePasskey,
+);
 
 /**
  * @swagger
@@ -343,10 +343,10 @@ router.patch(
  *         description: Passkey not found
  */
 router.delete(
-  '/:id',
+  "/:id",
   authenticate,
-  validate(passkeyDeleteSchema, 'params'),
-  removePasskey
-)
+  validate(passkeyDeleteSchema, "params"),
+  removePasskey,
+);
 
-export default router
+export default router;

@@ -1,19 +1,19 @@
-import type { RequestHandler } from 'express'
-import { Response } from 'express'
+import type { RequestHandler } from "express";
+import { Response } from "express";
 
-import { HTTP_STATUS } from '@constants/http'
-import { SUCCESS_MESSAGES } from '@constants/success'
-import type { AuthenticatedRequest } from '@middlewares/auth.middleware'
+import { HTTP_STATUS } from "@constants/http";
+import { SUCCESS_MESSAGES } from "@constants/success";
+import type { AuthenticatedRequest } from "@middlewares/auth.middleware";
 import {
   getRoleStatistics as fetchRoleStatistics,
   findRoleById,
   findRoleByIdWithPermissions,
   findRoles,
   updateRolePermissions,
-} from '@queries/role.queries'
-import { getPaginationMetadata } from '@schema/shared.schema'
-import { ApiResponse } from '@utils/ApiResponse'
-import asyncHandler from '@utils/asyncHandler'
+} from "@queries/role.queries";
+import { getPaginationMetadata } from "@schema/shared.schema";
+import { ApiResponse } from "@utils/ApiResponse";
+import asyncHandler from "@utils/asyncHandler";
 
 /**
  * Get all roles controller
@@ -24,12 +24,12 @@ export const getAllRoles: RequestHandler = asyncHandler(
     // Get validated query parameters
     const filters = (
       req as AuthenticatedRequest & {
-        validatedData: Parameters<typeof findRoles>[0]
+        validatedData: Parameters<typeof findRoles>[0];
       }
-    ).validatedData
+    ).validatedData;
 
     // Fetch roles with filters
-    const { roles, total } = await findRoles(filters)
+    const { roles, total } = await findRoles(filters);
 
     // Transform roles to response format
     const rolesData = roles.map((role) => ({
@@ -40,16 +40,20 @@ export const getAllRoles: RequestHandler = asyncHandler(
       isActive: role.isActive,
       createdAt: role.createdAt,
       updatedAt: role.updatedAt,
-    }))
+    }));
 
     // Get pagination metadata
-    const pagination = getPaginationMetadata(filters.page, filters.limit, total)
+    const pagination = getPaginationMetadata(
+      filters.page,
+      filters.limit,
+      total,
+    );
 
     // Prepare response data
     const responseData = {
       items: rolesData,
       pagination,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -57,11 +61,11 @@ export const getAllRoles: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.ROLES_RETRIEVED,
-          responseData
-        )
-      )
-  }
-)
+          responseData,
+        ),
+      );
+  },
+);
 
 /**
  * Get role by ID controller
@@ -69,10 +73,10 @@ export const getAllRoles: RequestHandler = asyncHandler(
  */
 export const getRoleById: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const id = req.params['id'] as string
+    const id = req.params["id"] as string;
 
     // Fetch role by ID
-    const role = await findRoleById(id)
+    const role = await findRoleById(id);
 
     // Transform role to response format
     const roleData = {
@@ -83,7 +87,7 @@ export const getRoleById: RequestHandler = asyncHandler(
       isActive: role.isActive,
       createdAt: role.createdAt,
       updatedAt: role.updatedAt,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -91,11 +95,11 @@ export const getRoleById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.ROLE_RETRIEVED,
-          roleData
-        )
-      )
-  }
-)
+          roleData,
+        ),
+      );
+  },
+);
 
 /**
  * Get role with available permissions controller
@@ -103,28 +107,28 @@ export const getRoleById: RequestHandler = asyncHandler(
  */
 export const getRoleWithPermissions: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const id = req.params['id'] as string
+    const id = req.params["id"] as string;
 
     // Fetch role by ID with permissions
-    const role = await findRoleByIdWithPermissions(id)
+    const role = await findRoleByIdWithPermissions(id);
 
     // Transform permissions to response format
     const permissionsData =
       role.permissions?.map(
         (permission: {
-          id: string
-          name: string
-          displayName: string
-          description?: string | null
-          isActive: boolean
+          id: string;
+          name: string;
+          displayName: string;
+          description?: string | null;
+          isActive: boolean;
         }) => ({
           id: permission.id,
           name: permission.name,
           displayName: permission.displayName,
           description: permission.description ?? null,
           isActive: permission.isActive,
-        })
-      ) ?? []
+        }),
+      ) ?? [];
 
     // Transform role to response format
     const roleData = {
@@ -136,7 +140,7 @@ export const getRoleWithPermissions: RequestHandler = asyncHandler(
       createdAt: role.createdAt,
       updatedAt: role.updatedAt,
       permissions: permissionsData,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -144,11 +148,11 @@ export const getRoleWithPermissions: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.ROLE_WITH_PERMISSIONS_RETRIEVED,
-          roleData
-        )
-      )
-  }
-)
+          roleData,
+        ),
+      );
+  },
+);
 
 /**
  * Get role statistics controller
@@ -157,7 +161,7 @@ export const getRoleWithPermissions: RequestHandler = asyncHandler(
 export const getRoleStatistics: RequestHandler = asyncHandler(
   async (_req: AuthenticatedRequest, res: Response) => {
     // Fetch role statistics
-    const statistics = await fetchRoleStatistics()
+    const statistics = await fetchRoleStatistics();
 
     res
       .status(HTTP_STATUS.OK)
@@ -165,11 +169,11 @@ export const getRoleStatistics: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.ROLE_STATISTICS_RETRIEVED,
-          statistics
-        )
-      )
-  }
-)
+          statistics,
+        ),
+      );
+  },
+);
 
 /**
  * Update role permissions controller
@@ -179,31 +183,31 @@ export const updateRolePermissionsController: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
     // Get validated route parameters (params are validated first, then body overwrites validatedData)
     // So we access req.params['id'] directly since it's already validated
-    const roleId = req.params['id'] as string
+    const roleId = req.params["id"] as string;
 
     // Get body data
-    const { permissionIds } = req.body
+    const { permissionIds } = req.body;
 
     // Update role permissions
-    const updatedRole = await updateRolePermissions(roleId, permissionIds)
+    const updatedRole = await updateRolePermissions(roleId, permissionIds);
 
     // Transform permissions to response format
     const permissionsData =
       updatedRole.permissions?.map(
         (permission: {
-          id: string
-          name: string
-          displayName: string
-          description?: string | null
-          isActive: boolean
+          id: string;
+          name: string;
+          displayName: string;
+          description?: string | null;
+          isActive: boolean;
         }) => ({
           id: permission.id,
           name: permission.name,
           displayName: permission.displayName,
           description: permission.description ?? null,
           isActive: permission.isActive,
-        })
-      ) ?? []
+        }),
+      ) ?? [];
 
     // Transform role to response format
     const roleData = {
@@ -215,7 +219,7 @@ export const updateRolePermissionsController: RequestHandler = asyncHandler(
       createdAt: updatedRole.createdAt,
       updatedAt: updatedRole.updatedAt,
       permissions: permissionsData,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -223,8 +227,8 @@ export const updateRolePermissionsController: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.ROLE_PERMISSIONS_UPDATED,
-          roleData
-        )
-      )
-  }
-)
+          roleData,
+        ),
+      );
+  },
+);

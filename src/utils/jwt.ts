@@ -1,9 +1,9 @@
-import jwt from 'jsonwebtoken'
+import jwt from "jsonwebtoken";
 
-import type { JwtUser, TokenPayload } from '@/types/jwt.type'
-import { env } from '@config/env'
-import { HTTP_STATUS } from '@constants/http'
-import { ApiError } from '@utils/ApiError'
+import type { JwtUser, TokenPayload } from "@/types/jwt.type";
+import { env } from "@config/env";
+import { HTTP_STATUS } from "@constants/http";
+import { ApiError } from "@utils/ApiError";
 
 /**
  * Sign access token
@@ -13,9 +13,9 @@ import { ApiError } from '@utils/ApiError'
 export const signAccessToken = (user: JwtUser): string => {
   return jwt.sign({ user }, env.ACCESS_TOKEN_SECRET, {
     expiresIn: env.ACCESS_TOKEN_EXPIRY,
-    algorithm: 'HS256',
-  } as jwt.SignOptions)
-}
+    algorithm: "HS256",
+  } as jwt.SignOptions);
+};
 
 /**
  * Sign refresh token
@@ -25,9 +25,9 @@ export const signAccessToken = (user: JwtUser): string => {
 export const signRefreshToken = (user: { id: string }): string => {
   return jwt.sign({ user: { id: user.id } }, env.REFRESH_TOKEN_SECRET, {
     expiresIn: env.REFRESH_TOKEN_EXPIRY,
-    algorithm: 'HS256',
-  } as jwt.SignOptions)
-}
+    algorithm: "HS256",
+  } as jwt.SignOptions);
+};
 
 /**
  * Sign both access and refresh tokens
@@ -35,12 +35,12 @@ export const signRefreshToken = (user: { id: string }): string => {
  * @returns Object containing accessToken and refreshToken
  */
 export const signTokens = (
-  user: JwtUser
+  user: JwtUser,
 ): { accessToken: string; refreshToken: string } => {
-  const accessToken = signAccessToken(user)
-  const refreshToken = signRefreshToken(user)
-  return { accessToken, refreshToken }
-}
+  const accessToken = signAccessToken(user);
+  const refreshToken = signRefreshToken(user);
+  return { accessToken, refreshToken };
+};
 
 /**
  * Verify JWT token
@@ -50,7 +50,7 @@ export const signTokens = (
  */
 export const verifyToken = async (
   token: string,
-  secret: string
+  secret: string,
 ): Promise<TokenPayload> => {
   return new Promise((resolve, reject) => {
     jwt.verify(token, secret, (error, decoded) => {
@@ -58,15 +58,15 @@ export const verifyToken = async (
         reject(
           new ApiError(
             HTTP_STATUS.UNAUTHORIZED,
-            `Token verification failed: ${error.message}`
-          )
-        )
+            `Token verification failed: ${error.message}`,
+          ),
+        );
       } else {
-        resolve(decoded as TokenPayload)
+        resolve(decoded as TokenPayload);
       }
-    })
-  })
-}
+    });
+  });
+};
 
 /**
  * Verify access token
@@ -74,9 +74,9 @@ export const verifyToken = async (
  * @returns User ID from token
  */
 export const verifyAccessToken = async (token: string): Promise<JwtUser> => {
-  const decoded = await verifyToken(token, env.ACCESS_TOKEN_SECRET)
-  return decoded.user
-}
+  const decoded = await verifyToken(token, env.ACCESS_TOKEN_SECRET);
+  return decoded.user;
+};
 
 /**
  * Verify refresh token
@@ -84,8 +84,8 @@ export const verifyAccessToken = async (token: string): Promise<JwtUser> => {
  * @returns User ID from token
  */
 export const verifyRefreshToken = async (
-  token: string
+  token: string,
 ): Promise<{ id: string }> => {
-  const decoded = await verifyToken(token, env.REFRESH_TOKEN_SECRET)
-  return decoded.user
-}
+  const decoded = await verifyToken(token, env.REFRESH_TOKEN_SECRET);
+  return decoded.user;
+};

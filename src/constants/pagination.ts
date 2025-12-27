@@ -12,12 +12,12 @@ export const PAGINATION_DEFAULTS = {
   LIMIT_MIN: 1,
   LIMIT_MAX: 100,
   LIMIT_DEFAULT: 20,
-} as const
+} as const;
 
 /**
  * Sort order options
  */
 export const SORT_ORDER = {
-  ASC: 'asc',
-  DESC: 'desc',
-} as const
+  ASC: "asc",
+  DESC: "desc",
+} as const;

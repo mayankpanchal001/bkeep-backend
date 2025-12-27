@@ -3,9 +3,9 @@
  * Validates request body, query, and params using Zod schemas
  */
 
-import type { NextFunction, Request, RequestHandler, Response } from 'express'
-import type { ZodType } from 'zod'
-import { z } from 'zod'
+import type { NextFunction, Request, RequestHandler, Response } from "express";
+import type { ZodType } from "zod";
+import { z } from "zod";
 
 /**
  * Validation middleware factory
@@ -16,27 +16,27 @@ import { z } from 'zod'
  */
 export const validate = <T extends ZodType>(
   schema: T,
-  source: 'body' | 'query' | 'params' = 'body'
+  source: "body" | "query" | "params" = "body",
 ): RequestHandler => {
   return (req: Request, _res: Response, next: NextFunction) => {
     try {
-      let data: unknown
-      if (source === 'body') {
-        data = req.body
-      } else if (source === 'query') {
-        data = req.query
+      let data: unknown;
+      if (source === "body") {
+        data = req.body;
+      } else if (source === "query") {
+        data = req.query;
       } else {
-        data = req.params
+        data = req.params;
       }
-      const validatedData = schema.parse(data)
+      const validatedData = schema.parse(data);
 
       // Attach validated data to request
-      ;(req as Request & { validatedData: z.infer<T> }).validatedData =
-        validatedData
+      (req as Request & { validatedData: z.infer<T> }).validatedData =
+        validatedData;
 
-      next()
+      next();
     } catch (error) {
-      next(error)
+      next(error);
     }
-  }
-}
+  };
+};

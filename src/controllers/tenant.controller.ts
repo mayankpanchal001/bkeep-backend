@@ -1,27 +1,27 @@
-import type { RequestHandler } from 'express'
-import { Response } from 'express'
+import type { RequestHandler } from "express";
+import { Response } from "express";
 
 import type {
   RefreshTokenResponseData,
   RolePermission,
   RoleWithPermissions,
-} from '@/types/auth.type'
-import type { JwtUser } from '@/types/jwt.type'
-import type { ExtendedSession } from '@/types/session.type'
-import type { TenantListData, TenantListItem } from '@/types/tenant.type'
-import { isProduction } from '@config/env'
-import logger from '@config/logger'
-import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from '@constants/audit'
-import { ERROR_MESSAGES } from '@constants/errors'
-import { HTTP_STATUS } from '@constants/http'
-import { PAGINATION_DEFAULTS } from '@constants/pagination'
-import { SUCCESS_MESSAGES } from '@constants/success'
-import type { AuthenticatedRequest } from '@middlewares/auth.middleware'
-import { User } from '@models/User'
+} from "@/types/auth.type";
+import type { JwtUser } from "@/types/jwt.type";
+import type { ExtendedSession } from "@/types/session.type";
+import type { TenantListData, TenantListItem } from "@/types/tenant.type";
+import { isProduction } from "@config/env";
+import logger from "@config/logger";
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from "@constants/audit";
+import { ERROR_MESSAGES } from "@constants/errors";
+import { HTTP_STATUS } from "@constants/http";
+import { PAGINATION_DEFAULTS } from "@constants/pagination";
+import { SUCCESS_MESSAGES } from "@constants/success";
+import type { AuthenticatedRequest } from "@middlewares/auth.middleware";
+import { User } from "@models/User";
 import {
   createRefreshToken,
   revokeRefreshToken,
-} from '@queries/refreshToken.queries'
+} from "@queries/refreshToken.queries";
 import {
   deleteTenant,
   findTenantById,
@@ -29,20 +29,20 @@ import {
   restoreTenant,
   switchUserTenant,
   updateTenant,
-} from '@queries/tenant.queries'
-import { getPaginationMetadata } from '@schema/shared.schema'
+} from "@queries/tenant.queries";
+import { getPaginationMetadata } from "@schema/shared.schema";
 import {
   auditAction,
   auditCreate,
   auditDelete,
   auditUpdate,
   extractRequestContext,
-} from '@services/audit.service'
-import { onboardTenant } from '@services/tenant.service'
-import { ApiError } from '@utils/ApiError'
-import { ApiResponse } from '@utils/ApiResponse'
-import asyncHandler from '@utils/asyncHandler'
-import { signTokens } from '@utils/jwt'
+} from "@services/audit.service";
+import { onboardTenant } from "@services/tenant.service";
+import { ApiError } from "@utils/ApiError";
+import { ApiResponse } from "@utils/ApiResponse";
+import asyncHandler from "@utils/asyncHandler";
+import { signTokens } from "@utils/jwt";
 
 /**
  * Get all tenants controller (for SuperAdmin only)
@@ -51,23 +51,23 @@ import { signTokens } from '@utils/jwt'
  */
 export const getAllTenants: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser
+    const user = req.user as JwtUser;
 
     // Get validated query parameters
     const filters = (
       req as AuthenticatedRequest & {
-        validatedData: Parameters<typeof findTenants>[0]
+        validatedData: Parameters<typeof findTenants>[0];
       }
-    ).validatedData
+    ).validatedData;
 
     // Fetch all tenants (no user filtering)
-    const { tenants, total } = await findTenants(filters)
+    const { tenants, total } = await findTenants(filters);
 
     // Transform tenants to list format
     const items: TenantListItem[] = tenants.map((tenant) => {
       const isPrimary = user?.selectedTenantId
         ? tenant.id === user.selectedTenantId
-        : false
+        : false;
 
       return {
         id: tenant.id,
@@ -76,8 +76,8 @@ export const getAllTenants: RequestHandler = asyncHandler(
         isPrimary,
         createdAt: tenant.createdAt,
         updatedAt: tenant.updatedAt,
-      }
-    })
+      };
+    });
 
     // Build response data
     const data: TenantListData = {
@@ -85,9 +85,9 @@ export const getAllTenants: RequestHandler = asyncHandler(
       pagination: getPaginationMetadata(
         filters.page ?? PAGINATION_DEFAULTS.PAGE_DEFAULT,
         filters.limit ?? PAGINATION_DEFAULTS.LIMIT_DEFAULT,
-        total
+        total,
       ),
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -95,11 +95,11 @@ export const getAllTenants: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TENANTS_RETRIEVED,
-          data
-        )
-      )
-  }
-)
+          data,
+        ),
+      );
+  },
+);
 
 /**
  * Get user's tenants controller (for regular users)
@@ -107,23 +107,23 @@ export const getAllTenants: RequestHandler = asyncHandler(
  */
 export const getUserTenants: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser
+    const user = req.user as JwtUser;
 
     // Get validated query parameters
     const filters = (
       req as AuthenticatedRequest & {
-        validatedData: Parameters<typeof findTenants>[0]
+        validatedData: Parameters<typeof findTenants>[0];
       }
-    ).validatedData
+    ).validatedData;
 
     // Fetch tenants filtered by user membership
-    const { tenants, total } = await findTenants(filters, user.id)
+    const { tenants, total } = await findTenants(filters, user.id);
 
     // Transform tenants to list format
     const items: TenantListItem[] = tenants.map((tenant) => {
       const isPrimary =
         tenant.id === user.selectedTenantId ||
-        tenant.id === user.selectedTenantId
+        tenant.id === user.selectedTenantId;
 
       return {
         id: tenant.id,
@@ -132,8 +132,8 @@ export const getUserTenants: RequestHandler = asyncHandler(
         isPrimary,
         createdAt: tenant.createdAt,
         updatedAt: tenant.updatedAt,
-      }
-    })
+      };
+    });
 
     // Build response data
     const data: TenantListData = {
@@ -141,9 +141,9 @@ export const getUserTenants: RequestHandler = asyncHandler(
       pagination: getPaginationMetadata(
         filters.page ?? PAGINATION_DEFAULTS.PAGE_DEFAULT,
         filters.limit ?? PAGINATION_DEFAULTS.LIMIT_DEFAULT,
-        total
+        total,
       ),
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -151,11 +151,11 @@ export const getUserTenants: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TENANTS_RETRIEVED,
-          data
-        )
-      )
-  }
-)
+          data,
+        ),
+      );
+  },
+);
 
 /**
  * Get tenant by ID controller
@@ -167,12 +167,12 @@ export const getTenantById: RequestHandler = asyncHandler(
     // Get validated params
     const { id } = (
       req as AuthenticatedRequest & {
-        params: { id: string }
+        params: { id: string };
       }
-    ).params
+    ).params;
 
     // Fetch tenant
-    const tenant = await findTenantById(id)
+    const tenant = await findTenantById(id);
 
     // Prepare tenant response data
     const tenantData = {
@@ -181,7 +181,7 @@ export const getTenantById: RequestHandler = asyncHandler(
       isActive: tenant.isActive,
       createdAt: tenant.createdAt,
       updatedAt: tenant.updatedAt,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -189,11 +189,11 @@ export const getTenantById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TENANT_RETRIEVED,
-          tenantData
-        )
-      )
-  }
-)
+          tenantData,
+        ),
+      );
+  },
+);
 
 /**
  * Create tenant (onboard) controller
@@ -206,21 +206,21 @@ export const createTenantController: RequestHandler = asyncHandler(
     const { name, schemaName } = (
       req as AuthenticatedRequest & {
         body: {
-          name: string
-          schemaName: string
-        }
+          name: string;
+          schemaName: string;
+        };
       }
-    ).body
+    ).body;
 
     // Onboard tenant (users will be created separately and associated later)
     const { tenant } = await onboardTenant({
       name,
       schemaName,
-    })
+    });
 
     // Audit log
     try {
-      const requestContext = extractRequestContext(req)
+      const requestContext = extractRequestContext(req);
       // For tenant creation, use the new tenant's ID as tenantId
       await auditCreate(
         AUDIT_ACTIONS.TENANT_CREATED,
@@ -233,10 +233,10 @@ export const createTenantController: RequestHandler = asyncHandler(
             name: tenant.name,
             schemaName: tenant.schemaName,
           },
-        }
-      )
+        },
+      );
     } catch (error) {
-      logger.error('Failed to create audit log for tenant creation:', error)
+      logger.error("Failed to create audit log for tenant creation:", error);
       // Don't fail the request if audit logging fails
     }
 
@@ -247,7 +247,7 @@ export const createTenantController: RequestHandler = asyncHandler(
       isActive: tenant.isActive,
       createdAt: tenant.createdAt,
       updatedAt: tenant.updatedAt,
-    }
+    };
 
     res
       .status(HTTP_STATUS.CREATED)
@@ -255,11 +255,11 @@ export const createTenantController: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.CREATED,
           SUCCESS_MESSAGES.TENANT_ONBOARDED,
-          tenantData
-        )
-      )
-  }
-)
+          tenantData,
+        ),
+      );
+  },
+);
 
 /**
  * Update tenant controller
@@ -268,53 +268,53 @@ export const createTenantController: RequestHandler = asyncHandler(
  */
 export const updateTenantController: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser
+    const user = req.user as JwtUser;
 
     // Get validated params and body
     const { id } = (
       req as AuthenticatedRequest & {
-        params: { id: string }
+        params: { id: string };
       }
-    ).params
+    ).params;
 
     const updateData = (
       req as AuthenticatedRequest & {
         body: {
-          name?: string
-          isActive?: boolean
-        }
+          name?: string;
+          isActive?: boolean;
+        };
       }
-    ).body
+    ).body;
 
     // Get tenant before update for audit
-    const tenantBeforeUpdate = await findTenantById(id)
+    const tenantBeforeUpdate = await findTenantById(id);
 
     // Update tenant
-    const updatedTenant = await updateTenant(id, updateData)
+    const updatedTenant = await updateTenant(id, updateData);
 
     // Track changes for audit
-    const changes: Record<string, { from: unknown; to: unknown }> = {}
+    const changes: Record<string, { from: unknown; to: unknown }> = {};
     if (updateData.name && tenantBeforeUpdate.name !== updatedTenant.name) {
-      changes['name'] = {
+      changes["name"] = {
         from: tenantBeforeUpdate.name,
         to: updatedTenant.name,
-      }
+      };
     }
     if (
       updateData.isActive !== undefined &&
       tenantBeforeUpdate.isActive !== updatedTenant.isActive
     ) {
-      changes['isActive'] = {
+      changes["isActive"] = {
         from: tenantBeforeUpdate.isActive,
         to: updatedTenant.isActive,
-      }
+      };
     }
 
     // Audit log
     if (Object.keys(changes).length > 0) {
       try {
-        const requestContext = extractRequestContext(req)
-        const tenantId = user.selectedTenantId
+        const requestContext = extractRequestContext(req);
+        const tenantId = user.selectedTenantId;
         if (tenantId) {
           await auditUpdate(
             AUDIT_ACTIONS.TENANT_UPDATED,
@@ -324,11 +324,11 @@ export const updateTenantController: RequestHandler = asyncHandler(
             {
               requestContext,
               tenantId,
-            }
-          )
+            },
+          );
         }
       } catch (error) {
-        logger.error('Failed to create audit log for tenant update:', error)
+        logger.error("Failed to create audit log for tenant update:", error);
       }
     }
 
@@ -339,7 +339,7 @@ export const updateTenantController: RequestHandler = asyncHandler(
       isActive: updatedTenant.isActive,
       createdAt: updatedTenant.createdAt,
       updatedAt: updatedTenant.updatedAt,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -347,11 +347,11 @@ export const updateTenantController: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TENANT_UPDATED,
-          tenantData
-        )
-      )
-  }
-)
+          tenantData,
+        ),
+      );
+  },
+);
 
 /**
  * Delete tenant controller
@@ -360,25 +360,25 @@ export const updateTenantController: RequestHandler = asyncHandler(
  */
 export const deleteTenantById: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser
+    const user = req.user as JwtUser;
 
     // Get validated params
     const { id } = (
       req as AuthenticatedRequest & {
-        params: { id: string }
+        params: { id: string };
       }
-    ).params
+    ).params;
 
     // Get tenant before deletion for audit
-    const tenantToDelete = await findTenantById(id)
+    const tenantToDelete = await findTenantById(id);
 
     // Delete tenant
-    const deletedTenant = await deleteTenant(id)
+    const deletedTenant = await deleteTenant(id);
 
     // Audit log
     try {
-      const requestContext = extractRequestContext(req)
-      const tenantId = user.selectedTenantId
+      const requestContext = extractRequestContext(req);
+      const tenantId = user.selectedTenantId;
       if (tenantId) {
         await auditDelete(
           AUDIT_ACTIONS.TENANT_DELETED,
@@ -391,11 +391,11 @@ export const deleteTenantById: RequestHandler = asyncHandler(
               name: tenantToDelete.name,
               schemaName: tenantToDelete.schemaName,
             },
-          }
-        )
+          },
+        );
       }
     } catch (error) {
-      logger.error('Failed to create audit log for tenant deletion:', error)
+      logger.error("Failed to create audit log for tenant deletion:", error);
     }
 
     // Prepare tenant response data
@@ -405,7 +405,7 @@ export const deleteTenantById: RequestHandler = asyncHandler(
       isActive: deletedTenant.isActive,
       createdAt: deletedTenant.createdAt,
       updatedAt: deletedTenant.updatedAt,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -413,11 +413,11 @@ export const deleteTenantById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TENANT_DELETED,
-          tenantData
-        )
-      )
-  }
-)
+          tenantData,
+        ),
+      );
+  },
+);
 
 /**
  * Restore tenant controller
@@ -426,22 +426,22 @@ export const deleteTenantById: RequestHandler = asyncHandler(
  */
 export const restoreTenantById: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser
+    const user = req.user as JwtUser;
 
     // Get validated params
     const { id } = (
       req as AuthenticatedRequest & {
-        params: { id: string }
+        params: { id: string };
       }
-    ).params
+    ).params;
 
     // Restore tenant
-    const restoredTenant = await restoreTenant(id)
+    const restoredTenant = await restoreTenant(id);
 
     // Audit log
     try {
-      const requestContext = extractRequestContext(req)
-      const tenantId = user.selectedTenantId
+      const requestContext = extractRequestContext(req);
+      const tenantId = user.selectedTenantId;
       if (tenantId) {
         await auditAction(
           AUDIT_ACTIONS.TENANT_RESTORED,
@@ -449,11 +449,11 @@ export const restoreTenantById: RequestHandler = asyncHandler(
           {
             requestContext,
             tenantId,
-          }
-        )
+          },
+        );
       }
     } catch (error) {
-      logger.error('Failed to create audit log for tenant restore:', error)
+      logger.error("Failed to create audit log for tenant restore:", error);
     }
 
     // Prepare tenant response data
@@ -463,7 +463,7 @@ export const restoreTenantById: RequestHandler = asyncHandler(
       isActive: restoredTenant.isActive,
       createdAt: restoredTenant.createdAt,
       updatedAt: restoredTenant.updatedAt,
-    }
+    };
 
     res
       .status(HTTP_STATUS.OK)
@@ -471,11 +471,11 @@ export const restoreTenantById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TENANT_RESTORED,
-          tenantData
-        )
-      )
-  }
-)
+          tenantData,
+        ),
+      );
+  },
+);
 
 /**
  * Switch tenant controller
@@ -483,55 +483,55 @@ export const restoreTenantById: RequestHandler = asyncHandler(
  */
 export const switchTenant: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser
+    const user = req.user as JwtUser;
 
     // Get validated params
     const { id: tenantId } = (
       req as AuthenticatedRequest & {
-        params: { id: string }
+        params: { id: string };
       }
-    ).params
+    ).params;
 
     // If switching to the same tenant, return early (no need to regenerate tokens)
     if (user.selectedTenantId === tenantId) {
       res.status(HTTP_STATUS.OK).json(
         new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.TENANT_SWITCHED, {
-          accessToken: req.headers.authorization?.split(' ')[1] ?? '',
-          refreshToken: req.cookies?.['refreshToken'] ?? '',
-        })
-      )
-      return
+          accessToken: req.headers.authorization?.split(" ")[1] ?? "",
+          refreshToken: req.cookies?.["refreshToken"] ?? "",
+        }),
+      );
+      return;
     }
 
     // Verify tenant exists and get tenant data
-    const switchedTenant = await findTenantById(tenantId)
+    const switchedTenant = await findTenantById(tenantId);
 
     // Switch user's primary tenant
-    await switchUserTenant(user.id, tenantId)
+    await switchUserTenant(user.id, tenantId);
 
     // Get user with all relations (roles, permissions)
     // Fetch roles filtered by the selected tenant
     const userWithRelations = await User.query()
-      .modify('notDeleted')
+      .modify("notDeleted")
       .findById(user.id)
-      .withGraphFetched('[roles.[permissions]]')
-      .modifyGraph('roles', (builder) => {
+      .withGraphFetched("[roles.[permissions]]")
+      .modifyGraph("roles", (builder) => {
         builder
-          .where('user_roles.tenant_id', tenantId)
-          .modify('notDeleted')
-          .modify('active')
+          .where("user_roles.tenant_id", tenantId)
+          .modify("notDeleted")
+          .modify("active");
       })
-      .modifyGraph('roles.permissions', (builder) => {
-        builder.modify('notDeleted').modify('active')
-      })
+      .modifyGraph("roles.permissions", (builder) => {
+        builder.modify("notDeleted").modify("active");
+      });
 
     if (!userWithRelations) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND)
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND);
     }
 
     // Extract roles and permissions
-    const roles: RoleWithPermissions[] = userWithRelations.roles ?? []
-    const allPermissionsMap = new Map<string, RolePermission>()
+    const roles: RoleWithPermissions[] = userWithRelations.roles ?? [];
+    const allPermissionsMap = new Map<string, RolePermission>();
 
     roles.forEach((role) => {
       if (role.permissions) {
@@ -539,24 +539,24 @@ export const switchTenant: RequestHandler = asyncHandler(
           // Only include active, non-deleted permissions
           if (permission.isActive && !permission.deletedAt) {
             if (!allPermissionsMap.has(permission.name)) {
-              allPermissionsMap.set(permission.name, permission)
+              allPermissionsMap.set(permission.name, permission);
             }
           }
-        })
+        });
       }
-    })
+    });
 
     // Convert to array of permission names for JWT (keep lightweight)
-    const permissionNames = Array.from(allPermissionsMap.keys())
+    const permissionNames = Array.from(allPermissionsMap.keys());
 
     // Validate and extract primary role for the selected tenant
-    const primaryRole = roles[0]
+    const primaryRole = roles[0];
 
     if (!primaryRole) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.USER_NO_ROLE
-      )
+        ERROR_MESSAGES.USER_NO_ROLE,
+      );
     }
 
     // Build JWT user payload
@@ -567,22 +567,22 @@ export const switchTenant: RequestHandler = asyncHandler(
       role: primaryRole.name,
       permissions: permissionNames,
       selectedTenantId: tenantId,
-    }
+    };
 
     // Generate new tokens
-    const { accessToken, refreshToken: newRefreshToken } = signTokens(payload)
+    const { accessToken, refreshToken: newRefreshToken } = signTokens(payload);
 
     // Get current refresh token from request
     const currentRefreshToken =
-      req.cookies?.['refreshToken'] ?? req.headers.authorization?.split(' ')[1]
+      req.cookies?.["refreshToken"] ?? req.headers.authorization?.split(" ")[1];
 
     // Revoke old refresh token if exists
     if (currentRefreshToken) {
       try {
-        await revokeRefreshToken(currentRefreshToken)
+        await revokeRefreshToken(currentRefreshToken);
       } catch (error) {
         // Ignore errors if token doesn't exist
-        logger.warn('Failed to revoke old refresh token:', error)
+        logger.warn("Failed to revoke old refresh token:", error);
       }
     }
 
@@ -590,31 +590,31 @@ export const switchTenant: RequestHandler = asyncHandler(
     await createRefreshToken({
       userId: userWithRelations.id,
       token: newRefreshToken,
-      userAgent: req.headers['user-agent'] ?? null,
+      userAgent: req.headers["user-agent"] ?? null,
       ipAddress: req.ip ?? null,
-    })
+    });
 
     // Update session with new user data
-    const session = req.session as ExtendedSession
+    const session = req.session as ExtendedSession;
     if (session) {
-      session.user = payload
+      session.user = payload;
     }
 
     // Set tokens in HTTP-only cookies
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction(),
-    }
+    };
 
     // Prepare response data
     const responseData: RefreshTokenResponseData = {
       accessToken,
       refreshToken: newRefreshToken,
-    }
+    };
 
     // Audit log
     try {
-      const requestContext = extractRequestContext(req)
+      const requestContext = extractRequestContext(req);
       await auditAction(
         AUDIT_ACTIONS.TENANT_SWITCHED,
         [
@@ -627,22 +627,22 @@ export const switchTenant: RequestHandler = asyncHandler(
         {
           requestContext,
           tenantId: tenantId,
-        }
-      )
+        },
+      );
     } catch (error) {
-      logger.error('Failed to create audit log for tenant switch:', error)
+      logger.error("Failed to create audit log for tenant switch:", error);
     }
 
     res
-      .cookie('refreshToken', newRefreshToken, cookieOptions)
-      .cookie('accessToken', accessToken, cookieOptions)
+      .cookie("refreshToken", newRefreshToken, cookieOptions)
+      .cookie("accessToken", accessToken, cookieOptions)
       .status(HTTP_STATUS.OK)
       .json(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TENANT_SWITCHED,
-          responseData
-        )
-      )
-  }
-)
+          responseData,
+        ),
+      );
+  },
+);

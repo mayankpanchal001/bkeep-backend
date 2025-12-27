@@ -1,8 +1,8 @@
-import { Model, snakeCaseMappers } from 'objection'
+import { Model, snakeCaseMappers } from "objection";
 
-import { Tenant } from '@models/Tenant'
-import { User } from '@models/User'
-import { getCurrentDate } from '@utils/date'
+import { Tenant } from "@models/Tenant";
+import { User } from "@models/User";
+import { getCurrentDate } from "@utils/date";
 
 /**
  * UserTenant Model
@@ -12,45 +12,45 @@ import { getCurrentDate } from '@utils/date'
 export class UserTenant extends Model {
   // Table name
   static override get tableName(): string {
-    return 'user_tenants'
+    return "user_tenants";
   }
 
   // Model properties
-  userId!: string
-  tenantId!: string
-  isPrimary!: boolean
-  createdAt!: Date
+  userId!: string;
+  tenantId!: string;
+  isPrimary!: boolean;
+  createdAt!: Date;
 
   // Relations
-  user?: User
-  tenant?: Tenant
+  user?: User;
+  tenant?: Tenant;
 
   // JSON Schema for validation
   static override get jsonSchema() {
     return {
-      type: 'object',
-      required: ['userId', 'tenantId', 'isPrimary'],
+      type: "object",
+      required: ["userId", "tenantId", "isPrimary"],
       properties: {
-        userId: { type: 'string', format: 'uuid' },
-        tenantId: { type: 'string', format: 'uuid' },
-        isPrimary: { type: 'boolean', default: false },
-        createdAt: { type: 'string', format: 'date-time' },
+        userId: { type: "string", format: "uuid" },
+        tenantId: { type: "string", format: "uuid" },
+        isPrimary: { type: "boolean", default: false },
+        createdAt: { type: "string", format: "date-time" },
       },
-    }
+    };
   }
 
   /**
    * Map JS camelCase properties <-> DB snake_case columns
    */
   static override get columnNameMappers() {
-    return snakeCaseMappers()
+    return snakeCaseMappers();
   }
 
   /**
    * Composite primary key
    */
   static override get idColumn() {
-    return ['user_id', 'tenant_id']
+    return ["user_id", "tenant_id"];
   }
 
   /**
@@ -62,19 +62,19 @@ export class UserTenant extends Model {
         relation: Model.BelongsToOneRelation,
         modelClass: User,
         join: {
-          from: 'user_tenants.user_id',
-          to: 'users.id',
+          from: "user_tenants.user_id",
+          to: "users.id",
         },
       },
       tenant: {
         relation: Model.BelongsToOneRelation,
         modelClass: Tenant,
         join: {
-          from: 'user_tenants.tenant_id',
-          to: 'tenants.id',
+          from: "user_tenants.tenant_id",
+          to: "tenants.id",
         },
       },
-    }
+    };
   }
 
   /**
@@ -82,7 +82,7 @@ export class UserTenant extends Model {
    */
   override $beforeInsert(): void {
     if (!this.createdAt) {
-      this.createdAt = getCurrentDate()
+      this.createdAt = getCurrentDate();
     }
   }
 
@@ -94,12 +94,12 @@ export class UserTenant extends Model {
    */
   static async findByUserAndTenant(
     userId: string,
-    tenantId: string
+    tenantId: string,
   ): Promise<UserTenant | undefined> {
     return this.query()
-      .where('user_id', userId)
-      .where('tenant_id', tenantId)
-      .first()
+      .where("user_id", userId)
+      .where("tenant_id", tenantId)
+      .first();
   }
 
   /**
@@ -108,7 +108,7 @@ export class UserTenant extends Model {
    * @returns Array of UserTenant with tenant details
    */
   static async findByUser(userId: string): Promise<UserTenant[]> {
-    return this.query().where('user_id', userId).withGraphFetched('tenant')
+    return this.query().where("user_id", userId).withGraphFetched("tenant");
   }
 
   /**
@@ -117,7 +117,7 @@ export class UserTenant extends Model {
    * @returns Array of UserTenant with user details
    */
   static async findByTenant(tenantId: string): Promise<UserTenant[]> {
-    return this.query().where('tenant_id', tenantId).withGraphFetched('user')
+    return this.query().where("tenant_id", tenantId).withGraphFetched("user");
   }
 
   /**
@@ -127,8 +127,8 @@ export class UserTenant extends Model {
    * @returns boolean
    */
   static async isMember(userId: string, tenantId: string): Promise<boolean> {
-    const userTenant = await this.findByUserAndTenant(userId, tenantId)
-    return !!userTenant
+    const userTenant = await this.findByUserAndTenant(userId, tenantId);
+    return !!userTenant;
   }
 
   /**
@@ -141,17 +141,19 @@ export class UserTenant extends Model {
   static async addUserToTenant(
     userId: string,
     tenantId: string,
-    isPrimary = false
+    isPrimary = false,
   ): Promise<UserTenant> {
     // Check if relationship already exists
-    const existing = await this.findByUserAndTenant(userId, tenantId)
+    const existing = await this.findByUserAndTenant(userId, tenantId);
 
     if (existing) {
       // Update isPrimary if needed
       if (existing.isPrimary !== isPrimary) {
-        return this.query().patchAndFetchById([userId, tenantId], { isPrimary })
+        return this.query().patchAndFetchById([userId, tenantId], {
+          isPrimary,
+        });
       }
-      return existing
+      return existing;
     }
 
     // Create new relationship
@@ -159,7 +161,7 @@ export class UserTenant extends Model {
       userId,
       tenantId,
       isPrimary,
-    })
+    });
   }
 
   /**
@@ -170,12 +172,12 @@ export class UserTenant extends Model {
    */
   static async removeUserFromTenant(
     userId: string,
-    tenantId: string
+    tenantId: string,
   ): Promise<number> {
     return this.query()
       .delete()
-      .where('user_id', userId)
-      .where('tenant_id', tenantId)
+      .where("user_id", userId)
+      .where("tenant_id", tenantId);
   }
 
   /**
@@ -185,16 +187,16 @@ export class UserTenant extends Model {
    */
   static async setPrimaryTenant(
     userId: string,
-    tenantId: string
+    tenantId: string,
   ): Promise<void> {
     // First, unset all primary flags for this user
-    await this.query().where('user_id', userId).patch({ isPrimary: false })
+    await this.query().where("user_id", userId).patch({ isPrimary: false });
 
     // Then set the specified tenant as primary
     await this.query()
-      .where('user_id', userId)
-      .where('tenant_id', tenantId)
-      .patch({ isPrimary: true })
+      .where("user_id", userId)
+      .where("tenant_id", tenantId)
+      .patch({ isPrimary: true });
   }
 
   /**
@@ -203,13 +205,13 @@ export class UserTenant extends Model {
    * @returns UserTenant with tenant details or undefined
    */
   static async getPrimaryTenant(
-    userId: string
+    userId: string,
   ): Promise<UserTenant | undefined> {
     return this.query()
-      .where('user_id', userId)
-      .where('is_primary', true)
-      .withGraphFetched('tenant')
-      .first()
+      .where("user_id", userId)
+      .where("is_primary", true)
+      .withGraphFetched("tenant")
+      .first();
   }
 
   /**
@@ -220,10 +222,10 @@ export class UserTenant extends Model {
    */
   static async getPivotData(
     userId: string,
-    tenantId: string
+    tenantId: string,
   ): Promise<{ isPrimary: boolean } | undefined> {
-    const userTenant = await this.findByUserAndTenant(userId, tenantId)
-    return userTenant ? { isPrimary: userTenant.isPrimary } : undefined
+    const userTenant = await this.findByUserAndTenant(userId, tenantId);
+    return userTenant ? { isPrimary: userTenant.isPrimary } : undefined;
   }
 
   /**
@@ -232,7 +234,7 @@ export class UserTenant extends Model {
    * @returns Number of deleted rows
    */
   static async removeAllUsersFromTenant(tenantId: string): Promise<number> {
-    return this.query().delete().where('tenant_id', tenantId)
+    return this.query().delete().where("tenant_id", tenantId);
   }
 
   /**
@@ -241,6 +243,6 @@ export class UserTenant extends Model {
    * @returns Number of deleted rows
    */
   static async removeUserFromAllTenants(userId: string): Promise<number> {
-    return this.query().delete().where('user_id', userId)
+    return this.query().delete().where("user_id", userId);
   }
 }

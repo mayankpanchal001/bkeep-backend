@@ -1,14 +1,14 @@
-import { RefreshToken, getTokenExpiry } from '@models/RefreshToken'
-import { getCurrentISOString } from '@utils/date'
+import { RefreshToken, getTokenExpiry } from "@models/RefreshToken";
+import { getCurrentISOString } from "@utils/date";
 
 /**
  * Interface for creating a refresh token
  */
 export interface CreateRefreshTokenData {
-  userId: string
-  token: string
-  userAgent?: string | null
-  ipAddress?: string | null
+  userId: string;
+  token: string;
+  userAgent?: string | null;
+  ipAddress?: string | null;
 }
 
 /**
@@ -17,12 +17,12 @@ export interface CreateRefreshTokenData {
  * @returns Created RefreshToken instance
  */
 export const createRefreshToken = async (
-  data: CreateRefreshTokenData
+  data: CreateRefreshTokenData,
 ): Promise<RefreshToken> => {
-  const { userId, token, userAgent, ipAddress } = data
+  const { userId, token, userAgent, ipAddress } = data;
 
   // Calculate token expiry from JWT
-  const expiresAtDate = getTokenExpiry(token)
+  const expiresAtDate = getTokenExpiry(token);
 
   // Create refresh token record
   // Convert Date to ISO string for JSON schema validation
@@ -33,10 +33,10 @@ export const createRefreshToken = async (
     expiresAt: expiresAtDate.toISOString() as unknown as Date,
     userAgent: userAgent ?? null,
     ipAddress: ipAddress ?? null,
-  })
+  });
 
-  return refreshToken
-}
+  return refreshToken;
+};
 
 /**
  * Find refresh token by token string
@@ -44,10 +44,10 @@ export const createRefreshToken = async (
  * @returns RefreshToken if found and valid, undefined otherwise
  */
 export const findRefreshTokenByToken = async (
-  token: string
+  token: string,
 ): Promise<RefreshToken | undefined> => {
-  return RefreshToken.findByToken(token)
-}
+  return RefreshToken.findByToken(token);
+};
 
 /**
  * Find all valid refresh tokens for a user
@@ -55,10 +55,10 @@ export const findRefreshTokenByToken = async (
  * @returns Array of valid RefreshToken instances
  */
 export const findRefreshTokensByUserId = async (
-  userId: string
+  userId: string,
 ): Promise<RefreshToken[]> => {
-  return RefreshToken.findByUserId(userId)
-}
+  return RefreshToken.findByUserId(userId);
+};
 
 /**
  * Revoke a refresh token (soft delete)
@@ -67,12 +67,12 @@ export const findRefreshTokensByUserId = async (
  */
 export const revokeRefreshToken = async (token: string): Promise<number> => {
   const revoked = await RefreshToken.query()
-    .modify('notDeleted')
+    .modify("notDeleted")
     .where({ token })
-    .patch({ deletedAt: getCurrentISOString() as unknown as Date })
+    .patch({ deletedAt: getCurrentISOString() as unknown as Date });
 
-  return revoked
-}
+  return revoked;
+};
 
 /**
  * Revoke all refresh tokens for a user
@@ -80,15 +80,15 @@ export const revokeRefreshToken = async (token: string): Promise<number> => {
  * @returns Number of tokens revoked
  */
 export const revokeAllRefreshTokensForUser = async (
-  userId: string
+  userId: string,
 ): Promise<number> => {
-  return RefreshToken.revokeAllForUser(userId)
-}
+  return RefreshToken.revokeAllForUser(userId);
+};
 
 /**
  * Delete expired refresh tokens (hard delete for cleanup)
  * @returns Number of tokens deleted
  */
 export const deleteExpiredRefreshTokens = async (): Promise<number> => {
-  return RefreshToken.deleteExpired()
-}
+  return RefreshToken.deleteExpired();
+};

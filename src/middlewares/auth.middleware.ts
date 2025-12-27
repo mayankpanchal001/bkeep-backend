@@ -1,19 +1,19 @@
-import type { NextFunction, Request, RequestHandler, Response } from 'express'
+import type { NextFunction, Request, RequestHandler, Response } from "express";
 
-import type { AuthorizeOptions } from '@/types/auth.type'
-import type { JwtUser } from '@/types/jwt.type'
-import { env } from '@config/env'
-import { ERROR_MESSAGES } from '@constants/errors'
-import { HTTP_STATUS } from '@constants/http'
-import { ApiError } from '@utils/ApiError'
-import { verifyToken } from '@utils/jwt'
+import type { AuthorizeOptions } from "@/types/auth.type";
+import type { JwtUser } from "@/types/jwt.type";
+import { env } from "@config/env";
+import { ERROR_MESSAGES } from "@constants/errors";
+import { HTTP_STATUS } from "@constants/http";
+import { ApiError } from "@utils/ApiError";
+import { verifyToken } from "@utils/jwt";
 
 /**
  * Token cache interface
  */
 interface CachedToken {
-  user: JwtUser
-  exp: number
+  user: JwtUser;
+  exp: number;
 }
 
 /**
@@ -21,13 +21,13 @@ interface CachedToken {
  * Key: token string
  * Value: { user, exp }
  */
-const cache = new Map<string, CachedToken>()
+const cache = new Map<string, CachedToken>();
 
 /**
  * Extended Request interface with user
  */
 export interface AuthenticatedRequest extends Request {
-  user?: JwtUser
+  user?: JwtUser;
 }
 
 /**
@@ -57,35 +57,35 @@ export interface AuthenticatedRequest extends Request {
 export const authenticate = async (
   req: AuthenticatedRequest,
   _res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
-  const authHeader = req.headers.authorization
-  const token = authHeader?.split(' ')[1]
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.split(" ")[1];
 
   if (!token) {
     throw new ApiError(
       HTTP_STATUS.UNAUTHORIZED,
-      ERROR_MESSAGES.USER_NOT_AUTHENTICATED
-    )
+      ERROR_MESSAGES.USER_NOT_AUTHENTICATED,
+    );
   }
 
   if (cache.has(token)) {
-    const now = Date.now() / 1000
-    const cached = cache.get(token)
+    const now = Date.now() / 1000;
+    const cached = cache.get(token);
 
     if (cached && cached.exp > now) {
-      req.user = cached.user
-      return next()
+      req.user = cached.user;
+      return next();
     }
 
-    cache.delete(token)
+    cache.delete(token);
   }
 
-  const decoded = await verifyToken(token, env.ACCESS_TOKEN_SECRET)
-  cache.set(token, { user: decoded.user, exp: decoded.exp ?? 0 })
-  req.user = decoded.user
-  next()
-}
+  const decoded = await verifyToken(token, env.ACCESS_TOKEN_SECRET);
+  cache.set(token, { user: decoded.user, exp: decoded.exp ?? 0 });
+  req.user = decoded.user;
+  next();
+};
 
 /**
  * Authorize middleware factory
@@ -120,29 +120,29 @@ export const authorize = (options: AuthorizeOptions = {}): RequestHandler => {
     permissions = [],
     requireAllPermissions = false,
     requireBoth = false,
-  } = options
+  } = options;
 
   return (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
-    const user = req.user
+    const user = req.user;
 
     if (!user) {
       throw new ApiError(
         HTTP_STATUS.UNAUTHORIZED,
-        ERROR_MESSAGES.USER_NOT_AUTHENTICATED
-      )
+        ERROR_MESSAGES.USER_NOT_AUTHENTICATED,
+      );
     }
 
     // If no roles or permissions specified, allow access (just authentication check)
     if (roles.length === 0 && permissions.length === 0) {
-      return next()
+      return next();
     }
 
-    let hasRole = false
-    let hasPermission = false
+    let hasRole = false;
+    let hasPermission = false;
 
     // Check roles
     if (roles.length > 0) {
-      hasRole = roles.includes(user.role)
+      hasRole = roles.includes(user.role);
     }
 
     // Check permissions
@@ -150,46 +150,46 @@ export const authorize = (options: AuthorizeOptions = {}): RequestHandler => {
       if (requireAllPermissions) {
         // User must have ALL specified permissions
         hasPermission = permissions.every((permission) =>
-          user.permissions.includes(permission)
-        )
+          user.permissions.includes(permission),
+        );
       } else {
         // User needs at least ONE permission
         hasPermission = permissions.some((permission) =>
-          user.permissions.includes(permission)
-        )
+          user.permissions.includes(permission),
+        );
       }
     }
 
     // Determine authorization result
-    let isAuthorized = false
+    let isAuthorized = false;
 
     if (requireBoth) {
       // User must have BOTH role AND permissions
       if (roles.length > 0 && permissions.length > 0) {
-        isAuthorized = hasRole && hasPermission
+        isAuthorized = hasRole && hasPermission;
       } else if (roles.length > 0) {
-        isAuthorized = hasRole
+        isAuthorized = hasRole;
       } else if (permissions.length > 0) {
-        isAuthorized = hasPermission
+        isAuthorized = hasPermission;
       }
     } else {
       // User needs EITHER role OR permissions
       if (roles.length > 0 && permissions.length > 0) {
-        isAuthorized = hasRole || hasPermission
+        isAuthorized = hasRole || hasPermission;
       } else if (roles.length > 0) {
-        isAuthorized = hasRole
+        isAuthorized = hasRole;
       } else if (permissions.length > 0) {
-        isAuthorized = hasPermission
+        isAuthorized = hasPermission;
       }
     }
 
     if (!isAuthorized) {
       throw new ApiError(
         HTTP_STATUS.FORBIDDEN,
-        ERROR_MESSAGES.UNAUTHORIZED_ACCESS
-      )
+        ERROR_MESSAGES.UNAUTHORIZED_ACCESS,
+      );
     }
 
-    next()
-  }
-}
+    next();
+  };
+};

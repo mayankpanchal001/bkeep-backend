@@ -12,6 +12,7 @@ services:
       - prod_redis_data:/data
 
   app:
+    image: bkeep-backend:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -24,8 +25,14 @@ services:
       DB_SSL: "false"
       REDIS_DB: 0
     command: sh -c "node_modules/.bin/knex migrate:latest --knexfile dist/config/knexfile.js --env production && node dist/server.js"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
 
   mail-worker:
+    image: bkeep-backend:latest
     build:
       context: .
       dockerfile: Dockerfile

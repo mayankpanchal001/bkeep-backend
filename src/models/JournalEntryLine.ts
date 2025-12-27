@@ -1,7 +1,7 @@
-import type { QueryBuilder } from 'objection'
+import type { QueryBuilder } from "objection";
 
-import { BaseModel } from '@models/BaseModel'
-import { ChartOfAccount } from '@models/ChartOfAccount'
+import { BaseModel } from "@models/BaseModel";
+import { ChartOfAccount } from "@models/ChartOfAccount";
 
 /**
  * JournalEntryLine Model
@@ -10,55 +10,55 @@ import { ChartOfAccount } from '@models/ChartOfAccount'
  */
 export class JournalEntryLine extends BaseModel {
   static override get tableName(): string {
-    return 'journal_entry_lines'
+    return "journal_entry_lines";
   }
 
   // Properties
-  declare id: string
-  declare tenantId: string
-  declare createdBy: string
-  declare journalEntryId: string
-  declare accountId: string
-  declare lineNumber: number
-  declare debit: number
-  declare credit: number
-  declare description?: string | null
-  declare memo?: string | null
-  declare contactId?: string | null
-  declare createdAt: Date
-  declare updatedAt: Date
+  declare id: string;
+  declare tenantId: string;
+  declare createdBy: string;
+  declare journalEntryId: string;
+  declare accountId: string;
+  declare lineNumber: number;
+  declare debit: number;
+  declare credit: number;
+  declare description?: string | null;
+  declare memo?: string | null;
+  declare contactId?: string | null;
+  declare createdAt: Date;
+  declare updatedAt: Date;
 
   // Relations
-  account?: ChartOfAccount
+  account?: ChartOfAccount;
 
   // JSON Schema
   static override get jsonSchema() {
     return {
-      type: 'object',
+      type: "object",
       required: [
-        'tenantId',
-        'createdBy',
-        'journalEntryId',
-        'accountId',
-        'lineNumber',
+        "tenantId",
+        "createdBy",
+        "journalEntryId",
+        "accountId",
+        "lineNumber",
       ],
       properties: {
-        id: { type: 'string', format: 'uuid' },
-        tenantId: { type: 'string', format: 'uuid' },
-        createdBy: { type: 'string', format: 'uuid' },
-        journalEntryId: { type: 'string', format: 'uuid' },
-        accountId: { type: 'string', format: 'uuid' },
-        lineNumber: { type: 'integer', minimum: 1 },
-        debit: { type: 'number', minimum: 0, default: 0 },
-        credit: { type: 'number', minimum: 0, default: 0 },
-        description: { type: ['string', 'null'] },
-        memo: { type: ['string', 'null'] },
-        contactId: { type: ['string', 'null'], format: 'uuid' },
-        createdAt: { type: 'string', format: 'date-time' },
-        updatedAt: { type: 'string', format: 'date-time' },
-        deletedAt: { type: ['string', 'null'], format: 'date-time' },
+        id: { type: "string", format: "uuid" },
+        tenantId: { type: "string", format: "uuid" },
+        createdBy: { type: "string", format: "uuid" },
+        journalEntryId: { type: "string", format: "uuid" },
+        accountId: { type: "string", format: "uuid" },
+        lineNumber: { type: "integer", minimum: 1 },
+        debit: { type: "number", minimum: 0, default: 0 },
+        credit: { type: "number", minimum: 0, default: 0 },
+        description: { type: ["string", "null"] },
+        memo: { type: ["string", "null"] },
+        contactId: { type: ["string", "null"], format: "uuid" },
+        createdAt: { type: "string", format: "date-time" },
+        updatedAt: { type: "string", format: "date-time" },
+        deletedAt: { type: ["string", "null"], format: "date-time" },
       },
-    }
+    };
   }
 
   // Relation mappings
@@ -68,11 +68,11 @@ export class JournalEntryLine extends BaseModel {
         relation: BaseModel.BelongsToOneRelation,
         modelClass: ChartOfAccount,
         join: {
-          from: 'journal_entry_lines.account_id',
-          to: 'chart_of_accounts.id',
+          from: "journal_entry_lines.account_id",
+          to: "chart_of_accounts.id",
         },
       },
-    }
+    };
   }
 
   // Query modifiers
@@ -80,24 +80,24 @@ export class JournalEntryLine extends BaseModel {
     return {
       ...super.modifiers,
       byTenant(query: QueryBuilder<JournalEntryLine>, tenantId: string) {
-        query.where('tenant_id', tenantId)
+        query.where("tenant_id", tenantId);
       },
       byJournalEntry(
         query: QueryBuilder<JournalEntryLine>,
-        journalEntryId: string
+        journalEntryId: string,
       ) {
-        query.where('journal_entry_id', journalEntryId)
+        query.where("journal_entry_id", journalEntryId);
       },
       byAccount(query: QueryBuilder<JournalEntryLine>, accountId: string) {
-        query.where('account_id', accountId)
+        query.where("account_id", accountId);
       },
       debits(query: QueryBuilder<JournalEntryLine>) {
-        query.where('debit', '>', 0).where('credit', 0)
+        query.where("debit", ">", 0).where("credit", 0);
       },
       credits(query: QueryBuilder<JournalEntryLine>) {
-        query.where('credit', '>', 0).where('debit', 0)
+        query.where("credit", ">", 0).where("debit", 0);
       },
-    }
+    };
   }
 
   // Helper methods
@@ -105,31 +105,31 @@ export class JournalEntryLine extends BaseModel {
    * Check if this line is a debit
    */
   isDebit(): boolean {
-    return this.debit > 0 && this.credit === 0
+    return this.debit > 0 && this.credit === 0;
   }
 
   /**
    * Check if this line is a credit
    */
   isCredit(): boolean {
-    return this.credit > 0 && this.debit === 0
+    return this.credit > 0 && this.debit === 0;
   }
 
   /**
    * Get the amount (debit or credit)
    */
   getAmount(): number {
-    return this.debit > 0 ? this.debit : this.credit
+    return this.debit > 0 ? this.debit : this.credit;
   }
 
   /**
    * Validate that line has either debit or credit (not both, not neither)
    */
   isValid(): boolean {
-    const hasDebit = this.debit > 0
-    const hasCredit = this.credit > 0
+    const hasDebit = this.debit > 0;
+    const hasCredit = this.credit > 0;
 
     // Must have exactly one (debit XOR credit)
-    return hasDebit !== hasCredit
+    return hasDebit !== hasCredit;
   }
 }

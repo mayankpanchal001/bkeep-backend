@@ -3,12 +3,12 @@
  * Used for Google Authenticator, Microsoft Authenticator, etc.
  */
 
-import { randomBytes } from 'node:crypto'
+import { randomBytes } from "node:crypto";
 
-import { authenticator } from 'otplib'
-import QRCode from 'qrcode'
+import { authenticator } from "otplib";
+import QRCode from "qrcode";
 
-import { SECURITY_RULES } from '@constants/security'
+import { SECURITY_RULES } from "@constants/security";
 
 /**
  * Configure TOTP options
@@ -18,16 +18,16 @@ authenticator.options = {
   window: SECURITY_RULES.TOTP_WINDOW,
   digits: SECURITY_RULES.TOTP_DIGITS,
   // @ts-expect-error - otplib types are inconsistent with runtime values
-  algorithm: 'sha1',
-}
+  algorithm: "sha1",
+};
 
 /**
  * Generate a new TOTP secret
  * @returns Base32 encoded secret string
  */
 export const generateTotpSecret = (): string => {
-  return authenticator.generateSecret()
-}
+  return authenticator.generateSecret();
+};
 
 /**
  * Generate TOTP token for testing (should only be used in development)
@@ -35,8 +35,8 @@ export const generateTotpSecret = (): string => {
  * @returns 6-digit TOTP code
  */
 export const generateTotpToken = (secret: string): string => {
-  return authenticator.generate(secret)
-}
+  return authenticator.generate(secret);
+};
 
 /**
  * Verify TOTP token
@@ -46,11 +46,11 @@ export const generateTotpToken = (secret: string): string => {
  */
 export const verifyTotpToken = (token: string, secret: string): boolean => {
   try {
-    return authenticator.verify({ token, secret })
+    return authenticator.verify({ token, secret });
   } catch {
-    return false
+    return false;
   }
-}
+};
 
 /**
  * Generate OTPAuth URL for QR code
@@ -62,10 +62,10 @@ export const verifyTotpToken = (token: string, secret: string): boolean => {
 export const generateTotpUrl = (
   email: string,
   secret: string,
-  issuer: string = SECURITY_RULES.TOTP_ISSUER
+  issuer: string = SECURITY_RULES.TOTP_ISSUER,
 ): string => {
-  return authenticator.keyuri(email, issuer, secret)
-}
+  return authenticator.keyuri(email, issuer, secret);
+};
 
 /**
  * Generate QR code data URL for TOTP setup
@@ -77,12 +77,12 @@ export const generateTotpUrl = (
 export const generateTotpQrCode = async (
   email: string,
   secret: string,
-  issuer: string = SECURITY_RULES.TOTP_ISSUER
+  issuer: string = SECURITY_RULES.TOTP_ISSUER,
 ): Promise<string> => {
-  const otpauthUrl = generateTotpUrl(email, secret, issuer)
+  const otpauthUrl = generateTotpUrl(email, secret, issuer);
   // Generate QR code as data URL (base64 encoded PNG)
-  return QRCode.toDataURL(otpauthUrl)
-}
+  return QRCode.toDataURL(otpauthUrl);
+};
 
 /**
  * Generate backup codes for account recovery
@@ -92,21 +92,21 @@ export const generateTotpQrCode = async (
  */
 export const generateBackupCodes = (
   count: number = SECURITY_RULES.BACKUP_CODES_COUNT,
-  length: number = SECURITY_RULES.BACKUP_CODE_LENGTH
+  length: number = SECURITY_RULES.BACKUP_CODE_LENGTH,
 ): string[] => {
-  const codes: string[] = []
+  const codes: string[] = [];
 
   for (let i = 0; i < count; i++) {
     // Generate random bytes and convert to alphanumeric string
     const code = randomBytes(length)
-      .toString('hex')
+      .toString("hex")
       .slice(0, length)
-      .toUpperCase()
-    codes.push(code)
+      .toUpperCase();
+    codes.push(code);
   }
 
-  return codes
-}
+  return codes;
+};
 
 /**
  * Hash backup code for storage
@@ -116,8 +116,8 @@ export const generateBackupCodes = (
  * @returns JSON string of codes
  */
 export const encodeBackupCodes = (codes: string[]): string => {
-  return JSON.stringify(codes)
-}
+  return JSON.stringify(codes);
+};
 
 /**
  * Decode stored backup codes
@@ -126,11 +126,11 @@ export const encodeBackupCodes = (codes: string[]): string => {
  */
 export const decodeBackupCodes = (encodedCodes: string): string[] => {
   try {
-    return JSON.parse(encodedCodes)
+    return JSON.parse(encodedCodes);
   } catch {
-    return []
+    return [];
   }
-}
+};
 
 /**
  * Verify backup code and remove it from the list
@@ -140,23 +140,23 @@ export const decodeBackupCodes = (encodedCodes: string): string[] => {
  */
 export const verifyBackupCode = (
   code: string,
-  encodedCodes: string
+  encodedCodes: string,
 ): { isValid: boolean; updatedCodes: string } => {
-  const codes = decodeBackupCodes(encodedCodes)
-  const normalizedCode = code.toUpperCase().replaceAll(/\s/g, '')
+  const codes = decodeBackupCodes(encodedCodes);
+  const normalizedCode = code.toUpperCase().replaceAll(/\s/g, "");
 
-  const codeIndex = codes.findIndex((c) => c === normalizedCode)
+  const codeIndex = codes.findIndex((c) => c === normalizedCode);
 
   if (codeIndex === -1) {
-    return { isValid: false, updatedCodes: encodedCodes }
+    return { isValid: false, updatedCodes: encodedCodes };
   }
 
   // Remove the used backup code
-  codes.splice(codeIndex, 1)
-  const updatedCodes = encodeBackupCodes(codes)
+  codes.splice(codeIndex, 1);
+  const updatedCodes = encodeBackupCodes(codes);
 
-  return { isValid: true, updatedCodes }
-}
+  return { isValid: true, updatedCodes };
+};
 
 /**
  * Check if user has remaining backup codes
@@ -164,6 +164,6 @@ export const verifyBackupCode = (
  * @returns Number of remaining backup codes
  */
 export const getRemainingBackupCodesCount = (encodedCodes: string): number => {
-  const codes = decodeBackupCodes(encodedCodes)
-  return codes.length
-}
+  const codes = decodeBackupCodes(encodedCodes);
+  return codes.length;
+};

@@ -7,9 +7,9 @@
  * - Rate limiter for password reset endpoints
  * - Rate limiter for OAuth endpoints
  */
-import rateLimit from 'express-rate-limit'
+import rateLimit from "express-rate-limit";
 
-import { ERROR_MESSAGES, RATE_LIMITS } from '@constants/index'
+import { ERROR_MESSAGES, RATE_LIMITS } from "@constants/index";
 
 /**
  * General rate limiter for all routes
@@ -23,7 +23,7 @@ export const generalRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-})
+});
 
 /**
  * Strict rate limiter for authentication endpoints
@@ -38,7 +38,7 @@ export const authRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true, // Don't count successful requests
-})
+});
 
 /**
  * Rate limiter for password reset endpoints
@@ -52,4 +52,4 @@ export const passwordResetRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-})
+});

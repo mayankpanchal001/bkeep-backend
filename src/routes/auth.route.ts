@@ -1,4 +1,4 @@
-import { Router, type Router as RouterType } from 'express'
+import { Router, type Router as RouterType } from "express";
 
 import {
   changePassword,
@@ -13,21 +13,21 @@ import {
   resetPassword,
   verifyMfa,
   verifyTotp,
-} from '@controllers/auth.controller'
+} from "@controllers/auth.controller";
 import {
   generateAuthenticationOptions,
   verifyAuthentication,
-} from '@controllers/passkey.controller'
+} from "@controllers/passkey.controller";
 import {
   acceptInvitation,
   verifyInvitation,
-} from '@controllers/userInvitation.controller'
-import { authenticate } from '@middlewares/auth.middleware'
+} from "@controllers/userInvitation.controller";
+import { authenticate } from "@middlewares/auth.middleware";
 import {
   authRateLimiter,
   passwordResetRateLimiter,
-} from '@middlewares/rateLimit.middleware'
-import { validate } from '@middlewares/validate.middleware'
+} from "@middlewares/rateLimit.middleware";
+import { validate } from "@middlewares/validate.middleware";
 import {
   changePasswordSchema,
   forgotPasswordSchema,
@@ -36,17 +36,17 @@ import {
   refreshTokenSchema,
   resetPasswordSchema,
   totpLoginSchema,
-} from '@schema/auth.schema'
+} from "@schema/auth.schema";
 import {
   passkeyAuthenticationOptionsSchema,
   passkeyAuthenticationVerifySchema,
-} from '@schema/passkey.schema'
+} from "@schema/passkey.schema";
 import {
   acceptInvitationSchema,
   verifyInvitationSchema,
-} from '@schema/user.schema'
+} from "@schema/user.schema";
 
-const router: RouterType = Router()
+const router: RouterType = Router();
 
 /**
  * @swagger
@@ -87,7 +87,7 @@ const router: RouterType = Router()
  *               success: false
  *               message: 'Invalid email or password'
  */
-router.post('/login', authRateLimiter, validate(loginSchema), login)
+router.post("/login", authRateLimiter, validate(loginSchema), login);
 
 /**
  * @swagger
@@ -130,11 +130,11 @@ router.post('/login', authRateLimiter, validate(loginSchema), login)
  *                       description: WebAuthn PublicKeyCredentialRequestOptions
  */
 router.post(
-  '/passkey/login/options',
+  "/passkey/login/options",
   authRateLimiter,
   validate(passkeyAuthenticationOptionsSchema),
-  generateAuthenticationOptions
-)
+  generateAuthenticationOptions,
+);
 
 /**
  * @swagger
@@ -176,11 +176,11 @@ router.post(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  '/passkey/login/verify',
+  "/passkey/login/verify",
   authRateLimiter,
   validate(passkeyAuthenticationVerifySchema),
-  verifyAuthentication
-)
+  verifyAuthentication,
+);
 
 /**
  * @swagger
@@ -230,7 +230,7 @@ router.post(
  *               success: false
  *               message: 'Invalid or expired token'
  */
-router.post('/refresh-token', validate(refreshTokenSchema), refreshToken)
+router.post("/refresh-token", validate(refreshTokenSchema), refreshToken);
 
 /**
  * @swagger
@@ -265,7 +265,7 @@ router.post('/refresh-token', validate(refreshTokenSchema), refreshToken)
  *               success: false
  *               message: 'User not authenticated'
  */
-router.post('/logout', authenticate, logout)
+router.post("/logout", authenticate, logout);
 
 /**
  * @swagger
@@ -309,11 +309,11 @@ router.post('/logout', authenticate, logout)
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  '/forgot-password',
+  "/forgot-password",
   passwordResetRateLimiter,
   validate(forgotPasswordSchema),
-  forgotPassword
-)
+  forgotPassword,
+);
 
 /**
  * @swagger
@@ -373,11 +373,11 @@ router.post(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  '/reset-password',
+  "/reset-password",
   passwordResetRateLimiter,
   validate(resetPasswordSchema),
-  resetPassword
-)
+  resetPassword,
+);
 
 /**
  * @swagger
@@ -452,11 +452,11 @@ router.post(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put(
-  '/change-password',
+  "/change-password",
   authenticate,
   validate(changePasswordSchema),
-  changePassword
-)
+  changePassword,
+);
 
 /**
  * @swagger
@@ -593,17 +593,17 @@ router.put(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  '/verify-invitation',
-  validate(verifyInvitationSchema, 'query'),
-  verifyInvitation
-)
+  "/verify-invitation",
+  validate(verifyInvitationSchema, "query"),
+  verifyInvitation,
+);
 
 router.post(
-  '/accept-invitation',
+  "/accept-invitation",
   passwordResetRateLimiter,
   validate(acceptInvitationSchema),
-  acceptInvitation
-)
+  acceptInvitation,
+);
 
 /**
  * @swagger
@@ -683,7 +683,7 @@ router.post(
  *               success: false
  *               message: 'User not authenticated'
  */
-router.get('/me', authenticate, getProfile)
+router.get("/me", authenticate, getProfile);
 
 /**
  * @swagger
@@ -721,7 +721,7 @@ router.get('/me', authenticate, getProfile)
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/mfa/enable', authenticate, enableMfa)
+router.post("/mfa/enable", authenticate, enableMfa);
 
 /**
  * @swagger
@@ -759,7 +759,7 @@ router.post('/mfa/enable', authenticate, enableMfa)
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/mfa/disable', authenticate, disableMfa)
+router.post("/mfa/disable", authenticate, disableMfa);
 
 /**
  * @swagger
@@ -798,7 +798,7 @@ router.post('/mfa/disable', authenticate, disableMfa)
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/mfa/status', authenticate, getMfaStatus)
+router.get("/mfa/status", authenticate, getMfaStatus);
 
 /**
  * @swagger
@@ -853,11 +853,11 @@ router.get('/mfa/status', authenticate, getMfaStatus)
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  '/mfa/verify',
+  "/mfa/verify",
   authRateLimiter,
   validate(mfaVerifySchema),
-  verifyMfa
-)
+  verifyMfa,
+);
 
 /**
  * @swagger
@@ -903,10 +903,10 @@ router.post(
  *         description: User not found
  */
 router.post(
-  '/totp/login',
+  "/totp/login",
   authRateLimiter,
   validate(totpLoginSchema),
-  verifyTotp
-)
+  verifyTotp,
+);
 
-export default router
+export default router;

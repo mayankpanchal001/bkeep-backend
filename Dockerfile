@@ -47,6 +47,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 RUN corepack enable && corepack prepare pnpm@10.20.0 --activate
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 COPY package.json pnpm-lock.yaml* ./
 # Skip lifecycle scripts (e.g., husky prepare) during production install
 ENV PNPM_SKIP_LIFECYCLE_SCRIPTS=true HUSKY=0
@@ -56,8 +59,18 @@ RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 COPY --from=builder /app/dist ./dist
 COPY public ./public
 
+# Set ownership to non-root user 'node'
+RUN chown -R node:node /app
+
+# Switch to non-root user
+USER node
+
 # Expose port
 EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
 
 # Start server (env vars should be provided by orchestrator like Docker Compose)
 # dotenv is optional fallback for standalone runs

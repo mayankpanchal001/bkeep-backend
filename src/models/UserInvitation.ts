@@ -1,6 +1,6 @@
-import { BaseModel } from '@models/BaseModel'
-import { Tenant } from '@models/Tenant'
-import { User } from '@models/User'
+import { BaseModel } from "@models/BaseModel";
+import { Tenant } from "@models/Tenant";
+import { User } from "@models/User";
 
 /**
  * UserInvitation Model
@@ -9,51 +9,51 @@ import { User } from '@models/User'
 export class UserInvitation extends BaseModel {
   // Table name
   static override get tableName(): string {
-    return 'user_invitations'
+    return "user_invitations";
   }
 
   // Model properties (inherits id, createdAt, updatedAt, deletedAt from BaseModel)
-  declare id: string
-  declare createdAt: Date
-  declare updatedAt: Date
-  declare deletedAt?: Date | null
+  declare id: string;
+  declare createdAt: Date;
+  declare updatedAt: Date;
+  declare deletedAt?: Date | null;
 
-  userId!: string
-  tenantId!: string
-  invitedBy!: string
-  roleId!: string
-  token!: string
+  userId!: string;
+  tenantId!: string;
+  invitedBy!: string;
+  roleId!: string;
+  token!: string;
 
   // Relations
   user?: {
-    id: string
-    name: string
-    email: string
-  }
+    id: string;
+    name: string;
+    email: string;
+  };
   tenant?: {
-    id: string
-    name: string
-    schemaName: string
-    isActive: boolean
-  }
+    id: string;
+    name: string;
+    schemaName: string;
+    isActive: boolean;
+  };
 
   // JSON Schema for validation
   static override get jsonSchema() {
     return {
-      type: 'object',
-      required: ['userId', 'tenantId', 'invitedBy', 'roleId', 'token'],
+      type: "object",
+      required: ["userId", "tenantId", "invitedBy", "roleId", "token"],
       properties: {
-        id: { type: 'string', format: 'uuid' },
-        userId: { type: 'string', format: 'uuid' },
-        tenantId: { type: 'string', format: 'uuid' },
-        invitedBy: { type: 'string', format: 'uuid' },
-        roleId: { type: 'string', format: 'uuid' },
-        token: { type: 'string', minLength: 1, maxLength: 255 },
-        createdAt: { type: 'string', format: 'date-time' },
-        updatedAt: { type: 'string', format: 'date-time' },
-        deletedAt: { type: ['string', 'null'], format: 'date-time' },
+        id: { type: "string", format: "uuid" },
+        userId: { type: "string", format: "uuid" },
+        tenantId: { type: "string", format: "uuid" },
+        invitedBy: { type: "string", format: "uuid" },
+        roleId: { type: "string", format: "uuid" },
+        token: { type: "string", minLength: 1, maxLength: 255 },
+        createdAt: { type: "string", format: "date-time" },
+        updatedAt: { type: "string", format: "date-time" },
+        deletedAt: { type: ["string", "null"], format: "date-time" },
       },
-    }
+    };
   }
 
   /**
@@ -65,19 +65,19 @@ export class UserInvitation extends BaseModel {
         relation: BaseModel.BelongsToOneRelation,
         modelClass: User,
         join: {
-          from: 'user_invitations.user_id',
-          to: 'users.id',
+          from: "user_invitations.user_id",
+          to: "users.id",
         },
       },
       tenant: {
         relation: BaseModel.BelongsToOneRelation,
         modelClass: Tenant,
         join: {
-          from: 'user_invitations.tenant_id',
-          to: 'tenants.id',
+          from: "user_invitations.tenant_id",
+          to: "tenants.id",
         },
       },
-    }
+    };
   }
 
   /**
@@ -87,7 +87,7 @@ export class UserInvitation extends BaseModel {
   static override get modifiers() {
     return {
       ...super.modifiers,
-    }
+    };
   }
 
   /**
@@ -95,9 +95,9 @@ export class UserInvitation extends BaseModel {
    */
   static async findByToken(token: string): Promise<UserInvitation | undefined> {
     return this.query()
-      .modify('notDeleted')
+      .modify("notDeleted")
       .findOne({ token })
-      .withGraphFetched('[user, tenant]')
+      .withGraphFetched("[user, tenant]");
   }
 
   /**
@@ -105,12 +105,12 @@ export class UserInvitation extends BaseModel {
    */
   static async findByUserAndTenant(
     userId: string,
-    tenantId: string
+    tenantId: string,
   ): Promise<UserInvitation | undefined> {
     return this.query()
-      .modify('notDeleted')
+      .modify("notDeleted")
       .findOne({ user_id: userId, tenant_id: tenantId })
-      .withGraphFetched('[user, tenant]')
+      .withGraphFetched("[user, tenant]");
   }
 
   /**
@@ -118,9 +118,9 @@ export class UserInvitation extends BaseModel {
    */
   static async findByUser(userId: string): Promise<UserInvitation[]> {
     return this.query()
-      .modify('notDeleted')
+      .modify("notDeleted")
       .where({ user_id: userId })
-      .withGraphFetched('[user, tenant]')
+      .withGraphFetched("[user, tenant]");
   }
 
   /**
@@ -128,8 +128,8 @@ export class UserInvitation extends BaseModel {
    */
   static async findByTenant(tenantId: string): Promise<UserInvitation[]> {
     return this.query()
-      .modify('notDeleted')
+      .modify("notDeleted")
       .where({ tenant_id: tenantId })
-      .withGraphFetched('[user, tenant]')
+      .withGraphFetched("[user, tenant]");
   }
 }

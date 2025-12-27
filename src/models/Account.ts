@@ -1,7 +1,7 @@
-import type { Knex } from 'knex'
-import type { QueryBuilder } from 'objection'
+import type { Knex } from "knex";
+import type { QueryBuilder } from "objection";
 
-import { BaseModel } from '@models/BaseModel'
+import { BaseModel } from "@models/BaseModel";
 
 /**
  * Account Model
@@ -11,54 +11,54 @@ import { BaseModel } from '@models/BaseModel'
 export class Account extends BaseModel {
   // Table name
   static override get tableName(): string {
-    return 'accounts'
+    return "accounts";
   }
 
   // Model properties (inherits id, createdAt, updatedAt, deletedAt from BaseModel)
-  declare id: string
-  declare createdAt: Date
-  declare updatedAt: Date
-  declare deletedAt?: Date | null
+  declare id: string;
+  declare createdAt: Date;
+  declare updatedAt: Date;
+  declare deletedAt?: Date | null;
 
-  tenantId!: string
-  createdBy!: string
-  name!: string
-  number?: string | null
-  type!: string
-  currencyCode!: string
-  openingBalance!: number
-  currentBalance!: number
-  bankName?: string | null
-  isActive!: boolean
-  lastReconciledAt?: Date | null
-  reconciledBalance?: number | null
-  lastReconciledBy?: string | null
+  tenantId!: string;
+  createdBy!: string;
+  name!: string;
+  number?: string | null;
+  type!: string;
+  currencyCode!: string;
+  openingBalance!: number;
+  currentBalance!: number;
+  bankName?: string | null;
+  isActive!: boolean;
+  lastReconciledAt?: Date | null;
+  reconciledBalance?: number | null;
+  lastReconciledBy?: string | null;
 
   // JSON Schema for validation
   static override get jsonSchema() {
     return {
-      type: 'object',
-      required: ['tenantId', 'createdBy', 'name', 'currencyCode'],
+      type: "object",
+      required: ["tenantId", "createdBy", "name", "currencyCode"],
       properties: {
-        id: { type: 'string', format: 'uuid' },
-        tenantId: { type: 'string', format: 'uuid' },
-        createdBy: { type: 'string', format: 'uuid' },
-        name: { type: 'string', minLength: 1, maxLength: 255 },
-        number: { type: ['string', 'null'], maxLength: 255 },
-        type: { type: 'string', minLength: 1, maxLength: 255 },
-        currencyCode: { type: 'string', minLength: 3, maxLength: 3 },
-        openingBalance: { type: 'number', default: 0 },
-        currentBalance: { type: 'number', default: 0 },
-        bankName: { type: ['string', 'null'], maxLength: 255 },
-        isActive: { type: 'boolean', default: true },
-        lastReconciledAt: { type: ['string', 'null'], format: 'date-time' },
-        reconciledBalance: { type: ['number', 'null'] },
-        lastReconciledBy: { type: ['string', 'null'], format: 'uuid' },
-        createdAt: { type: 'string', format: 'date-time' },
-        updatedAt: { type: 'string', format: 'date-time' },
-        deletedAt: { type: ['string', 'null'], format: 'date-time' },
+        id: { type: "string", format: "uuid" },
+        tenantId: { type: "string", format: "uuid" },
+        createdBy: { type: "string", format: "uuid" },
+        name: { type: "string", minLength: 1, maxLength: 255 },
+        number: { type: ["string", "null"], maxLength: 255 },
+        type: { type: "string", minLength: 1, maxLength: 255 },
+        currencyCode: { type: "string", minLength: 3, maxLength: 3 },
+        openingBalance: { type: "number", default: 0 },
+        currentBalance: { type: "number", default: 0 },
+        bankName: { type: ["string", "null"], maxLength: 255 },
+        isActive: { type: "boolean", default: true },
+        lastReconciledAt: { type: ["string", "null"], format: "date-time" },
+        reconciledBalance: { type: ["number", "null"] },
+        lastReconciledBy: { type: ["string", "null"], format: "uuid" },
+        createdAt: { type: "string", format: "date-time" },
+        updatedAt: { type: "string", format: "date-time" },
+        deletedAt: { type: ["string", "null"], format: "date-time" },
       },
-    }
+    };
   }
 
   /**
@@ -70,25 +70,25 @@ export class Account extends BaseModel {
       ...super.modifiers,
       // Only active accounts (is_active = true)
       active(query: QueryBuilder<Account>) {
-        query.where('is_active', true)
+        query.where("is_active", true);
       },
       // Only inactive accounts (is_active = false)
       inactive(query: QueryBuilder<Account>) {
-        query.where('is_active', false)
+        query.where("is_active", false);
       },
       // Search by name or number
       search(query: QueryBuilder<Account>, searchTerm: string) {
         query.where((builder: QueryBuilder<Account>) => {
           builder
-            .where('name', 'ilike', `%${searchTerm}%`)
-            .orWhere('number', 'ilike', `%${searchTerm}%`)
-        })
+            .where("name", "ilike", `%${searchTerm}%`)
+            .orWhere("number", "ilike", `%${searchTerm}%`);
+        });
       },
       // Filter by tenant
       byTenant(query: QueryBuilder<Account>, tenantId: string) {
-        query.where('tenant_id', tenantId)
+        query.where("tenant_id", tenantId);
       },
-    }
+    };
   }
 
   /**
@@ -97,7 +97,7 @@ export class Account extends BaseModel {
    * @returns Query builder for Account model in tenant schema
    */
   static queryForTenant(knex: Knex): QueryBuilder<Account> {
-    return this.query(knex)
+    return this.query(knex);
   }
 
   /**
@@ -105,16 +105,16 @@ export class Account extends BaseModel {
    */
   static async findByTenant(knex: Knex, tenantId: string): Promise<Account[]> {
     return this.queryForTenant(knex)
-      .modify('notDeleted')
-      .modify('active')
-      .modify('byTenant', tenantId)
+      .modify("notDeleted")
+      .modify("active")
+      .modify("byTenant", tenantId);
   }
 
   /**
    * Scope: Find active accounts (non-deleted)
    */
   static async findActive(knex: Knex): Promise<Account[]> {
-    return this.queryForTenant(knex).modify('notDeleted').modify('active')
+    return this.queryForTenant(knex).modify("notDeleted").modify("active");
   }
 
   /**
@@ -123,13 +123,13 @@ export class Account extends BaseModel {
   static async search(
     knex: Knex,
     term: string,
-    tenantId: string
+    tenantId: string,
   ): Promise<Account[]> {
     return this.queryForTenant(knex)
-      .modify('notDeleted')
-      .modify('active')
-      .modify('byTenant', tenantId)
-      .modify('search', term)
+      .modify("notDeleted")
+      .modify("active")
+      .modify("byTenant", tenantId)
+      .modify("search", term);
   }
 
   /**
@@ -141,6 +141,6 @@ export class Account extends BaseModel {
   updateBalance(amount: number, isIncrease: boolean): number {
     return isIncrease
       ? this.currentBalance + amount
-      : this.currentBalance - amount
+      : this.currentBalance - amount;
   }
 }

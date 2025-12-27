@@ -1,4 +1,4 @@
-import { Router, type Router as RouterType } from 'express'
+import { Router, type Router as RouterType } from "express";
 
 import {
   createChartOfAccountController,
@@ -12,21 +12,21 @@ import {
   getImportFields,
   restoreChartOfAccountById,
   updateChartOfAccountController,
-} from '@controllers/chartOfAccount.controller'
-import { authenticate } from '@middlewares/auth.middleware'
+} from "@controllers/chartOfAccount.controller";
+import { authenticate } from "@middlewares/auth.middleware";
 import {
   requireTenantContext,
   setTenantContext,
-} from '@middlewares/tenantContext.middleware'
-import { validate } from '@middlewares/validate.middleware'
+} from "@middlewares/tenantContext.middleware";
+import { validate } from "@middlewares/validate.middleware";
 import {
   chartOfAccountIdSchema,
   chartOfAccountListSchema,
   createChartOfAccountSchema,
   updateChartOfAccountSchema,
-} from '@schema/chartOfAccount.schema'
+} from "@schema/chartOfAccount.schema";
 
-const router: RouterType = Router()
+const router: RouterType = Router();
 
 /**
  * @swagger
@@ -104,13 +104,13 @@ const router: RouterType = Router()
  *         description: Chart of account not found
  */
 router.get(
-  '/',
+  "/",
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(chartOfAccountListSchema, 'query'),
-  getAllChartOfAccounts
-)
+  validate(chartOfAccountListSchema, "query"),
+  getAllChartOfAccounts,
+);
 
 /**
  * @swagger
@@ -128,12 +128,12 @@ router.get(
  *         description: User not authenticated
  */
 router.get(
-  '/hierarchy',
+  "/hierarchy",
   authenticate,
   setTenantContext,
   requireTenantContext,
-  getChartOfAccountHierarchy
-)
+  getChartOfAccountHierarchy,
+);
 
 /**
  * @swagger
@@ -161,13 +161,13 @@ router.get(
  *         description: Chart of account not found
  */
 router.get(
-  '/:id',
+  "/:id",
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(chartOfAccountIdSchema, 'params'),
-  getChartOfAccountById
-)
+  validate(chartOfAccountIdSchema, "params"),
+  getChartOfAccountById,
+);
 
 /**
  * @swagger
@@ -239,13 +239,13 @@ router.get(
  *         description: Account number already exists
  */
 router.post(
-  '/',
+  "/",
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(createChartOfAccountSchema, 'body'),
-  createChartOfAccountController
-)
+  validate(createChartOfAccountSchema, "body"),
+  createChartOfAccountController,
+);
 
 /**
  * @swagger
@@ -325,14 +325,14 @@ router.post(
  *         description: Account number already exists
  */
 router.put(
-  '/:id',
+  "/:id",
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(chartOfAccountIdSchema, 'params'),
-  validate(updateChartOfAccountSchema, 'body'),
-  updateChartOfAccountController
-)
+  validate(chartOfAccountIdSchema, "params"),
+  validate(updateChartOfAccountSchema, "body"),
+  updateChartOfAccountController,
+);
 
 /**
  * @swagger
@@ -364,13 +364,13 @@ router.put(
  *         description: Account has children and cannot be deleted
  */
 router.delete(
-  '/:id',
+  "/:id",
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(chartOfAccountIdSchema, 'params'),
-  deleteChartOfAccountById
-)
+  validate(chartOfAccountIdSchema, "params"),
+  deleteChartOfAccountById,
+);
 
 /**
  * @swagger
@@ -431,13 +431,13 @@ router.delete(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  '/:id/enable',
+  "/:id/enable",
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(chartOfAccountIdSchema, 'params'),
-  enableChartOfAccount
-)
+  validate(chartOfAccountIdSchema, "params"),
+  enableChartOfAccount,
+);
 
 /**
  * @swagger
@@ -498,13 +498,13 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  '/:id/disable',
+  "/:id/disable",
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(chartOfAccountIdSchema, 'params'),
-  disableChartOfAccount
-)
+  validate(chartOfAccountIdSchema, "params"),
+  disableChartOfAccount,
+);
 
 /**
  * @swagger
@@ -532,13 +532,13 @@ router.patch(
  *         description: Chart of account not found or not deleted
  */
 router.patch(
-  '/:id/restore',
+  "/:id/restore",
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(chartOfAccountIdSchema, 'params'),
-  restoreChartOfAccountById
-)
+  validate(chartOfAccountIdSchema, "params"),
+  restoreChartOfAccountById,
+);
 
 /**
  * @swagger
@@ -568,12 +568,12 @@ router.patch(
  *         description: Tenant context required
  */
 router.get(
-  '/import/sample',
+  "/import/sample",
   authenticate,
   setTenantContext,
   requireTenantContext,
-  downloadChartOfAccountSample
-)
+  downloadChartOfAccountSample,
+);
 
 /**
  * @swagger
@@ -605,11 +605,11 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  '/import/fields',
+  "/import/fields",
   authenticate,
   setTenantContext,
   requireTenantContext,
-  getImportFields
-)
+  getImportFields,
+);
 
-export default router
+export default router;

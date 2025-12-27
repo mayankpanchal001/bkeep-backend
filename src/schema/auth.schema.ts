@@ -3,9 +3,9 @@
  * Zod validation schema for user login requests
  */
 
-import { z } from 'zod'
+import { z } from "zod";
 
-import { VALIDATION_RULES } from '@constants/validation'
+import { VALIDATION_RULES } from "@constants/validation";
 
 /**
  * Login request body schema
@@ -14,7 +14,7 @@ import { VALIDATION_RULES } from '@constants/validation'
 export const loginSchema = z.object({
   email: z
     .string()
-    .email({ message: 'Invalid email format' })
+    .email({ message: "Invalid email format" })
     .max(VALIDATION_RULES.EMAIL_MAX_LENGTH, {
       message: `Email must not exceed ${VALIDATION_RULES.EMAIL_MAX_LENGTH} characters`,
     }),
@@ -24,7 +24,7 @@ export const loginSchema = z.object({
     .max(VALIDATION_RULES.PASSWORD_MAX_LENGTH, {
       message: `Password must not exceed ${VALIDATION_RULES.PASSWORD_MAX_LENGTH} characters`,
     }),
-})
+});
 
 /**
  * Refresh token request body schema
@@ -32,15 +32,15 @@ export const loginSchema = z.object({
  */
 export const refreshTokenSchema = z.object({
   refreshToken: z
-    .string({ message: 'Refresh token must be a string' })
-    .min(1, { message: 'Refresh token cannot be empty' })
+    .string({ message: "Refresh token must be a string" })
+    .min(1, { message: "Refresh token cannot be empty" })
     .optional(),
-})
+});
 
 /**
  * Type inference for login schema
  */
-export type AuthInput = z.infer<typeof loginSchema>
+export type AuthInput = z.infer<typeof loginSchema>;
 
 /**
  * Forgot password schema
@@ -49,11 +49,11 @@ export type AuthInput = z.infer<typeof loginSchema>
 export const forgotPasswordSchema = z.object({
   email: z
     .string()
-    .email({ message: 'Invalid email format' })
+    .email({ message: "Invalid email format" })
     .max(VALIDATION_RULES.EMAIL_MAX_LENGTH, {
       message: `Email must not exceed ${VALIDATION_RULES.EMAIL_MAX_LENGTH} characters`,
     }),
-})
+});
 
 /**
  * Reset password schema
@@ -62,11 +62,11 @@ export const forgotPasswordSchema = z.object({
 export const resetPasswordSchema = z.object({
   email: z
     .string()
-    .email({ message: 'Invalid email format' })
+    .email({ message: "Invalid email format" })
     .max(VALIDATION_RULES.EMAIL_MAX_LENGTH, {
       message: `Email must not exceed ${VALIDATION_RULES.EMAIL_MAX_LENGTH} characters`,
     }),
-  token: z.string().min(1, { message: 'Reset token is required' }),
+  token: z.string().min(1, { message: "Reset token is required" }),
   password: z
     .string()
     .min(VALIDATION_RULES.PASSWORD_MIN_LENGTH, {
@@ -75,22 +75,22 @@ export const resetPasswordSchema = z.object({
     .max(VALIDATION_RULES.PASSWORD_MAX_LENGTH, {
       message: `Password must not exceed ${VALIDATION_RULES.PASSWORD_MAX_LENGTH} characters`,
     }),
-})
+});
 
 /**
  * Type inference for refresh token schema
  */
-export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>
+export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
 
 /**
  * Type inference for forgot password schema
  */
-export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
 /**
  * Type inference for reset password schema
  */
-export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 /**
  * Update profile schema
@@ -100,16 +100,16 @@ export const updateProfileSchema = z.object({
   name: z
     .string()
     .trim()
-    .min(1, { message: 'Name is required' })
+    .min(1, { message: "Name is required" })
     .max(VALIDATION_RULES.NAME_MAX_LENGTH, {
       message: `Name must not exceed ${VALIDATION_RULES.NAME_MAX_LENGTH} characters`,
     }),
-})
+});
 
 /**
  * Type inference for update profile schema
  */
-export type UpdateProfileInput = z.infer<typeof updateProfileSchema>
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
 /**
  * MFA verify schema
@@ -120,20 +120,20 @@ export const mfaVerifySchema = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .email({ message: 'Invalid email format' })
+    .email({ message: "Invalid email format" })
     .max(VALIDATION_RULES.EMAIL_MAX_LENGTH, {
       message: `Email must not exceed ${VALIDATION_RULES.EMAIL_MAX_LENGTH} characters`,
     }),
   code: z
     .string()
-    .length(6, { message: 'Verification code must be 6 digits' })
-    .regex(/^\d+$/, { message: 'Verification code must contain only digits' }),
-})
+    .length(6, { message: "Verification code must be 6 digits" })
+    .regex(/^\d+$/, { message: "Verification code must contain only digits" }),
+});
 
 /**
  * Type inference for MFA verify schema
  */
-export type MfaVerifyInput = z.infer<typeof mfaVerifySchema>
+export type MfaVerifyInput = z.infer<typeof mfaVerifySchema>;
 
 /**
  * TOTP setup verification schema
@@ -142,14 +142,14 @@ export type MfaVerifyInput = z.infer<typeof mfaVerifySchema>
 export const totpVerifySchema = z.object({
   code: z
     .string()
-    .length(6, { message: 'TOTP code must be 6 digits' })
-    .regex(/^\d+$/, { message: 'TOTP code must contain only digits' }),
-})
+    .length(6, { message: "TOTP code must be 6 digits" })
+    .regex(/^\d+$/, { message: "TOTP code must contain only digits" }),
+});
 
 /**
  * Type inference for TOTP verify schema
  */
-export type TotpVerifyInput = z.infer<typeof totpVerifySchema>
+export type TotpVerifyInput = z.infer<typeof totpVerifySchema>;
 
 /**
  * TOTP or backup code verification schema (for login)
@@ -160,24 +160,24 @@ export const totpLoginSchema = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .email({ message: 'Invalid email format' })
+    .email({ message: "Invalid email format" })
     .max(VALIDATION_RULES.EMAIL_MAX_LENGTH, {
       message: `Email must not exceed ${VALIDATION_RULES.EMAIL_MAX_LENGTH} characters`,
     }),
   code: z
     .string()
-    .min(6, { message: 'Code must be at least 6 characters' })
-    .max(10, { message: 'Code must not exceed 10 characters' })
+    .min(6, { message: "Code must be at least 6 characters" })
+    .max(10, { message: "Code must not exceed 10 characters" })
     .regex(/^[\da-z]+$/i, {
-      message: 'Code must contain only letters and numbers',
+      message: "Code must contain only letters and numbers",
     }),
   isBackupCode: z.boolean().optional().default(false),
-})
+});
 
 /**
  * Type inference for TOTP login schema
  */
-export type TotpLoginInput = z.infer<typeof totpLoginSchema>
+export type TotpLoginInput = z.infer<typeof totpLoginSchema>;
 
 /**
  * Change password schema
@@ -186,7 +186,7 @@ export type TotpLoginInput = z.infer<typeof totpLoginSchema>
 export const changePasswordSchema = z.object({
   currentPassword: z
     .string()
-    .min(1, { message: 'Current password is required' }),
+    .min(1, { message: "Current password is required" }),
   newPassword: z
     .string()
     .min(VALIDATION_RULES.PASSWORD_MIN_LENGTH, {
@@ -195,9 +195,9 @@ export const changePasswordSchema = z.object({
     .max(VALIDATION_RULES.PASSWORD_MAX_LENGTH, {
       message: `Password must not exceed ${VALIDATION_RULES.PASSWORD_MAX_LENGTH} characters`,
     }),
-})
+});
 
 /**
  * Type inference for change password schema
  */
-export type ChangePasswordInput = z.infer<typeof changePasswordSchema>
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

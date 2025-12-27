@@ -1,9 +1,9 @@
-import type { Knex } from 'knex'
+import type { Knex } from "knex";
 
-import { ERROR_MESSAGES } from '@constants/errors'
-import { HTTP_STATUS } from '@constants/http'
-import db from '@database/connection'
-import { ApiError } from '@utils/ApiError'
+import { ERROR_MESSAGES } from "@constants/errors";
+import { HTTP_STATUS } from "@constants/http";
+import db from "@database/connection";
+import { ApiError } from "@utils/ApiError";
 
 /**
  * Normalize schema name to include tenant_ prefix if needed
@@ -11,8 +11,8 @@ import { ApiError } from '@utils/ApiError'
  * @returns Full schema name with tenant_ prefix
  */
 const normalizeSchemaName = (schemaName: string): string => {
-  return schemaName.startsWith('tenant_') ? schemaName : `tenant_${schemaName}`
-}
+  return schemaName.startsWith("tenant_") ? schemaName : `tenant_${schemaName}`;
+};
 
 /**
  * Check if tenant schema exists in the database
@@ -20,18 +20,18 @@ const normalizeSchemaName = (schemaName: string): string => {
  * @returns true if schema exists, false otherwise
  */
 const schemaExists = async (schemaName: string): Promise<boolean> => {
-  const fullSchemaName = normalizeSchemaName(schemaName)
+  const fullSchemaName = normalizeSchemaName(schemaName);
 
   const result = await db.raw(
     `SELECT EXISTS(
       SELECT 1 FROM information_schema.schemata 
       WHERE schema_name = ?
     )`,
-    [fullSchemaName]
-  )
+    [fullSchemaName],
+  );
 
-  return result.rows[0].exists
-}
+  return result.rows[0].exists;
+};
 
 /**
  * Set tenant schema search path on a transaction
@@ -40,13 +40,13 @@ const schemaExists = async (schemaName: string): Promise<boolean> => {
  */
 const setTenantSearchPath = async (
   trx: Knex.Transaction,
-  schemaName: string
+  schemaName: string,
 ): Promise<void> => {
-  const fullSchemaName = normalizeSchemaName(schemaName)
+  const fullSchemaName = normalizeSchemaName(schemaName);
   // Use Knex's identifier binding (??) to properly escape schema name
   // SET LOCAL search_path sets the search path for the current transaction only
-  await trx.raw(`SET LOCAL search_path TO ??, public`, [fullSchemaName])
-}
+  await trx.raw(`SET LOCAL search_path TO ??, public`, [fullSchemaName]);
+};
 
 /**
  * Execute a query with tenant schema search path set
@@ -63,23 +63,23 @@ const setTenantSearchPath = async (
  */
 export const withTenantSchema = async <T>(
   schemaName: string,
-  callback: (trx: Knex.Transaction) => Promise<T>
+  callback: (trx: Knex.Transaction) => Promise<T>,
 ): Promise<T> => {
   // Check if schema exists before proceeding
-  const exists = await schemaExists(schemaName)
+  const exists = await schemaExists(schemaName);
   if (!exists) {
     throw new ApiError(
       HTTP_STATUS.NOT_FOUND,
-      ERROR_MESSAGES.TENANT_SCHEMA_NOT_FOUND
-    )
+      ERROR_MESSAGES.TENANT_SCHEMA_NOT_FOUND,
+    );
   }
 
   // Use a transaction to ensure search path is set for all queries
   return db.transaction(async (trx) => {
     // Set search path for this transaction
-    await setTenantSearchPath(trx, schemaName)
+    await setTenantSearchPath(trx, schemaName);
 
     // Execute callback with transaction (which has search path set)
-    return callback(trx)
-  })
-}
+    return callback(trx);
+  });
+};
