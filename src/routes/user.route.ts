@@ -1,7 +1,7 @@
-import { Router, type Router as RouterType } from "express";
+import { Router, type Router as RouterType } from 'express'
 
-import { ROLES } from "@constants/roles";
-import { updateProfile } from "@controllers/auth.controller";
+import { ROLES } from '@constants/roles'
+import { updateProfile } from '@controllers/auth.controller'
 import {
   deleteUserById,
   getAllUsers,
@@ -10,16 +10,16 @@ import {
   restoreUserById,
   updateUserActivation,
   updateUserRolesController,
-} from "@controllers/user.controller";
+} from '@controllers/user.controller'
 import {
   getAllInvitations,
   inviteUser,
   resendInvitation,
   revokeInvitation,
-} from "@controllers/userInvitation.controller";
-import { authenticate, authorize } from "@middlewares/auth.middleware";
-import { validate } from "@middlewares/validate.middleware";
-import { updateProfileSchema } from "@schema/auth.schema";
+} from '@controllers/userInvitation.controller'
+import { authenticate, authorize } from '@middlewares/auth.middleware'
+import { validate } from '@middlewares/validate.middleware'
+import { updateProfileSchema } from '@schema/auth.schema'
 import {
   invitationIdSchema,
   invitationListSchema,
@@ -28,9 +28,9 @@ import {
   userIdSchema,
   userInvitationSchema,
   userListSchema,
-} from "@schema/user.schema";
+} from '@schema/user.schema'
 
-const router: RouterType = Router();
+const router: RouterType = Router()
 
 /**
  * @swagger
@@ -124,12 +124,12 @@ const router: RouterType = Router();
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/",
+  '/',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
-  validate(userListSchema, "query"),
-  getAllUsers,
-);
+  validate(userListSchema, 'query'),
+  getAllUsers
+)
 
 /**
  * @swagger
@@ -170,11 +170,11 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/statistics",
+  '/statistics',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN] }),
-  getUserStatistics,
-);
+  getUserStatistics
+)
 
 /**
  * @swagger
@@ -274,12 +274,12 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/invitations",
+  '/invitations',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
-  validate(invitationListSchema, "query"),
-  getAllInvitations,
-);
+  validate(invitationListSchema, 'query'),
+  getAllInvitations
+)
 
 /**
  * @swagger
@@ -333,7 +333,7 @@ router.get(
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get("/:id", authenticate, validate(userIdSchema, "params"), getUserById);
+router.get('/:id', authenticate, validate(userIdSchema, 'params'), getUserById)
 
 /**
  * @swagger
@@ -388,11 +388,11 @@ router.get("/:id", authenticate, validate(userIdSchema, "params"), getUserById);
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put(
-  "/profile",
+  '/profile',
   authenticate,
   validate(updateProfileSchema),
-  updateProfile,
-);
+  updateProfile
+)
 
 /**
  * @swagger
@@ -448,12 +448,12 @@ router.put(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete(
-  "/:id",
+  '/:id',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN] }),
-  validate(userIdSchema, "params"),
-  deleteUserById,
-);
+  validate(userIdSchema, 'params'),
+  deleteUserById
+)
 
 /**
  * @swagger
@@ -542,13 +542,13 @@ router.delete(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/activation",
+  '/:id/activation',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN] }),
-  validate(userIdSchema, "params"),
+  validate(userIdSchema, 'params'),
   validate(updateUserActivationSchema),
-  updateUserActivation,
-);
+  updateUserActivation
+)
 
 /**
  * @swagger
@@ -623,12 +623,12 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/restore",
+  '/:id/restore',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN] }),
-  validate(userIdSchema, "params"),
-  restoreUserById,
-);
+  validate(userIdSchema, 'params'),
+  restoreUserById
+)
 
 /**
  * @swagger
@@ -732,13 +732,13 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put(
-  "/:id/roles",
+  '/:id/roles',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
-  validate(userIdSchema, "params"),
+  validate(userIdSchema, 'params'),
   validate(updateUserRolesSchema),
-  updateUserRolesController,
-);
+  updateUserRolesController
+)
 
 /**
  * @swagger
@@ -843,12 +843,12 @@ router.put(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/invitation",
+  '/invitation',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
   validate(userInvitationSchema),
-  inviteUser,
-);
+  inviteUser
+)
 
 /**
  * @swagger
@@ -927,12 +927,12 @@ router.post(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete(
-  "/invitations/:invitationId",
+  '/invitations/:invitationId',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
-  validate(invitationIdSchema, "params"),
-  revokeInvitation,
-);
+  validate(invitationIdSchema, 'params'),
+  revokeInvitation
+)
 
 /**
  * @swagger
@@ -1002,11 +1002,11 @@ router.delete(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/invitations/:invitationId/resend",
+  '/invitations/:invitationId/resend',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN, ROLES.ADMIN] }),
-  validate(invitationIdSchema, "params"),
-  resendInvitation,
-);
+  validate(invitationIdSchema, 'params'),
+  resendInvitation
+)
 
-export default router;
+export default router

@@ -1,5 +1,5 @@
-import type { RequestHandler } from "express";
-import helmet from "helmet";
+import type { RequestHandler } from 'express'
+import helmet from 'helmet'
 
 /**
  * Helmet middleware configuration for security headers
@@ -13,14 +13,14 @@ const helmetMiddleware: RequestHandler = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
-      imgSrc: ["'self'", "data:", "https:", "https://unpkg.com"],
-      fontSrc: ["'self'", "https://unpkg.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+      scriptSrc: ["'self'", "'unsafe-inline'", 'https://unpkg.com'],
+      imgSrc: ["'self'", 'data:', 'https:', 'https://unpkg.com'],
+      fontSrc: ["'self'", 'https://unpkg.com'],
       connectSrc: ["'self'"],
     },
   },
   crossOriginEmbedderPolicy: false,
-});
+})
 
-export default helmetMiddleware;
+export default helmetMiddleware

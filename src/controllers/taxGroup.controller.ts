@@ -1,14 +1,14 @@
-import type { RequestHandler } from "express";
-import { Response } from "express";
+import type { RequestHandler } from 'express'
+import { Response } from 'express'
 
-import type { JwtUser } from "@/types/jwt.type";
-import { HTTP_STATUS } from "@constants/http";
-import { SUCCESS_MESSAGES } from "@constants/success";
+import type { JwtUser } from '@/types/jwt.type'
+import { HTTP_STATUS } from '@constants/http'
+import { SUCCESS_MESSAGES } from '@constants/success'
 import {
   getTenantContext,
   type TenantContext,
   type TenantRequest,
-} from "@middlewares/tenantContext.middleware";
+} from '@middlewares/tenantContext.middleware'
 import {
   calculateTaxWithGroup,
   createTaxGroup,
@@ -19,10 +19,10 @@ import {
   restoreTaxGroup,
   updateTaxGroup,
   updateTaxGroupActivationStatus,
-} from "@queries/taxGroup.queries";
-import { getPaginationMetadata } from "@schema/shared.schema";
-import { ApiResponse } from "@utils/ApiResponse";
-import asyncHandler from "@utils/asyncHandler";
+} from '@queries/taxGroup.queries'
+import { getPaginationMetadata } from '@schema/shared.schema'
+import { ApiResponse } from '@utils/ApiResponse'
+import asyncHandler from '@utils/asyncHandler'
 
 /**
  * Get all tax groups controller
@@ -30,21 +30,21 @@ import asyncHandler from "@utils/asyncHandler";
  */
 export const getAllTaxGroups: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated query parameters
     const filters = (
       req as TenantRequest & {
-        validatedData: Parameters<typeof findTaxGroups>[2];
+        validatedData: Parameters<typeof findTaxGroups>[2]
       }
-    ).validatedData;
+    ).validatedData
 
     // Fetch tax groups
     const { taxGroups, total } = await findTaxGroups(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      filters,
-    );
+      filters
+    )
 
     // Transform tax groups to response format
     const responseData = taxGroups.map((group) => ({
@@ -61,17 +61,17 @@ export const getAllTaxGroups: RequestHandler = asyncHandler(
         })) ?? [],
       createdAt: group.createdAt,
       updatedAt: group.updatedAt,
-    }));
+    }))
 
     // Return response with pagination
     res.status(HTTP_STATUS.OK).json(
       new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.TAX_GROUPS_FETCHED, {
         items: responseData,
         pagination: getPaginationMetadata(filters.page, filters.limit, total),
-      }),
-    );
-  },
-);
+      })
+    )
+  }
+)
 
 /**
  * Get active tax groups controller
@@ -79,13 +79,13 @@ export const getAllTaxGroups: RequestHandler = asyncHandler(
  */
 export const getActiveTaxGroups: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Fetch active tax groups
     const taxGroups = await findActiveTaxGroups(
       tenantContext.tenantId,
-      tenantContext.schemaName,
-    );
+      tenantContext.schemaName
+    )
 
     // Transform tax groups to response format
     const responseData = taxGroups.map((group) => ({
@@ -100,7 +100,7 @@ export const getActiveTaxGroups: RequestHandler = asyncHandler(
           type: tax.type,
           rate: tax.rate,
         })) ?? [],
-    }));
+    }))
 
     res
       .status(HTTP_STATUS.OK)
@@ -108,11 +108,11 @@ export const getActiveTaxGroups: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_GROUPS_FETCHED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Get tax group by ID controller
@@ -120,17 +120,17 @@ export const getActiveTaxGroups: RequestHandler = asyncHandler(
  */
 export const getTaxGroupById: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Fetch tax group
     const taxGroup = await findTaxGroupById(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      id,
-    );
+      id
+    )
 
     // Transform tax group to response format
     const responseData = {
@@ -147,7 +147,7 @@ export const getTaxGroupById: RequestHandler = asyncHandler(
         })) ?? [],
       createdAt: taxGroup.createdAt,
       updatedAt: taxGroup.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -155,11 +155,11 @@ export const getTaxGroupById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_GROUP_FETCHED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Create tax group controller
@@ -167,23 +167,23 @@ export const getTaxGroupById: RequestHandler = asyncHandler(
  */
 export const createTaxGroupController: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
-    const user = req.user as JwtUser;
+    const tenantContext = getTenantContext(req) as TenantContext
+    const user = req.user as JwtUser
 
     // Get validated body
     const taxGroupData = (
       req as TenantRequest & {
-        validatedData: Parameters<typeof createTaxGroup>[2];
+        validatedData: Parameters<typeof createTaxGroup>[2]
       }
-    ).validatedData;
+    ).validatedData
 
     // Create tax group
     const taxGroup = await createTaxGroup(
       tenantContext.tenantId,
       tenantContext.schemaName,
       taxGroupData,
-      user.id,
-    );
+      user.id
+    )
 
     // Transform tax group to response format
     const responseData = {
@@ -200,7 +200,7 @@ export const createTaxGroupController: RequestHandler = asyncHandler(
         })) ?? [],
       createdAt: taxGroup.createdAt,
       updatedAt: taxGroup.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.CREATED)
@@ -208,11 +208,11 @@ export const createTaxGroupController: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.CREATED,
           SUCCESS_MESSAGES.TAX_GROUP_CREATED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Update tax group controller
@@ -220,24 +220,24 @@ export const createTaxGroupController: RequestHandler = asyncHandler(
  */
 export const updateTaxGroupController: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params and body
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     const updateData = (
       req as TenantRequest & {
-        validatedData: Parameters<typeof updateTaxGroup>[3];
+        validatedData: Parameters<typeof updateTaxGroup>[3]
       }
-    ).validatedData;
+    ).validatedData
 
     // Update tax group
     const updatedTaxGroup = await updateTaxGroup(
       tenantContext.tenantId,
       tenantContext.schemaName,
       id,
-      updateData,
-    );
+      updateData
+    )
 
     // Transform tax group to response format
     const responseData = {
@@ -253,7 +253,7 @@ export const updateTaxGroupController: RequestHandler = asyncHandler(
           rate: tax.rate,
         })) ?? [],
       updatedAt: updatedTaxGroup.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -261,11 +261,11 @@ export const updateTaxGroupController: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_GROUP_UPDATED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Delete tax group controller
@@ -273,24 +273,24 @@ export const updateTaxGroupController: RequestHandler = asyncHandler(
  */
 export const deleteTaxGroupById: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Delete tax group
     const deletedTaxGroup = await deleteTaxGroup(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      id,
-    );
+      id
+    )
 
     // Transform tax group to response format
     const responseData = {
       id: deletedTaxGroup.id,
       name: deletedTaxGroup.name,
       deletedAt: deletedTaxGroup.deletedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -298,11 +298,11 @@ export const deleteTaxGroupById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_GROUP_DELETED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Restore tax group controller
@@ -310,17 +310,17 @@ export const deleteTaxGroupById: RequestHandler = asyncHandler(
  */
 export const restoreTaxGroupById: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Restore tax group
     const restoredTaxGroup = await restoreTaxGroup(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      id,
-    );
+      id
+    )
 
     // Transform tax group to response format
     const responseData = {
@@ -328,7 +328,7 @@ export const restoreTaxGroupById: RequestHandler = asyncHandler(
       name: restoredTaxGroup.name,
       isActive: restoredTaxGroup.isActive,
       updatedAt: restoredTaxGroup.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -336,11 +336,11 @@ export const restoreTaxGroupById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_GROUP_RESTORED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Enable tax group controller
@@ -348,18 +348,18 @@ export const restoreTaxGroupById: RequestHandler = asyncHandler(
  */
 export const enableTaxGroup: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Enable tax group
     const enabledTaxGroup = await updateTaxGroupActivationStatus(
       tenantContext.tenantId,
       tenantContext.schemaName,
       id,
-      true,
-    );
+      true
+    )
 
     // Transform tax group to response format
     const responseData = {
@@ -367,7 +367,7 @@ export const enableTaxGroup: RequestHandler = asyncHandler(
       name: enabledTaxGroup.name,
       isActive: enabledTaxGroup.isActive,
       updatedAt: enabledTaxGroup.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -375,11 +375,11 @@ export const enableTaxGroup: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_GROUP_ENABLED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Disable tax group controller
@@ -387,18 +387,18 @@ export const enableTaxGroup: RequestHandler = asyncHandler(
  */
 export const disableTaxGroup: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Disable tax group
     const disabledTaxGroup = await updateTaxGroupActivationStatus(
       tenantContext.tenantId,
       tenantContext.schemaName,
       id,
-      false,
-    );
+      false
+    )
 
     // Transform tax group to response format
     const responseData = {
@@ -406,7 +406,7 @@ export const disableTaxGroup: RequestHandler = asyncHandler(
       name: disabledTaxGroup.name,
       isActive: disabledTaxGroup.isActive,
       updatedAt: disabledTaxGroup.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -414,11 +414,11 @@ export const disableTaxGroup: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_GROUP_DISABLED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Calculate tax with tax group controller
@@ -426,24 +426,24 @@ export const disableTaxGroup: RequestHandler = asyncHandler(
  */
 export const calculateTaxGroupController: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params and body
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     const { amount } = (
       req as TenantRequest & {
-        validatedData: { amount: number };
+        validatedData: { amount: number }
       }
-    ).validatedData;
+    ).validatedData
 
     // Calculate tax
     const calculation = await calculateTaxWithGroup(
       tenantContext.tenantId,
       tenantContext.schemaName,
       id,
-      amount,
-    );
+      amount
+    )
 
     res
       .status(HTTP_STATUS.OK)
@@ -451,8 +451,8 @@ export const calculateTaxGroupController: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_GROUP_CALCULATED,
-          calculation,
-        ),
-      );
-  },
-);
+          calculation
+        )
+      )
+  }
+)

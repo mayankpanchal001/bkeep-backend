@@ -3,22 +3,22 @@
  * Adds request tracking and user agent parsing
  */
 
-import { randomUUID } from "node:crypto";
+import { randomUUID } from 'node:crypto'
 
-import type { NextFunction, Request, Response } from "express";
-import type { IBrowser, ICPU, IDevice, IEngine, IOS } from "ua-parser-js";
-import { UAParser } from "ua-parser-js";
+import type { NextFunction, Request, Response } from 'express'
+import type { IBrowser, ICPU, IDevice, IEngine, IOS } from 'ua-parser-js'
+import { UAParser } from 'ua-parser-js'
 
 interface RequestWithUserAgent extends Request {
-  requestId: string;
+  requestId: string
   userAgent: {
-    browser: IBrowser;
-    os: IOS;
-    device: IDevice;
-    engine: IEngine;
-    cpu: ICPU;
-  };
-  startTime: number;
+    browser: IBrowser
+    os: IOS
+    device: IDevice
+    engine: IEngine
+    cpu: ICPU
+  }
+  startTime: number
 }
 
 /**
@@ -28,19 +28,19 @@ interface RequestWithUserAgent extends Request {
 export const requestId = (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void => {
-  const existingRequestId = req.headers["x-request-id"];
-  const id = existingRequestId?.toString() ?? randomUUID();
+  const existingRequestId = req.headers['x-request-id']
+  const id = existingRequestId?.toString() ?? randomUUID()
 
   // Make request ID available in req object
-  (req as RequestWithUserAgent).requestId = id;
+  ;(req as RequestWithUserAgent).requestId = id
 
   // Add request ID to response headers
-  res.setHeader("x-request-id", id);
+  res.setHeader('x-request-id', id)
 
-  next();
-};
+  next()
+}
 
 /**
  * Parse user agent and add to request object
@@ -48,15 +48,15 @@ export const requestId = (
 export const userAgent = (
   req: Request,
   _res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void => {
-  const parser = UAParser(req.headers["user-agent"] ?? "");
-  (req as RequestWithUserAgent).userAgent = {
+  const parser = UAParser(req.headers['user-agent'] ?? '')
+  ;(req as RequestWithUserAgent).userAgent = {
     browser: parser.browser,
     os: parser.os,
     device: parser.device,
     engine: parser.engine,
     cpu: parser.cpu,
-  };
-  next();
-};
+  }
+  next()
+}

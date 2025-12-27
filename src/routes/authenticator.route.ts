@@ -1,4 +1,4 @@
-import { Router, type Router as RouterType } from "express";
+import { Router, type Router as RouterType } from 'express'
 
 import {
   disableTotp,
@@ -7,12 +7,12 @@ import {
   regenerateBackupCodes,
   setupTotp,
   verifyAndEnableTotp,
-} from "@controllers/authenticator.controller";
-import { authenticate } from "@middlewares/auth.middleware";
-import { validate } from "@middlewares/validate.middleware";
-import { totpVerifySchema } from "@schema/auth.schema";
+} from '@controllers/authenticator.controller'
+import { authenticate } from '@middlewares/auth.middleware'
+import { validate } from '@middlewares/validate.middleware'
+import { totpVerifySchema } from '@schema/auth.schema'
 
-const router: RouterType = Router();
+const router: RouterType = Router()
 
 /**
  * @swagger
@@ -75,7 +75,7 @@ const router: RouterType = Router();
  *               statusCode: 401
  *               message: 'User not authenticated'
  */
-router.post("/setup", authenticate, setupTotp);
+router.post('/setup', authenticate, setupTotp)
 
 /**
  * @swagger
@@ -125,11 +125,11 @@ router.post("/setup", authenticate, setupTotp);
  *               message: 'Invalid TOTP code or user not authenticated'
  */
 router.post(
-  "/verify",
+  '/verify',
   authenticate,
   validate(totpVerifySchema),
-  verifyAndEnableTotp,
-);
+  verifyAndEnableTotp
+)
 
 /**
  * @swagger
@@ -164,7 +164,7 @@ router.post(
  *               statusCode: 401
  *               message: 'User not authenticated'
  */
-router.post("/deactivate", authenticate, disableTotp);
+router.post('/deactivate', authenticate, disableTotp)
 
 /**
  * @swagger
@@ -216,7 +216,7 @@ router.post("/deactivate", authenticate, disableTotp);
  *               statusCode: 401
  *               message: 'User not authenticated'
  */
-router.get("/status", authenticate, getTotpStatus);
+router.get('/status', authenticate, getTotpStatus)
 
 /**
  * @swagger
@@ -270,7 +270,7 @@ router.get("/status", authenticate, getTotpStatus);
  *               statusCode: 401
  *               message: 'User not authenticated'
  */
-router.post("/backup-codes", authenticate, regenerateBackupCodes);
+router.post('/backup-codes', authenticate, regenerateBackupCodes)
 
 /**
  * @swagger
@@ -321,6 +321,6 @@ router.post("/backup-codes", authenticate, regenerateBackupCodes);
  *               statusCode: 401
  *               message: 'User not authenticated'
  */
-router.get("/backup-codes/download", authenticate, downloadBackupCodes);
+router.get('/backup-codes/download', authenticate, downloadBackupCodes)
 
-export default router;
+export default router

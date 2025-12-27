@@ -7,9 +7,9 @@
  * Individual role names
  */
 export const ROLES = {
-  SUPERADMIN: "superadmin",
-  ADMIN: "admin",
-  ACCOUNTANT: "accountant",
-  BOOKKEEPER: "bookkeeper",
-  VIEWER: "viewer",
-} as const;
+  SUPERADMIN: 'superadmin',
+  ADMIN: 'admin',
+  ACCOUNTANT: 'accountant',
+  BOOKKEEPER: 'bookkeeper',
+  VIEWER: 'viewer',
+} as const

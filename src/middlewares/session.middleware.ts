@@ -7,21 +7,21 @@
  * - Session cookie configuration
  * - Session cleanup interval
  */
-import { ConnectSessionKnexStore } from "connect-session-knex";
-import type { RequestHandler } from "express";
-import session from "express-session";
+import { ConnectSessionKnexStore } from 'connect-session-knex'
+import type { RequestHandler } from 'express'
+import session from 'express-session'
 
-import { env, isProduction } from "@config/env";
-import { SECURITY_RULES } from "@constants/index";
-import db from "@database/connection";
+import { env, isProduction } from '@config/env'
+import { SECURITY_RULES } from '@constants/index'
+import db from '@database/connection'
 
 const store = new ConnectSessionKnexStore({
   knex: db,
-  tableName: "sessions",
+  tableName: 'sessions',
   createTable: true,
-  sidFieldName: "sid",
+  sidFieldName: 'sid',
   cleanupInterval: 15 * 60 * 1000,
-});
+})
 
 const sessionMiddleware: RequestHandler = session({
   name: SECURITY_RULES.SESSION_NAME,
@@ -33,9 +33,9 @@ const sessionMiddleware: RequestHandler = session({
     maxAge: SECURITY_RULES.SESSION_MAX_AGE,
     secure: isProduction(),
     httpOnly: isProduction(),
-    sameSite: isProduction() ? "none" : "lax",
+    sameSite: isProduction() ? 'none' : 'lax',
   },
   store,
-});
+})
 
-export default sessionMiddleware;
+export default sessionMiddleware

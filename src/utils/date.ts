@@ -1,28 +1,28 @@
-import moment from "moment";
+import moment from 'moment'
 
 /**
  * Get current moment in UTC
  * @returns Moment object in UTC
  */
 export const getCurrentMoment = () => {
-  return moment().utc();
-};
+  return moment().utc()
+}
 
 /**
  * Get current date in UTC
  * @returns Date object
  */
 export const getCurrentDate = (): Date => {
-  return getCurrentMoment().toDate();
-};
+  return getCurrentMoment().toDate()
+}
 
 /**
  * Get current ISO string in UTC
  * @returns ISO string
  */
 export const getCurrentISOString = (): string => {
-  return getCurrentMoment().toISOString();
-};
+  return getCurrentMoment().toISOString()
+}
 
 /**
  * Parse a date value and convert to UTC Date
@@ -30,8 +30,8 @@ export const getCurrentISOString = (): string => {
  * @returns Date object in UTC
  */
 export const parseToUTCDate = (date: string | Date | moment.Moment): Date => {
-  return moment(date).utc().toDate();
-};
+  return moment(date).utc().toDate()
+}
 
 /**
  * Parse a date string (YYYY-MM-DD) or Date object and convert to UTC Date at start of day
@@ -39,12 +39,12 @@ export const parseToUTCDate = (date: string | Date | moment.Moment): Date => {
  * @returns Date object in UTC at start of day (00:00:00)
  */
 export const parseDateStringToUTC = (dateInput: string | Date): Date => {
-  if (typeof dateInput === "string") {
-    return moment(dateInput).utc().startOf("day").toDate();
+  if (typeof dateInput === 'string') {
+    return moment(dateInput).utc().startOf('day').toDate()
   }
   // If it's already a Date object, convert to UTC and set to start of day
-  return moment(dateInput).utc().startOf("day").toDate();
-};
+  return moment(dateInput).utc().startOf('day').toDate()
+}
 
 /**
  * Format a Date object to YYYY-MM-DD string
@@ -52,11 +52,11 @@ export const parseDateStringToUTC = (dateInput: string | Date): Date => {
  * @returns Date string in YYYY-MM-DD format
  */
 export const formatDateToString = (
-  date: Date | string | null | undefined,
+  date: Date | string | null | undefined
 ): string | null => {
-  if (!date) return null;
-  return moment(date).utc().format("YYYY-MM-DD");
-};
+  if (!date) return null
+  return moment(date).utc().format('YYYY-MM-DD')
+}
 
 /**
  * Convert a Date object to ISO string (for Objection JSON schema validation)
@@ -64,8 +64,8 @@ export const formatDateToString = (
  * @returns ISO string or null
  */
 export const formatDateToISOString = (
-  date: Date | string | null | undefined,
+  date: Date | string | null | undefined
 ): string | null => {
-  if (!date) return null;
-  return moment(date).utc().toISOString();
-};
+  if (!date) return null
+  return moment(date).utc().toISOString()
+}

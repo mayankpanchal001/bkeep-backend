@@ -1,18 +1,18 @@
-import { ERROR_MESSAGES } from "@constants/errors";
-import { HTTP_STATUS } from "@constants/http";
-import { Account } from "@models/Account";
-import type { AccountListInput } from "@schema/account.schema";
-import { calculateOffset } from "@schema/shared.schema";
-import { ApiError } from "@utils/ApiError";
-import { getCurrentDate, getCurrentISOString } from "@utils/date";
-import { withTenantSchema } from "@utils/tenantQuery";
+import { ERROR_MESSAGES } from '@constants/errors'
+import { HTTP_STATUS } from '@constants/http'
+import { Account } from '@models/Account'
+import type { AccountListInput } from '@schema/account.schema'
+import { calculateOffset } from '@schema/shared.schema'
+import { ApiError } from '@utils/ApiError'
+import { getCurrentDate, getCurrentISOString } from '@utils/date'
+import { withTenantSchema } from '@utils/tenantQuery'
 
 /**
  * Interface for account query result with pagination
  */
 export interface AccountQueryResult {
-  accounts: Account[];
-  total: number;
+  accounts: Account[]
+  total: number
 }
 
 /**
@@ -20,18 +20,18 @@ export interface AccountQueryResult {
  */
 const mapAccountSortField = (field: string): string => {
   const fieldMap: Record<string, string> = {
-    name: "name",
-    number: "number",
-    currencyCode: "currency_code",
-    openingBalance: "opening_balance",
-    isActive: "is_active",
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-  };
+    name: 'name',
+    number: 'number',
+    currencyCode: 'currency_code',
+    openingBalance: 'opening_balance',
+    isActive: 'is_active',
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+  }
 
   // eslint-disable-next-line security/detect-object-injection
-  return fieldMap[field] ?? "created_at";
-};
+  return fieldMap[field] ?? 'created_at'
+}
 
 /**
  * Find accounts with pagination, sorting, search, and filtering
@@ -43,60 +43,60 @@ const mapAccountSortField = (field: string): string => {
 export const findAccounts = async (
   tenantId: string,
   schemaName: string,
-  filters: AccountListInput,
+  filters: AccountListInput
 ): Promise<AccountQueryResult> => {
   const {
     page,
     limit,
-    sort = "createdAt",
-    order = "asc",
+    sort = 'createdAt',
+    order = 'asc',
     search,
     isActive,
     currencyCode,
-  } = filters;
+  } = filters
 
-  const offset = calculateOffset(page, limit);
-  const sortColumn = mapAccountSortField(sort);
+  const offset = calculateOffset(page, limit)
+  const sortColumn = mapAccountSortField(sort)
 
   // Use shared connection with tenant schema search path
   return withTenantSchema(schemaName, async (trx) => {
     // Build base query
-    let query = Account.query(trx).modify("notDeleted");
+    let query = Account.query(trx).modify('notDeleted')
 
     // Filter by tenant
-    query = query.modify("byTenant", tenantId);
+    query = query.modify('byTenant', tenantId)
 
     // Apply active filter if provided
     if (isActive !== undefined) {
       if (isActive) {
-        query = query.modify("active");
+        query = query.modify('active')
       } else {
-        query = query.modify("inactive");
+        query = query.modify('inactive')
       }
     }
 
     // Apply currency filter if provided
     if (currencyCode) {
-      query = query.where("currency_code", currencyCode);
+      query = query.where('currency_code', currencyCode)
     }
 
     // Apply search if provided
     if (search) {
-      query = query.modify("search", search);
+      query = query.modify('search', search)
     }
 
     // Get total count before pagination
-    const total = await query.resultSize();
+    const total = await query.resultSize()
 
     // Apply pagination and sorting
     const accounts = await query
       .orderBy(sortColumn, order)
       .limit(limit)
-      .offset(offset);
+      .offset(offset)
 
-    return { accounts, total };
-  });
-};
+    return { accounts, total }
+  })
+}
 
 /**
  * Find account by ID
@@ -109,37 +109,37 @@ export const findAccounts = async (
 export const findAccountById = async (
   tenantId: string,
   schemaName: string,
-  accountId: string,
+  accountId: string
 ): Promise<Account> => {
   // Use shared connection with tenant schema search path
   return withTenantSchema(schemaName, async (trx) => {
     const account = await Account.query(trx)
-      .modify("notDeleted")
-      .modify("byTenant", tenantId)
-      .findById(accountId);
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
+      .findById(accountId)
 
     if (!account) {
       throw new ApiError(
         HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.ACCOUNT_NOT_FOUND,
-      );
+        ERROR_MESSAGES.ACCOUNT_NOT_FOUND
+      )
     }
 
-    return account;
-  });
-};
+    return account
+  })
+}
 
 /**
  * Interface for creating an account
  */
 export interface CreateAccountData {
-  name: string;
-  number?: string | null;
-  type?: string;
-  currencyCode?: string;
-  openingBalance?: number;
-  bankName?: string | null;
-  isActive?: boolean;
+  name: string
+  number?: string | null
+  type?: string
+  currencyCode?: string
+  openingBalance?: number
+  bankName?: string | null
+  isActive?: boolean
 }
 
 /**
@@ -154,7 +154,7 @@ export const createAccount = async (
   tenantId: string,
   schemaName: string,
   createdBy: string,
-  data: CreateAccountData,
+  data: CreateAccountData
 ): Promise<Account> => {
   // Use shared connection with tenant schema search path
   return withTenantSchema(schemaName, async (trx) => {
@@ -163,29 +163,29 @@ export const createAccount = async (
       createdBy,
       name: data.name,
       number: data.number ?? null,
-      type: data.type ?? "bank",
-      currencyCode: data.currencyCode ?? "CAD",
+      type: data.type ?? 'bank',
+      currencyCode: data.currencyCode ?? 'CAD',
       openingBalance: data.openingBalance ?? 0,
       currentBalance: data.openingBalance ?? 0, // Initialize current balance to opening balance
       bankName: data.bankName ?? null,
       isActive: data.isActive ?? true,
-    });
+    })
 
-    return account;
-  });
-};
+    return account
+  })
+}
 
 /**
  * Interface for updating an account
  */
 export interface UpdateAccountData {
-  name?: string;
-  number?: string | null;
-  type?: string;
-  currencyCode?: string;
-  openingBalance?: number;
-  bankName?: string | null;
-  isActive?: boolean;
+  name?: string
+  number?: string | null
+  type?: string
+  currencyCode?: string
+  openingBalance?: number
+  bankName?: string | null
+  isActive?: boolean
 }
 
 /**
@@ -200,17 +200,17 @@ export const updateAccount = async (
   tenantId: string,
   schemaName: string,
   accountId: string,
-  data: UpdateAccountData,
+  data: UpdateAccountData
 ): Promise<Account> => {
   // Get account first to ensure it exists and belongs to tenant
-  const account = await findAccountById(tenantId, schemaName, accountId);
+  const account = await findAccountById(tenantId, schemaName, accountId)
 
   // Use shared connection with tenant schema search path
   return withTenantSchema(schemaName, async (trx) => {
-    const updatedAccount = await account.$query(trx).patchAndFetch(data);
-    return updatedAccount;
-  });
-};
+    const updatedAccount = await account.$query(trx).patchAndFetch(data)
+    return updatedAccount
+  })
+}
 
 /**
  * Delete account (soft delete)
@@ -222,46 +222,46 @@ export const updateAccount = async (
 export const deleteAccount = async (
   tenantId: string,
   schemaName: string,
-  accountId: string,
+  accountId: string
 ): Promise<Account> => {
   // Verify account exists and belongs to tenant
-  await findAccountById(tenantId, schemaName, accountId);
+  await findAccountById(tenantId, schemaName, accountId)
 
   // Use shared connection with tenant schema search path
   return withTenantSchema(schemaName, async (trx) => {
     // Use BaseModel softDelete() method which handles timestamps automatically
     const account = await Account.query(trx)
-      .modify("notDeleted")
-      .modify("byTenant", tenantId)
-      .findById(accountId);
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
+      .findById(accountId)
 
     if (!account) {
       throw new ApiError(
         HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.ACCOUNT_NOT_FOUND,
-      );
+        ERROR_MESSAGES.ACCOUNT_NOT_FOUND
+      )
     }
 
     // Use BaseModel softDelete() - it handles deletedAt and updatedAt automatically
     await account
       .$query(trx)
-      .patch({ deletedAt: getCurrentISOString() as unknown as Date });
+      .patch({ deletedAt: getCurrentISOString() as unknown as Date })
 
     // Reload to get updated data (without notDeleted modifier to include deleted records)
     const deletedAccount = await Account.query(trx)
-      .modify("byTenant", tenantId)
-      .findById(accountId);
+      .modify('byTenant', tenantId)
+      .findById(accountId)
 
     if (!deletedAccount) {
       throw new ApiError(
         HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.ACCOUNT_NOT_FOUND,
-      );
+        ERROR_MESSAGES.ACCOUNT_NOT_FOUND
+      )
     }
 
-    return deletedAccount;
-  });
-};
+    return deletedAccount
+  })
+}
 
 /**
  * Update account activation status
@@ -275,19 +275,17 @@ export const updateAccountActivationStatus = async (
   tenantId: string,
   schemaName: string,
   accountId: string,
-  isActive: boolean,
+  isActive: boolean
 ): Promise<Account> => {
   // Get account first to ensure it exists and belongs to tenant
-  const account = await findAccountById(tenantId, schemaName, accountId);
+  const account = await findAccountById(tenantId, schemaName, accountId)
 
   // Use shared connection with tenant schema search path
   return withTenantSchema(schemaName, async (trx) => {
-    const updatedAccount = await account
-      .$query(trx)
-      .patchAndFetch({ isActive });
-    return updatedAccount;
-  });
-};
+    const updatedAccount = await account.$query(trx).patchAndFetch({ isActive })
+    return updatedAccount
+  })
+}
 
 /**
  * Restore account (un-soft delete)
@@ -299,40 +297,40 @@ export const updateAccountActivationStatus = async (
 export const restoreAccount = async (
   tenantId: string,
   schemaName: string,
-  accountId: string,
+  accountId: string
 ): Promise<Account> => {
   // Use shared connection with tenant schema search path
   return withTenantSchema(schemaName, async (trx) => {
     const account = await Account.query(trx)
-      .modify("deleted")
-      .modify("byTenant", tenantId)
-      .findById(accountId);
+      .modify('deleted')
+      .modify('byTenant', tenantId)
+      .findById(accountId)
 
     if (!account) {
       throw new ApiError(
         HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.ACCOUNT_NOT_FOUND_OR_NOT_DELETED,
-      );
+        ERROR_MESSAGES.ACCOUNT_NOT_FOUND_OR_NOT_DELETED
+      )
     }
 
     // Restore the account using BaseModel restore() which handles timestamps automatically
-    await account.$query(trx).patch({ deletedAt: null });
+    await account.$query(trx).patch({ deletedAt: null })
 
     // Reload to get updated data
     const restoredAccount = await Account.query(trx)
-      .modify("byTenant", tenantId)
-      .findById(accountId);
+      .modify('byTenant', tenantId)
+      .findById(accountId)
 
     if (!restoredAccount) {
       throw new ApiError(
         HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.ACCOUNT_NOT_FOUND,
-      );
+        ERROR_MESSAGES.ACCOUNT_NOT_FOUND
+      )
     }
 
-    return restoredAccount;
-  });
-};
+    return restoredAccount
+  })
+}
 
 /**
  * Update account balance from transaction
@@ -348,31 +346,31 @@ export const updateAccountBalance = async (
   schemaName: string,
   accountId: string,
   amount: number,
-  isIncrease: boolean,
+  isIncrease: boolean
 ): Promise<Account> => {
   return withTenantSchema(schemaName, async (trx) => {
     const account = await Account.query(trx)
-      .modify("notDeleted")
-      .modify("byTenant", tenantId)
-      .findById(accountId);
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
+      .findById(accountId)
 
     if (!account) {
       throw new ApiError(
         HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.ACCOUNT_NOT_FOUND,
-      );
+        ERROR_MESSAGES.ACCOUNT_NOT_FOUND
+      )
     }
 
-    const amountNum = Number(amount || 0);
-    const newBalance = account.updateBalance(amountNum, isIncrease);
+    const amountNum = Number(amount || 0)
+    const newBalance = account.updateBalance(amountNum, isIncrease)
 
     const updated = await account.$query(trx).patchAndFetch({
       currentBalance: Number(newBalance),
-    });
+    })
 
-    return updated;
-  });
-};
+    return updated
+  })
+}
 
 /**
  * Reconcile account
@@ -388,27 +386,27 @@ export const reconcileAccount = async (
   schemaName: string,
   accountId: string,
   reconciledBalance: number,
-  reconciledBy: string,
+  reconciledBy: string
 ): Promise<Account> => {
   return withTenantSchema(schemaName, async (trx) => {
     const account = await Account.query(trx)
-      .modify("notDeleted")
-      .modify("byTenant", tenantId)
-      .findById(accountId);
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
+      .findById(accountId)
 
     if (!account) {
       throw new ApiError(
         HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.ACCOUNT_NOT_FOUND,
-      );
+        ERROR_MESSAGES.ACCOUNT_NOT_FOUND
+      )
     }
 
     const updated = await account.$query(trx).patchAndFetch({
       lastReconciledAt: getCurrentDate(),
       reconciledBalance,
       lastReconciledBy: reconciledBy,
-    });
+    })
 
-    return updated;
-  });
-};
+    return updated
+  })
+}

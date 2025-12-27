@@ -1,4 +1,4 @@
-import { Router, type Router as RouterType } from "express";
+import { Router, type Router as RouterType } from 'express'
 
 import {
   createTaxExemptionController,
@@ -9,21 +9,21 @@ import {
   getTaxExemptionById,
   restoreTaxExemptionById,
   updateTaxExemptionController,
-} from "@controllers/taxExemption.controller";
-import { authenticate } from "@middlewares/auth.middleware";
+} from '@controllers/taxExemption.controller'
+import { authenticate } from '@middlewares/auth.middleware'
 import {
   requireTenantContext,
   setTenantContext,
-} from "@middlewares/tenantContext.middleware";
-import { validate } from "@middlewares/validate.middleware";
+} from '@middlewares/tenantContext.middleware'
+import { validate } from '@middlewares/validate.middleware'
 import {
   createTaxExemptionSchema,
   taxExemptionIdSchema,
   taxExemptionListSchema,
   updateTaxExemptionSchema,
-} from "@schema/taxExemption.schema";
+} from '@schema/taxExemption.schema'
 
-const router: RouterType = Router();
+const router: RouterType = Router()
 
 /**
  * @swagger
@@ -176,13 +176,13 @@ const router: RouterType = Router();
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/",
+  '/',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxExemptionListSchema, "query"),
-  getAllTaxExemptions,
-);
+  validate(taxExemptionListSchema, 'query'),
+  getAllTaxExemptions
+)
 
 /**
  * @swagger
@@ -277,13 +277,13 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxExemptionIdSchema, "params"),
-  getTaxExemptionById,
-);
+  validate(taxExemptionIdSchema, 'params'),
+  getTaxExemptionById
+)
 
 /**
  * @swagger
@@ -389,13 +389,13 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/",
+  '/',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(createTaxExemptionSchema, "body"),
-  createTaxExemptionController,
-);
+  validate(createTaxExemptionSchema, 'body'),
+  createTaxExemptionController
+)
 
 /**
  * @swagger
@@ -487,14 +487,14 @@ router.post(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxExemptionIdSchema, "params"),
-  validate(updateTaxExemptionSchema, "body"),
-  updateTaxExemptionController,
-);
+  validate(taxExemptionIdSchema, 'params'),
+  validate(updateTaxExemptionSchema, 'body'),
+  updateTaxExemptionController
+)
 
 /**
  * @swagger
@@ -553,13 +553,13 @@ router.put(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxExemptionIdSchema, "params"),
-  deleteTaxExemptionById,
-);
+  validate(taxExemptionIdSchema, 'params'),
+  deleteTaxExemptionById
+)
 
 /**
  * @swagger
@@ -618,13 +618,13 @@ router.delete(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/enable",
+  '/:id/enable',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxExemptionIdSchema, "params"),
-  enableTaxExemption,
-);
+  validate(taxExemptionIdSchema, 'params'),
+  enableTaxExemption
+)
 
 /**
  * @swagger
@@ -683,13 +683,13 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/disable",
+  '/:id/disable',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxExemptionIdSchema, "params"),
-  disableTaxExemption,
-);
+  validate(taxExemptionIdSchema, 'params'),
+  disableTaxExemption
+)
 
 /**
  * @swagger
@@ -748,12 +748,12 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/restore",
+  '/:id/restore',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxExemptionIdSchema, "params"),
-  restoreTaxExemptionById,
-);
+  validate(taxExemptionIdSchema, 'params'),
+  restoreTaxExemptionById
+)
 
-export default router;
+export default router

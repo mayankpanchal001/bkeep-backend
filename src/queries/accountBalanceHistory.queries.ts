@@ -1,40 +1,40 @@
-import type { Knex } from "knex";
+import type { Knex } from 'knex'
 
 import {
   AccountBalanceHistory,
   BalanceChangeType,
-} from "@models/AccountBalanceHistory";
-import { formatDateToISOString, getCurrentDate } from "@utils/date";
-import { withTenantSchema } from "@utils/tenantQuery";
+} from '@models/AccountBalanceHistory'
+import { formatDateToISOString, getCurrentDate } from '@utils/date'
+import { withTenantSchema } from '@utils/tenantQuery'
 
 export interface CreateBalanceHistoryData {
-  accountId: string;
-  journalEntryId?: string | null;
-  journalEntryLineId?: string | null;
-  previousBalance: number;
-  newBalance: number;
-  changeAmount: number;
-  changeType: BalanceChangeType;
-  changeDate?: Date;
-  description?: string | null;
-  sourceModule?: string | null;
-  sourceId?: string | null;
-  createdBy: string;
+  accountId: string
+  journalEntryId?: string | null
+  journalEntryLineId?: string | null
+  previousBalance: number
+  newBalance: number
+  changeAmount: number
+  changeType: BalanceChangeType
+  changeDate?: Date
+  description?: string | null
+  sourceModule?: string | null
+  sourceId?: string | null
+  createdBy: string
 }
 
 export interface BalanceHistoryFilters {
-  accountId?: string;
-  journalEntryId?: string;
-  startDate?: Date;
-  endDate?: Date;
-  changeType?: BalanceChangeType;
-  page: number;
-  limit: number;
+  accountId?: string
+  journalEntryId?: string
+  startDate?: Date
+  endDate?: Date
+  changeType?: BalanceChangeType
+  page: number
+  limit: number
 }
 
 export interface BalanceHistoryListResult {
-  history: AccountBalanceHistory[];
-  total: number;
+  history: AccountBalanceHistory[]
+  total: number
 }
 
 /**
@@ -49,10 +49,10 @@ export const createBalanceHistory = async (
   tenantId: string,
   schemaName: string,
   data: CreateBalanceHistoryData,
-  trx?: Knex.Transaction,
+  trx?: Knex.Transaction
 ): Promise<AccountBalanceHistory> => {
   const execute = async (transaction: Knex.Transaction) => {
-    const changeDate = data.changeDate ?? getCurrentDate();
+    const changeDate = data.changeDate ?? getCurrentDate()
     const insertData = {
       ...data,
       tenantId,
@@ -60,17 +60,17 @@ export const createBalanceHistory = async (
       newBalance: Number(data.newBalance),
       changeAmount: Number(data.changeAmount),
       changeDate: formatDateToISOString(changeDate) as unknown as Date,
-    };
+    }
 
-    return AccountBalanceHistory.query(transaction).insert(insertData);
-  };
-
-  if (trx) {
-    return execute(trx);
+    return AccountBalanceHistory.query(transaction).insert(insertData)
   }
 
-  return withTenantSchema(schemaName, execute);
-};
+  if (trx) {
+    return execute(trx)
+  }
+
+  return withTenantSchema(schemaName, execute)
+}
 
 /**
  * Find balance history records with filters
@@ -82,43 +82,43 @@ export const createBalanceHistory = async (
 export const findBalanceHistory = async (
   tenantId: string,
   schemaName: string,
-  filters: BalanceHistoryFilters,
+  filters: BalanceHistoryFilters
 ): Promise<BalanceHistoryListResult> => {
   return withTenantSchema(schemaName, async (trx) => {
     let query = AccountBalanceHistory.query(trx)
-      .modify("notDeleted")
-      .modify("byTenant", tenantId);
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
 
     // Apply filters
     if (filters.accountId) {
-      query = query.modify("byAccount", filters.accountId);
+      query = query.modify('byAccount', filters.accountId)
     }
 
     if (filters.journalEntryId) {
-      query = query.modify("byJournalEntry", filters.journalEntryId);
+      query = query.modify('byJournalEntry', filters.journalEntryId)
     }
 
     if (filters.startDate && filters.endDate) {
-      query = query.modify("byDateRange", filters.startDate, filters.endDate);
+      query = query.modify('byDateRange', filters.startDate, filters.endDate)
     }
 
     if (filters.changeType) {
-      query = query.modify("byChangeType", filters.changeType);
+      query = query.modify('byChangeType', filters.changeType)
     }
 
     // Get total count
-    const total = await query.resultSize();
+    const total = await query.resultSize()
 
     // Apply pagination and sorting
-    const offset = (filters.page - 1) * filters.limit;
+    const offset = (filters.page - 1) * filters.limit
     const history = await query
-      .modify("recentFirst")
+      .modify('recentFirst')
       .limit(filters.limit)
-      .offset(offset);
+      .offset(offset)
 
-    return { history, total };
-  });
-};
+    return { history, total }
+  })
+}
 
 /**
  * Find balance history by account ID
@@ -132,17 +132,17 @@ export const findBalanceHistoryByAccount = async (
   tenantId: string,
   schemaName: string,
   accountId: string,
-  limit: number = 100,
+  limit: number = 100
 ): Promise<AccountBalanceHistory[]> => {
   return withTenantSchema(schemaName, async (trx) => {
     return AccountBalanceHistory.query(trx)
-      .modify("notDeleted")
-      .modify("byTenant", tenantId)
-      .modify("byAccount", accountId)
-      .modify("recentFirst")
-      .limit(limit);
-  });
-};
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
+      .modify('byAccount', accountId)
+      .modify('recentFirst')
+      .limit(limit)
+  })
+}
 
 /**
  * Find balance history by journal entry ID
@@ -154,16 +154,16 @@ export const findBalanceHistoryByAccount = async (
 export const findBalanceHistoryByJournalEntry = async (
   tenantId: string,
   schemaName: string,
-  journalEntryId: string,
+  journalEntryId: string
 ): Promise<AccountBalanceHistory[]> => {
   return withTenantSchema(schemaName, async (trx) => {
     return AccountBalanceHistory.query(trx)
-      .modify("notDeleted")
-      .modify("byTenant", tenantId)
-      .modify("byJournalEntry", journalEntryId)
-      .modify("recentFirst");
-  });
-};
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
+      .modify('byJournalEntry', journalEntryId)
+      .modify('recentFirst')
+  })
+}
 
 /**
  * Get account balance at a specific point in time
@@ -177,21 +177,21 @@ export const getAccountBalanceAsOf = async (
   tenantId: string,
   schemaName: string,
   accountId: string,
-  asOfDate: Date,
+  asOfDate: Date
 ): Promise<number | null> => {
   return withTenantSchema(schemaName, async (trx) => {
     const history = await AccountBalanceHistory.query(trx)
-      .modify("notDeleted")
-      .modify("byTenant", tenantId)
-      .modify("byAccount", accountId)
-      .where("change_date", "<=", asOfDate)
-      .modify("recentFirst")
-      .first();
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
+      .modify('byAccount', accountId)
+      .where('change_date', '<=', asOfDate)
+      .modify('recentFirst')
+      .first()
 
     if (!history) {
-      return null;
+      return null
     }
 
-    return history.newBalance;
-  });
-};
+    return history.newBalance
+  })
+}

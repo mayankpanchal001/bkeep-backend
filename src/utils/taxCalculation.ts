@@ -3,27 +3,27 @@
  * Provides utilities for calculating taxes with groups and exemptions
  */
 
-import type { Tax, TaxType } from "@models/Tax";
-import type { TaxGroup } from "@models/TaxGroup";
-import { isContactExemptFromTax } from "@queries/taxExemption.queries";
-import { withTenantSchema } from "@utils/tenantQuery";
+import type { Tax, TaxType } from '@models/Tax'
+import type { TaxGroup } from '@models/TaxGroup'
+import { isContactExemptFromTax } from '@queries/taxExemption.queries'
+import { withTenantSchema } from '@utils/tenantQuery'
 
 /**
  * Tax calculation result
  */
 export interface TaxCalculationResult {
-  baseAmount: number;
-  taxAmount: number;
-  totalAmount: number;
-  effectiveRate: number;
+  baseAmount: number
+  taxAmount: number
+  totalAmount: number
+  effectiveRate: number
   taxBreakdown: Array<{
-    taxId: string;
-    taxName: string;
-    taxType: TaxType;
-    taxRate: number;
-    taxAmount: number;
-    isExempt: boolean;
-  }>;
+    taxId: string
+    taxName: string
+    taxType: TaxType
+    taxRate: number
+    taxAmount: number
+    isExempt: boolean
+  }>
 }
 
 /**
@@ -40,29 +40,29 @@ export const calculateTaxWithExemptions = async (
   taxes: Tax[],
   contactId: string | null,
   tenantId: string,
-  schemaName: string,
+  schemaName: string
 ): Promise<TaxCalculationResult> => {
-  let currentAmount = amount;
-  let totalTax = 0;
-  const taxBreakdown: TaxCalculationResult["taxBreakdown"] = [];
+  let currentAmount = amount
+  let totalTax = 0
+  const taxBreakdown: TaxCalculationResult['taxBreakdown'] = []
 
   // Process each tax
   for (const tax of taxes) {
     // Check if contact is exempt from this tax
-    let isExempt = false;
+    let isExempt = false
     if (contactId) {
       isExempt = await isContactExemptFromTax(
         tenantId,
         schemaName,
         contactId,
-        tax.id,
-      );
+        tax.id
+      )
     }
 
     if (!isExempt) {
       // Calculate tax amount
-      const taxAmount = tax.calculateTax(currentAmount);
-      totalTax += taxAmount;
+      const taxAmount = tax.calculateTax(currentAmount)
+      totalTax += taxAmount
 
       taxBreakdown.push({
         taxId: tax.id,
@@ -71,11 +71,11 @@ export const calculateTaxWithExemptions = async (
         taxRate: tax.rate,
         taxAmount,
         isExempt: false,
-      });
+      })
 
       // For compound taxes, add tax to base for next calculation
-      if (tax.type === "compound") {
-        currentAmount += taxAmount;
+      if (tax.type === 'compound') {
+        currentAmount += taxAmount
       }
     } else {
       taxBreakdown.push({
@@ -85,12 +85,12 @@ export const calculateTaxWithExemptions = async (
         taxRate: tax.rate,
         taxAmount: 0,
         isExempt: true,
-      });
+      })
     }
   }
 
-  const totalAmount = amount + totalTax;
-  const effectiveRate = amount > 0 ? (totalTax / amount) * 100 : 0;
+  const totalAmount = amount + totalTax
+  const effectiveRate = amount > 0 ? (totalTax / amount) * 100 : 0
 
   return {
     baseAmount: amount,
@@ -98,8 +98,8 @@ export const calculateTaxWithExemptions = async (
     totalAmount,
     effectiveRate: Number(effectiveRate.toFixed(2)),
     taxBreakdown,
-  };
-};
+  }
+}
 
 /**
  * Calculate tax with tax group and exemptions
@@ -115,7 +115,7 @@ export const calculateTaxWithGroupAndExemptions = async (
   taxGroup: TaxGroup,
   contactId: string | null,
   tenantId: string,
-  schemaName: string,
+  schemaName: string
 ): Promise<TaxCalculationResult> => {
   if (!taxGroup.taxes || taxGroup.taxes.length === 0) {
     return {
@@ -124,7 +124,7 @@ export const calculateTaxWithGroupAndExemptions = async (
       totalAmount: amount,
       effectiveRate: 0,
       taxBreakdown: [],
-    };
+    }
   }
 
   return calculateTaxWithExemptions(
@@ -132,9 +132,9 @@ export const calculateTaxWithGroupAndExemptions = async (
     taxGroup.taxes,
     contactId,
     tenantId,
-    schemaName,
-  );
-};
+    schemaName
+  )
+}
 
 /**
  * Calculate tax with individual taxes and exemptions
@@ -150,21 +150,21 @@ export const calculateTaxWithTaxIds = async (
   taxIds: string[],
   contactId: string | null,
   tenantId: string,
-  schemaName: string,
+  schemaName: string
 ): Promise<TaxCalculationResult> => {
   return withTenantSchema(schemaName, async (trx) => {
-    const { Tax } = await import("@models/Tax");
+    const { Tax } = await import('@models/Tax')
 
     // Fetch taxes
     const taxes = await Tax.query(trx)
-      .modify("notDeleted")
-      .modify("byTenant", tenantId)
-      .modify("active")
-      .whereIn("id", taxIds)
-      .orderBy("type", "asc"); // Order by type for proper compound tax calculation
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
+      .modify('active')
+      .whereIn('id', taxIds)
+      .orderBy('type', 'asc') // Order by type for proper compound tax calculation
 
     if (taxes.length !== taxIds.length) {
-      throw new Error("One or more tax IDs are invalid");
+      throw new Error('One or more tax IDs are invalid')
     }
 
     return calculateTaxWithExemptions(
@@ -172,10 +172,10 @@ export const calculateTaxWithTaxIds = async (
       taxes,
       contactId,
       tenantId,
-      schemaName,
-    );
-  });
-};
+      schemaName
+    )
+  })
+}
 
 /**
  * Calculate tax with tax group ID and exemptions
@@ -191,16 +191,16 @@ export const calculateTaxWithGroupId = async (
   taxGroupId: string,
   contactId: string | null,
   tenantId: string,
-  schemaName: string,
+  schemaName: string
 ): Promise<TaxCalculationResult> => {
-  const { findTaxGroupById } = await import("@queries/taxGroup.queries");
-  const taxGroup = await findTaxGroupById(tenantId, schemaName, taxGroupId);
+  const { findTaxGroupById } = await import('@queries/taxGroup.queries')
+  const taxGroup = await findTaxGroupById(tenantId, schemaName, taxGroupId)
 
   return calculateTaxWithGroupAndExemptions(
     amount,
     taxGroup,
     contactId,
     tenantId,
-    schemaName,
-  );
-};
+    schemaName
+  )
+}

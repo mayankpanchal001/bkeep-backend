@@ -3,31 +3,31 @@
  * Type definitions for tenant-related data structures
  */
 
-import type { Tenant } from "@models/Tenant";
+import type { Tenant } from '@models/Tenant'
 
 /**
  * Tenant list item data
  */
 export interface TenantListItem {
-  id: string;
-  name: string;
-  isActive: boolean;
-  isPrimary: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  id: string
+  name: string
+  isActive: boolean
+  isPrimary: boolean
+  createdAt: Date
+  updatedAt: Date
 }
 
 /**
  * Tenant list data with pagination
  */
 export interface TenantListData {
-  items: TenantListItem[];
+  items: TenantListItem[]
   pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
 }
 
 /**
@@ -35,10 +35,10 @@ export interface TenantListData {
  */
 export interface TenantDetailData extends Tenant {
   users?: Array<{
-    id: string;
-    name: string;
-    email: string;
-    isVerified: boolean;
-    isPrimary: boolean;
-  }>;
+    id: string
+    name: string
+    email: string
+    isVerified: boolean
+    isPrimary: boolean
+  }>
 }

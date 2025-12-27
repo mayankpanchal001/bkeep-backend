@@ -1,7 +1,7 @@
-import type { QueryBuilder } from "objection";
+import type { QueryBuilder } from 'objection'
 
-import { BaseModel } from "@models/BaseModel";
-import { User } from "@models/User";
+import { BaseModel } from '@models/BaseModel'
+import { User } from '@models/User'
 
 /**
  * Tenant Model
@@ -11,47 +11,47 @@ import { User } from "@models/User";
 export class Tenant extends BaseModel {
   // Table name
   static override get tableName(): string {
-    return "tenants";
+    return 'tenants'
   }
 
   // Model properties (inherits id, createdAt, updatedAt, deletedAt from BaseModel)
-  declare id: string;
-  declare createdAt: Date;
-  declare updatedAt: Date;
-  declare deletedAt?: Date | null;
+  declare id: string
+  declare createdAt: Date
+  declare updatedAt: Date
+  declare deletedAt?: Date | null
 
-  name!: string;
-  schemaName!: string;
-  isActive!: boolean;
+  name!: string
+  schemaName!: string
+  isActive!: boolean
 
   // Relations
   users?: Array<{
-    id: string;
-    name: string;
-    email: string;
-    isVerified: boolean;
-  }>;
+    id: string
+    name: string
+    email: string
+    isVerified: boolean
+  }>
 
   // JSON Schema for validation
   static override get jsonSchema() {
     return {
-      type: "object",
-      required: ["name", "schemaName"],
+      type: 'object',
+      required: ['name', 'schemaName'],
       properties: {
-        id: { type: "string", format: "uuid" },
-        name: { type: "string", minLength: 1, maxLength: 255 },
+        id: { type: 'string', format: 'uuid' },
+        name: { type: 'string', minLength: 1, maxLength: 255 },
         schemaName: {
-          type: "string",
+          type: 'string',
           minLength: 1,
           maxLength: 63, // PostgreSQL schema name limit
-          pattern: "^[a-z][a-z0-9_]*$", // Lowercase, alphanumeric, underscore
+          pattern: '^[a-z][a-z0-9_]*$', // Lowercase, alphanumeric, underscore
         },
-        isActive: { type: "boolean", default: true },
-        createdAt: { type: "string", format: "date-time" },
-        updatedAt: { type: "string", format: "date-time" },
-        deletedAt: { type: ["string", "null"], format: "date-time" },
+        isActive: { type: 'boolean', default: true },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' },
+        deletedAt: { type: ['string', 'null'], format: 'date-time' },
       },
-    };
+    }
   }
 
   /**
@@ -63,19 +63,19 @@ export class Tenant extends BaseModel {
         relation: BaseModel.ManyToManyRelation,
         modelClass: User,
         join: {
-          from: "tenants.id",
+          from: 'tenants.id',
           through: {
-            from: "user_tenants.tenant_id",
-            to: "user_tenants.user_id",
+            from: 'user_tenants.tenant_id',
+            to: 'user_tenants.user_id',
             extra: {
-              isPrimary: "is_primary",
-              createdAt: "created_at",
+              isPrimary: 'is_primary',
+              createdAt: 'created_at',
             },
           },
-          to: "users.id",
+          to: 'users.id',
         },
       },
-    };
+    }
   }
 
   /**
@@ -89,32 +89,32 @@ export class Tenant extends BaseModel {
       search(query: QueryBuilder<Tenant>, searchTerm: string) {
         query.where((builder: QueryBuilder<Tenant>) => {
           builder
-            .where("name", "ilike", `%${searchTerm}%`)
-            .orWhere("schema_name", "ilike", `%${searchTerm}%`);
-        });
+            .where('name', 'ilike', `%${searchTerm}%`)
+            .orWhere('schema_name', 'ilike', `%${searchTerm}%`)
+        })
       },
       // Only active tenants (is_active = true)
       active(query: QueryBuilder<Tenant>) {
-        query.where("is_active", true);
+        query.where('is_active', true)
       },
       // Only inactive tenants (is_active = false)
       inactive(query: QueryBuilder<Tenant>) {
-        query.where("is_active", false);
+        query.where('is_active', false)
       },
-    };
+    }
   }
 
   /**
    * Scope: Find by schema name (only active, non-deleted tenants)
    */
   static async findBySchemaName(
-    schemaName: string,
+    schemaName: string
   ): Promise<Tenant | undefined> {
     return this.query()
-      .modify("notDeleted")
-      .modify("active")
-      .where("schema_name", schemaName)
-      .first();
+      .modify('notDeleted')
+      .modify('active')
+      .where('schema_name', schemaName)
+      .first()
   }
 
   /**
@@ -122,16 +122,16 @@ export class Tenant extends BaseModel {
    */
   static async search(term: string): Promise<Tenant[]> {
     return this.query()
-      .modify("notDeleted")
-      .modify("active")
-      .modify("search", term);
+      .modify('notDeleted')
+      .modify('active')
+      .modify('search', term)
   }
 
   /**
    * Scope: Get only active (non-deleted) tenants
    */
   static async findActive(): Promise<Tenant[]> {
-    return this.query().modify("notDeleted").modify("active");
+    return this.query().modify('notDeleted').modify('active')
   }
 
   /**
@@ -139,10 +139,10 @@ export class Tenant extends BaseModel {
    */
   getFullSchemaName(): string {
     // Ensure schema name follows tenant_ prefix pattern
-    if (this.schemaName.startsWith("tenant_")) {
-      return this.schemaName;
+    if (this.schemaName.startsWith('tenant_')) {
+      return this.schemaName
     }
-    return `tenant_${this.schemaName}`;
+    return `tenant_${this.schemaName}`
   }
 
   /**
@@ -154,7 +154,7 @@ export class Tenant extends BaseModel {
     // - Can contain letters, digits, underscores
     // - Max 63 characters
     // - Lowercase recommended
-    const schemaNameRegex = /^[a-z][\d_a-z]{0,62}$/;
-    return schemaNameRegex.test(schemaName.toLowerCase());
+    const schemaNameRegex = /^[a-z][\d_a-z]{0,62}$/
+    return schemaNameRegex.test(schemaName.toLowerCase())
   }
 }

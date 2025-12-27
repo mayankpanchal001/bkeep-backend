@@ -3,50 +3,50 @@
  * Loads and renders HTML email templates with context data
  */
 
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
 
-import { MailTemplate } from "@/types/mail.type";
-import logger from "@config/logger";
-import { MAIL_TEMPLATES } from "@constants/mail";
-import { getCurrentMoment } from "@utils/date";
+import { MailTemplate } from '@/types/mail.type'
+import logger from '@config/logger'
+import { MAIL_TEMPLATES } from '@constants/mail'
+import { getCurrentMoment } from '@utils/date'
 
 /**
  * Template cache to avoid reading files multiple times
  */
-const templateCache = new Map<MailTemplate, string>();
+const templateCache = new Map<MailTemplate, string>()
 
 /**
  * Load HTML template from file system
  */
 async function loadTemplate(template: MailTemplate): Promise<string> {
   // Check cache first
-  const cached = templateCache.get(template);
+  const cached = templateCache.get(template)
   if (cached) {
-    return cached;
+    return cached
   }
 
   try {
     // eslint-disable-next-line security/detect-object-injection
-    const templateFileName = MAIL_TEMPLATES[template] as string;
+    const templateFileName = MAIL_TEMPLATES[template] as string
     const templatePath = join(
       __dirname,
-      "..",
-      "..",
-      "public",
-      "templates",
-      templateFileName,
-    );
+      '..',
+      '..',
+      'public',
+      'templates',
+      templateFileName
+    )
     // eslint-disable-next-line security/detect-non-literal-fs-filename
-    const html = await readFile(templatePath, "utf-8");
+    const html = await readFile(templatePath, 'utf-8')
 
     // Cache the template
-    templateCache.set(template, html);
+    templateCache.set(template, html)
 
-    return html;
+    return html
   } catch (error) {
-    logger.error(`Failed to load mail template ${template}:`, error);
-    throw new Error(`Failed to load mail template: ${template}`);
+    logger.error(`Failed to load mail template ${template}:`, error)
+    throw new Error(`Failed to load mail template: ${template}`)
   }
 }
 
@@ -56,28 +56,28 @@ async function loadTemplate(template: MailTemplate): Promise<string> {
  */
 function renderTemplate(
   html: string,
-  context: Record<string, unknown>,
+  context: Record<string, unknown>
 ): string {
-  let rendered = html;
+  let rendered = html
 
   // Replace all {{variable}} placeholders with context values
   for (const [key, value] of Object.entries(context)) {
     // eslint-disable-next-line security/detect-non-literal-regexp
-    const regex = new RegExp(`{{${key}}}`, "g");
-    rendered = rendered.replaceAll(regex, String(value ?? ""));
+    const regex = new RegExp(`{{${key}}}`, 'g')
+    rendered = rendered.replaceAll(regex, String(value ?? ''))
   }
 
   // Add current year if not provided
-  const currentYearKey = "currentYear";
+  const currentYearKey = 'currentYear'
   // eslint-disable-next-line security/detect-object-injection
   if (!context[currentYearKey]) {
     rendered = rendered.replaceAll(
-      "{{currentYear}}",
-      String(getCurrentMoment().year()),
-    );
+      '{{currentYear}}',
+      String(getCurrentMoment().year())
+    )
   }
 
-  return rendered;
+  return rendered
 }
 
 /**
@@ -85,14 +85,14 @@ function renderTemplate(
  */
 export async function renderMailTemplate(
   template: MailTemplate,
-  context: Record<string, unknown>,
+  context: Record<string, unknown>
 ): Promise<string> {
   try {
-    const html = await loadTemplate(template);
-    return renderTemplate(html, context);
+    const html = await loadTemplate(template)
+    return renderTemplate(html, context)
   } catch (error) {
-    logger.error(`Failed to render mail template ${template}:`, error);
-    throw error;
+    logger.error(`Failed to render mail template ${template}:`, error)
+    throw error
   }
 }
 
@@ -100,5 +100,5 @@ export async function renderMailTemplate(
  * Clear template cache (useful for testing or development)
  */
 export function clearTemplateCache(): void {
-  templateCache.clear();
+  templateCache.clear()
 }

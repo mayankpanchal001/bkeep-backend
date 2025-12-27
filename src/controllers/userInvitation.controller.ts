@@ -1,14 +1,14 @@
-import type { RequestHandler } from "express";
-import { Request, Response } from "express";
+import type { RequestHandler } from 'express'
+import { Request, Response } from 'express'
 
-import { env } from "@config/env";
-import logger from "@config/logger";
-import { ERROR_MESSAGES } from "@constants/errors";
-import { HTTP_STATUS } from "@constants/http";
-import { SECURITY_RULES } from "@constants/security";
-import { SUCCESS_MESSAGES } from "@constants/success";
-import type { AuthenticatedRequest } from "@middlewares/auth.middleware";
-import { findUserById } from "@queries/user.queries";
+import { env } from '@config/env'
+import logger from '@config/logger'
+import { ERROR_MESSAGES } from '@constants/errors'
+import { HTTP_STATUS } from '@constants/http'
+import { SECURITY_RULES } from '@constants/security'
+import { SUCCESS_MESSAGES } from '@constants/success'
+import type { AuthenticatedRequest } from '@middlewares/auth.middleware'
+import { findUserById } from '@queries/user.queries'
 import {
   acceptUserInvitation,
   createUserInvitation,
@@ -17,19 +17,19 @@ import {
   revokeUserInvitation,
   verifyInvitationToken,
   type CreateUserInvitationData,
-} from "@queries/userInvitation.queries";
-import { getPaginationMetadata } from "@schema/shared.schema";
+} from '@queries/userInvitation.queries'
+import { getPaginationMetadata } from '@schema/shared.schema'
 import type {
   InvitationIdInput,
   InvitationListInput,
-} from "@schema/user.schema";
+} from '@schema/user.schema'
 import {
   queueUserInvitationEmail,
   queueWelcomeEmail,
-} from "@services/mailQueue.service";
-import { ApiError } from "@utils/ApiError";
-import { ApiResponse } from "@utils/ApiResponse";
-import asyncHandler from "@utils/asyncHandler";
+} from '@services/mailQueue.service'
+import { ApiError } from '@utils/ApiError'
+import { ApiResponse } from '@utils/ApiResponse'
+import asyncHandler from '@utils/asyncHandler'
 
 /**
  * Get all invitations controller
@@ -38,52 +38,48 @@ import asyncHandler from "@utils/asyncHandler";
  */
 export const getAllInvitations: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user;
+    const user = req.user
     if (!user?.selectedTenantId) {
       throw new ApiError(
         HTTP_STATUS.FORBIDDEN,
-        ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED,
-      );
+        ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED
+      )
     }
 
     // Get validated query parameters
     const filters = (
       req as AuthenticatedRequest & {
-        validatedData: InvitationListInput;
+        validatedData: InvitationListInput
       }
-    ).validatedData;
+    ).validatedData
 
     // Fetch invitations with filters (filtered by tenant)
     const { invitations, total } = await findInvitations(
       filters,
-      user.selectedTenantId,
-    );
+      user.selectedTenantId
+    )
 
     // Transform invitations to response format (exclude sensitive fields)
     const items = invitations.map((invitation) => ({
       id: invitation.id,
-      email: invitation.user?.email ?? "",
-      userName: invitation.user?.name ?? "",
+      email: invitation.user?.email ?? '',
+      userName: invitation.user?.name ?? '',
       tenant: {
         id: invitation.tenant?.id,
         name: invitation.tenant?.name,
       },
       createdAt: invitation.createdAt,
       updatedAt: invitation.updatedAt,
-    }));
+    }))
 
     // Get pagination metadata
-    const pagination = getPaginationMetadata(
-      filters.page,
-      filters.limit,
-      total,
-    );
+    const pagination = getPaginationMetadata(filters.page, filters.limit, total)
 
     // Prepare response data
     const responseData = {
       items,
       pagination,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -91,11 +87,11 @@ export const getAllInvitations: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.INVITATIONS_RETRIEVED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Invite user controller
@@ -104,23 +100,23 @@ export const getAllInvitations: RequestHandler = asyncHandler(
  */
 export const inviteUser: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user;
+    const user = req.user
     if (!user) {
       throw new ApiError(
         HTTP_STATUS.UNAUTHORIZED,
-        ERROR_MESSAGES.USER_NOT_AUTHENTICATED,
-      );
+        ERROR_MESSAGES.USER_NOT_AUTHENTICATED
+      )
     }
 
     if (!user.selectedTenantId) {
       throw new ApiError(
         HTTP_STATUS.FORBIDDEN,
-        ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED,
-      );
+        ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED
+      )
     }
 
     // Get validated body data
-    const { name, email, roleId } = req.body;
+    const { name, email, roleId } = req.body
 
     // Create invitation
     const invitationData: CreateUserInvitationData = {
@@ -129,33 +125,33 @@ export const inviteUser: RequestHandler = asyncHandler(
       roleId,
       tenantId: user.selectedTenantId,
       invitedBy: user.id,
-    };
+    }
 
     const { invitation, plainToken } =
-      await createUserInvitation(invitationData);
+      await createUserInvitation(invitationData)
 
     // Send invitation email via queue
     try {
       // Fetch inviting user's name
-      const invitingUser = await findUserById(user.id);
+      const invitingUser = await findUserById(user.id)
 
-      const acceptUrl = `${env.FRONTEND_URL}/accept-invitation?token=${plainToken}`;
+      const acceptUrl = `${env.FRONTEND_URL}/accept-invitation?token=${plainToken}`
       await queueUserInvitationEmail({
         to: invitation.user?.email ?? email,
         acceptUrl,
-        tenantName: invitation.tenant?.name ?? "the organization",
+        tenantName: invitation.tenant?.name ?? 'the organization',
         expiryDays: Math.floor(
-          SECURITY_RULES.USER_INVITATION_TOKEN_EXPIRY_MINUTES / 60 / 24,
+          SECURITY_RULES.USER_INVITATION_TOKEN_EXPIRY_MINUTES / 60 / 24
         ),
-        userName: invitation.user?.name ?? name ?? "User",
+        userName: invitation.user?.name ?? name ?? 'User',
         invitedBy: invitingUser.name,
-      });
+      })
       logger.info(
-        `Invitation email queued for ${invitation.user?.email ?? email}`,
-      );
+        `Invitation email queued for ${invitation.user?.email ?? email}`
+      )
     } catch (error) {
       // Log error but don't fail the request
-      logger.error("Failed to queue invitation email:", error);
+      logger.error('Failed to queue invitation email:', error)
     }
 
     res.status(HTTP_STATUS.CREATED).json(
@@ -167,10 +163,10 @@ export const inviteUser: RequestHandler = asyncHandler(
           name: invitation.tenant?.name,
         },
         createdAt: invitation.createdAt,
-      }),
-    );
-  },
-);
+      })
+    )
+  }
+)
 
 /**
  * Verify invitation token
@@ -182,12 +178,12 @@ export const verifyInvitation: RequestHandler = asyncHandler(
     // Get validated query parameters
     const { token } = (
       req as Request & {
-        validatedData: { token: string };
+        validatedData: { token: string }
       }
-    ).validatedData;
+    ).validatedData
 
     // Verify invitation token
-    const invitationStatus = await verifyInvitationToken(token);
+    const invitationStatus = await verifyInvitationToken(token)
 
     res
       .status(HTTP_STATUS.OK)
@@ -195,11 +191,11 @@ export const verifyInvitation: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.INVITATION_VERIFIED,
-          invitationStatus,
-        ),
-      );
-  },
-);
+          invitationStatus
+        )
+      )
+  }
+)
 
 /**
  * Accept invitation
@@ -209,34 +205,33 @@ export const acceptInvitation: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     // Get validated body data
     const { token, password } = req.body as {
-      token: string;
-      password?: string;
-    };
+      token: string
+      password?: string
+    }
 
     // Accept invitation
     const user = await acceptUserInvitation({
       token,
       ...(password !== undefined && { password }),
-    });
+    })
 
     try {
       // Get the primary tenant (first tenant or primary tenant)
       const primaryTenant =
-        user.tenants?.find((t) => t.userTenants?.isPrimary) ??
-        user.tenants?.[0];
+        user.tenants?.find((t) => t.userTenants?.isPrimary) ?? user.tenants?.[0]
 
-      const loginUrl = `${env.FRONTEND_URL}/login`;
+      const loginUrl = `${env.FRONTEND_URL}/login`
 
       // Send welcome email via queue
       await queueWelcomeEmail({
         to: user.email,
         userName: user.name,
-        tenantName: primaryTenant?.name ?? "BKeep",
+        tenantName: primaryTenant?.name ?? 'BKeep',
         loginUrl,
-      });
+      })
     } catch (error) {
       // Log error but don't fail the request
-      logger.error("Failed to queue welcome email:", error);
+      logger.error('Failed to queue welcome email:', error)
     }
 
     // Prepare response data (exclude sensitive fields)
@@ -247,15 +242,15 @@ export const acceptInvitation: RequestHandler = asyncHandler(
       isVerified: user.isVerified,
       isActive: user.isActive,
       mfaEnabled: user.mfaEnabled,
-    };
+    }
 
     res.status(HTTP_STATUS.OK).json(
       new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.INVITATION_ACCEPTED, {
         user: userData,
-      }),
-    );
-  },
-);
+      })
+    )
+  }
+)
 
 /**
  * Revoke invitation
@@ -264,26 +259,26 @@ export const acceptInvitation: RequestHandler = asyncHandler(
  */
 export const revokeInvitation: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user;
+    const user = req.user
     if (!user?.selectedTenantId) {
       throw new ApiError(
         HTTP_STATUS.FORBIDDEN,
-        ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED,
-      );
+        ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED
+      )
     }
 
     // Get validated params
     const { invitationId } = (
       req as AuthenticatedRequest & {
-        validatedData: InvitationIdInput;
+        validatedData: InvitationIdInput
       }
-    ).validatedData;
+    ).validatedData
 
     // Revoke invitation (filtered by tenant)
     const revokedInvitation = await revokeUserInvitation(
       invitationId,
-      user.selectedTenantId,
-    );
+      user.selectedTenantId
+    )
 
     res.status(HTTP_STATUS.OK).json(
       new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.INVITATION_REVOKED, {
@@ -293,10 +288,10 @@ export const revokeInvitation: RequestHandler = asyncHandler(
           id: revokedInvitation.tenant?.id,
           name: revokedInvitation.tenant?.name,
         },
-      }),
-    );
-  },
-);
+      })
+    )
+  }
+)
 
 /**
  * Resend invitation
@@ -305,49 +300,49 @@ export const revokeInvitation: RequestHandler = asyncHandler(
  */
 export const resendInvitation: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user;
+    const user = req.user
     if (!user?.selectedTenantId) {
       throw new ApiError(
         HTTP_STATUS.FORBIDDEN,
-        ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED,
-      );
+        ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED
+      )
     }
 
     // Get validated params
     const { invitationId } = (
       req as AuthenticatedRequest & {
-        validatedData: InvitationIdInput;
+        validatedData: InvitationIdInput
       }
-    ).validatedData;
+    ).validatedData
 
     // Resend invitation (generates new token, filtered by tenant)
     const { invitation, plainToken } = await resendUserInvitation(
       invitationId,
-      user.selectedTenantId,
-    );
+      user.selectedTenantId
+    )
 
     // Send invitation email via queue
     try {
       // Fetch inviting user's name
-      const invitingUser = await findUserById(invitation.invitedBy);
+      const invitingUser = await findUserById(invitation.invitedBy)
 
-      const acceptUrl = `${env.FRONTEND_URL}/accept-invitation?token=${plainToken}`;
+      const acceptUrl = `${env.FRONTEND_URL}/accept-invitation?token=${plainToken}`
       await queueUserInvitationEmail({
-        to: invitation.user?.email ?? "",
+        to: invitation.user?.email ?? '',
         acceptUrl,
-        tenantName: invitation.tenant?.name ?? "the organization",
+        tenantName: invitation.tenant?.name ?? 'the organization',
         expiryDays: Math.floor(
-          SECURITY_RULES.USER_INVITATION_TOKEN_EXPIRY_MINUTES / 60 / 24,
+          SECURITY_RULES.USER_INVITATION_TOKEN_EXPIRY_MINUTES / 60 / 24
         ),
-        userName: invitation.user?.name ?? "User",
+        userName: invitation.user?.name ?? 'User',
         invitedBy: invitingUser.name,
-      });
+      })
       logger.info(
-        `Invitation email queued for ${invitation.user?.email ?? "unknown"}`,
-      );
+        `Invitation email queued for ${invitation.user?.email ?? 'unknown'}`
+      )
     } catch (error) {
       // Log error but don't fail the request
-      logger.error("Failed to queue invitation email:", error);
+      logger.error('Failed to queue invitation email:', error)
     }
 
     res.status(HTTP_STATUS.OK).json(
@@ -359,7 +354,7 @@ export const resendInvitation: RequestHandler = asyncHandler(
           name: invitation.tenant?.name,
         },
         createdAt: invitation.createdAt,
-      }),
-    );
-  },
-);
+      })
+    )
+  }
+)

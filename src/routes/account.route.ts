@@ -1,4 +1,4 @@
-import { Router, type Router as RouterType } from "express";
+import { Router, type Router as RouterType } from 'express'
 
 import {
   activateAccount,
@@ -10,21 +10,21 @@ import {
   getAllAccounts,
   restoreAccountById,
   updateAccountController,
-} from "@controllers/account.controller";
-import { authenticate } from "@middlewares/auth.middleware";
+} from '@controllers/account.controller'
+import { authenticate } from '@middlewares/auth.middleware'
 import {
   requireTenantContext,
   setTenantContext,
-} from "@middlewares/tenantContext.middleware";
-import { validate } from "@middlewares/validate.middleware";
+} from '@middlewares/tenantContext.middleware'
+import { validate } from '@middlewares/validate.middleware'
 import {
   accountIdSchema,
   accountListSchema,
   createAccountSchema,
   updateAccountSchema,
-} from "@schema/account.schema";
+} from '@schema/account.schema'
 
-const router: RouterType = Router();
+const router: RouterType = Router()
 
 /**
  * @swagger
@@ -113,13 +113,13 @@ const router: RouterType = Router();
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/",
+  '/',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(accountListSchema, "query"),
-  getAllAccounts,
-);
+  validate(accountListSchema, 'query'),
+  getAllAccounts
+)
 
 /**
  * @swagger
@@ -168,13 +168,13 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(accountIdSchema, "params"),
-  getAccountById,
-);
+  validate(accountIdSchema, 'params'),
+  getAccountById
+)
 
 /**
  * @swagger
@@ -235,13 +235,13 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/:id/status",
+  '/:id/status',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(accountIdSchema, "params"),
-  getAccountStatus,
-);
+  validate(accountIdSchema, 'params'),
+  getAccountStatus
+)
 
 /**
  * @swagger
@@ -288,13 +288,13 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/",
+  '/',
   authenticate,
   setTenantContext,
   requireTenantContext,
   validate(createAccountSchema),
-  createAccountController,
-);
+  createAccountController
+)
 
 /**
  * @swagger
@@ -355,14 +355,14 @@ router.post(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(accountIdSchema, "params"),
+  validate(accountIdSchema, 'params'),
   validate(updateAccountSchema),
-  updateAccountController,
-);
+  updateAccountController
+)
 
 /**
  * @swagger
@@ -411,13 +411,13 @@ router.put(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(accountIdSchema, "params"),
-  deleteAccountById,
-);
+  validate(accountIdSchema, 'params'),
+  deleteAccountById
+)
 
 /**
  * @swagger
@@ -466,13 +466,13 @@ router.delete(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/activate",
+  '/:id/activate',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(accountIdSchema, "params"),
-  activateAccount,
-);
+  validate(accountIdSchema, 'params'),
+  activateAccount
+)
 
 /**
  * @swagger
@@ -521,13 +521,13 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/deactivate",
+  '/:id/deactivate',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(accountIdSchema, "params"),
-  deactivateAccount,
-);
+  validate(accountIdSchema, 'params'),
+  deactivateAccount
+)
 
 /**
  * @swagger
@@ -576,12 +576,12 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/restore",
+  '/:id/restore',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(accountIdSchema, "params"),
-  restoreAccountById,
-);
+  validate(accountIdSchema, 'params'),
+  restoreAccountById
+)
 
-export default router;
+export default router

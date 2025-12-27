@@ -3,10 +3,10 @@
  * Catches all unmatched routes and throws NotFoundError
  */
 
-import type { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, Response } from 'express'
 
-import { HTTP_STATUS } from "@constants/http";
-import { ApiError } from "@utils/ApiError";
+import { HTTP_STATUS } from '@constants/http'
+import { ApiError } from '@utils/ApiError'
 
 /**
  * Catch-all middleware for unmatched routes
@@ -15,13 +15,13 @@ import { ApiError } from "@utils/ApiError";
 export const notFoundHandler = (
   req: Request,
   _res: Response,
-  next: NextFunction,
+  next: NextFunction
 ): void => {
   next(
     new ApiError(
       HTTP_STATUS.NOT_FOUND,
       `Route ${req.originalUrl} not found`,
-      false,
-    ),
-  );
-};
+      false
+    )
+  )
+}

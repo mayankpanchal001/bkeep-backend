@@ -1,0 +1,84 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Clean",
+      "type": "npm",
+      "script": "clean",
+      "group": { "kind": "build", "isDefault": false },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Build",
+      "type": "npm",
+      "script": "build",
+      "group": { "kind": "build", "isDefault": false },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Start (prod)",
+      "type": "npm",
+      "script": "start",
+      "group": { "kind": "build", "isDefault": false },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Dev Server",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "group": { "kind": "build", "isDefault": false },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "PM2: Start",
+      "type": "npm",
+      "script": "pm2:start",
+      "group": { "kind": "build", "isDefault": false },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Lint",
+      "type": "npm",
+      "script": "lint",
+      "group": { "kind": "test", "isDefault": false },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Lint & Fix",
+      "type": "npm",
+      "script": "lint:fix",
+      "group": { "kind": "test", "isDefault": false },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Test",
+      "type": "npm",
+      "script": "test",
+      "group": { "kind": "test", "isDefault": true },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Test (watch)",
+      "type": "npm",
+      "script": "test:watch",
+      "isBackground": true,
+      "group": { "kind": "test", "isDefault": false },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Coverage",
+      "type": "npm",
+      "script": "coverage",
+      "group": { "kind": "test", "isDefault": false },
+      "presentation": { "reveal": "always" }
+    },
+    {
+      "label": "Coverage → Coveralls",
+      "type": "npm",
+      "script": "coverage:coveralls",
+      "group": { "kind": "test", "isDefault": false },
+      "presentation": { "reveal": "always" }
+    }
+  ]
+}

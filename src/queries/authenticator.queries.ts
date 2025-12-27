@@ -1,9 +1,9 @@
-import { ERROR_MESSAGES } from "@constants/errors";
-import { HTTP_STATUS } from "@constants/http";
-import { User } from "@models/User";
-import { UserAuthenticator } from "@models/UserAuthenticator";
-import { ApiError } from "@utils/ApiError";
-import { getCurrentISOString } from "@utils/date";
+import { ERROR_MESSAGES } from '@constants/errors'
+import { HTTP_STATUS } from '@constants/http'
+import { User } from '@models/User'
+import { UserAuthenticator } from '@models/UserAuthenticator'
+import { ApiError } from '@utils/ApiError'
+import { getCurrentISOString } from '@utils/date'
 
 /**
  * Setup TOTP for user (create authenticator)
@@ -20,36 +20,36 @@ export const setupUserTotp = async (
   secret: string,
   backupCodes: string,
   userAgent?: string | null,
-  ipAddress?: string | null,
+  ipAddress?: string | null
 ): Promise<UserAuthenticator> => {
   // Verify user exists
-  const user = await User.query().modify("notDeleted").findById(userId);
+  const user = await User.query().modify('notDeleted').findById(userId)
 
   if (!user) {
-    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND);
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND)
   }
 
   // Deactivate any existing authenticators for this user
   await UserAuthenticator.query()
-    .modify("notDeleted")
-    .where("user_id", userId)
+    .modify('notDeleted')
+    .where('user_id', userId)
     .patch({
       isActive: false,
-    });
+    })
 
   // Create new authenticator (unverified)
   const authenticator = await UserAuthenticator.query().insert({
     userId,
-    type: "totp",
+    type: 'totp',
     secret,
     backupCodes,
     isActive: false, // Not active until verified
     userAgent: userAgent ?? null,
     ipAddress: ipAddress ?? null,
-  });
+  })
 
-  return authenticator;
-};
+  return authenticator
+}
 
 /**
  * Verify and enable TOTP for user
@@ -60,53 +60,53 @@ export const setupUserTotp = async (
  */
 export const verifyAndEnableUserTotp = async (
   userId: string,
-  authenticatorId?: string,
+  authenticatorId?: string
 ): Promise<UserAuthenticator> => {
   // Verify user exists
-  const user = await User.query().modify("notDeleted").findById(userId);
+  const user = await User.query().modify('notDeleted').findById(userId)
 
   if (!user) {
-    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND);
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND)
   }
 
   // Find the authenticator
-  let authenticator: UserAuthenticator | undefined;
+  let authenticator: UserAuthenticator | undefined
 
   if (authenticatorId) {
     authenticator = await UserAuthenticator.query()
-      .modify("notDeleted")
-      .modify("byUser", userId)
-      .findById(authenticatorId);
+      .modify('notDeleted')
+      .modify('byUser', userId)
+      .findById(authenticatorId)
   } else {
     // Find the most recent unverified authenticator
     authenticator = await UserAuthenticator.query()
-      .modify("notDeleted")
-      .modify("byUser", userId)
-      .modify("unverified")
-      .orderBy("created_at", "desc")
-      .first();
+      .modify('notDeleted')
+      .modify('byUser', userId)
+      .modify('unverified')
+      .orderBy('created_at', 'desc')
+      .first()
   }
 
   if (!authenticator) {
     throw new ApiError(
       HTTP_STATUS.BAD_REQUEST,
-      ERROR_MESSAGES.MFA_TOTP_SETUP_REQUIRED,
-    );
+      ERROR_MESSAGES.MFA_TOTP_SETUP_REQUIRED
+    )
   }
 
   // Activate and verify the authenticator
   await authenticator.$query().patch({
     isActive: true,
     verifiedAt: getCurrentISOString() as unknown as Date,
-  });
+  })
 
   // Enable MFA on user account
   await user.$query().patch({
     mfaEnabled: true,
-  });
+  })
 
-  return authenticator;
-};
+  return authenticator
+}
 
 /**
  * Disable TOTP for user
@@ -116,27 +116,27 @@ export const verifyAndEnableUserTotp = async (
  */
 export const disableUserTotp = async (userId: string): Promise<User> => {
   // Verify user exists
-  const user = await User.query().modify("notDeleted").findById(userId);
+  const user = await User.query().modify('notDeleted').findById(userId)
 
   if (!user) {
-    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND);
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND)
   }
 
   // Soft delete all authenticators for this user
   await UserAuthenticator.query()
-    .modify("notDeleted")
-    .where("user_id", userId)
+    .modify('notDeleted')
+    .where('user_id', userId)
     .patch({
       deletedAt: getCurrentISOString() as unknown as Date,
-    });
+    })
 
   // Disable MFA on user account
   await user.$query().patch({
     mfaEnabled: false,
-  });
+  })
 
-  return user;
-};
+  return user
+}
 
 /**
  * Update user backup codes
@@ -147,28 +147,28 @@ export const disableUserTotp = async (userId: string): Promise<User> => {
  */
 export const updateUserBackupCodes = async (
   userId: string,
-  backupCodes: string,
+  backupCodes: string
 ): Promise<UserAuthenticator> => {
   // Find active TOTP authenticator
   const authenticator = await UserAuthenticator.findActiveByUserAndType(
     userId,
-    "totp",
-  );
+    'totp'
+  )
 
   if (!authenticator) {
     throw new ApiError(
       HTTP_STATUS.BAD_REQUEST,
-      ERROR_MESSAGES.MFA_TOTP_NOT_ENABLED,
-    );
+      ERROR_MESSAGES.MFA_TOTP_NOT_ENABLED
+    )
   }
 
   // Update backup codes
   await authenticator.$query().patch({
     backupCodes,
-  });
+  })
 
-  return authenticator;
-};
+  return authenticator
+}
 
 /**
  * Get active TOTP authenticator for user
@@ -176,10 +176,10 @@ export const updateUserBackupCodes = async (
  * @returns UserAuthenticator or undefined
  */
 export const getUserTotpAuthenticator = async (
-  userId: string,
+  userId: string
 ): Promise<UserAuthenticator | undefined> => {
-  return UserAuthenticator.findActiveByUserAndType(userId, "totp");
-};
+  return UserAuthenticator.findActiveByUserAndType(userId, 'totp')
+}
 
 /**
  * Get unverified TOTP authenticator for user
@@ -188,30 +188,30 @@ export const getUserTotpAuthenticator = async (
  * @returns UserAuthenticator or undefined
  */
 export const getUnverifiedTotpAuthenticator = async (
-  userId: string,
+  userId: string
 ): Promise<UserAuthenticator | undefined> => {
   return UserAuthenticator.query()
-    .modify("notDeleted")
-    .modify("byUser", userId)
-    .modify("byType", "totp")
-    .modify("unverified")
-    .orderBy("created_at", "desc")
-    .first();
-};
+    .modify('notDeleted')
+    .modify('byUser', userId)
+    .modify('byType', 'totp')
+    .modify('unverified')
+    .orderBy('created_at', 'desc')
+    .first()
+}
 
 /**
  * Update authenticator last used timestamp
  * @param authenticatorId - Authenticator ID
  */
 export const updateAuthenticatorLastUsed = async (
-  authenticatorId: string,
+  authenticatorId: string
 ): Promise<void> => {
   await UserAuthenticator.query()
     .findById(authenticatorId)
     .patch({
       lastUsedAt: getCurrentISOString() as unknown as Date,
-    });
-};
+    })
+}
 
 /**
  * Regenerate backup codes for user
@@ -222,7 +222,7 @@ export const updateAuthenticatorLastUsed = async (
  */
 export const regenerateUserBackupCodes = async (
   userId: string,
-  newBackupCodes: string,
+  newBackupCodes: string
 ): Promise<UserAuthenticator> => {
-  return updateUserBackupCodes(userId, newBackupCodes);
-};
+  return updateUserBackupCodes(userId, newBackupCodes)
+}

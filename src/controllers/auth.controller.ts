@@ -1,8 +1,8 @@
-import { createHash, randomBytes, randomInt } from "node:crypto";
+import { createHash, randomBytes, randomInt } from 'node:crypto'
 
-import bcrypt from "bcrypt";
-import type { RequestHandler } from "express";
-import { Request, Response } from "express";
+import bcrypt from 'bcrypt'
+import type { RequestHandler } from 'express'
+import { Request, Response } from 'express'
 
 import type {
   LoginResponseData,
@@ -13,35 +13,35 @@ import type {
   RolePermission,
   RoleWithPermissions,
   TenantData,
-} from "@/types/auth.type";
-import type { JwtUser } from "@/types/jwt.type";
-import type { ExtendedSession } from "@/types/session.type";
-import { env } from "@config/env";
-import logger from "@config/logger";
-import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from "@constants/audit";
-import { ERROR_MESSAGES } from "@constants/errors";
-import { HTTP_STATUS } from "@constants/http";
-import { MFA_TYPE, SECURITY_RULES } from "@constants/security";
-import { SUCCESS_MESSAGES } from "@constants/success";
-import type { AuthenticatedRequest } from "@middlewares/auth.middleware";
-import { User } from "@models/User";
+} from '@/types/auth.type'
+import type { JwtUser } from '@/types/jwt.type'
+import type { ExtendedSession } from '@/types/session.type'
+import { env } from '@config/env'
+import logger from '@config/logger'
+import { AUDIT_ACTIONS, AUDIT_ENTITY_TYPES } from '@constants/audit'
+import { ERROR_MESSAGES } from '@constants/errors'
+import { HTTP_STATUS } from '@constants/http'
+import { MFA_TYPE, SECURITY_RULES } from '@constants/security'
+import { SUCCESS_MESSAGES } from '@constants/success'
+import type { AuthenticatedRequest } from '@middlewares/auth.middleware'
+import { User } from '@models/User'
 import {
   getUserTotpAuthenticator,
   updateAuthenticatorLastUsed,
   updateUserBackupCodes,
-} from "@queries/authenticator.queries";
-import { createMfaOtp, verifyMfaOtp } from "@queries/mfa.queries";
+} from '@queries/authenticator.queries'
+import { createMfaOtp, verifyMfaOtp } from '@queries/mfa.queries'
 import {
   createPasswordResetToken,
   findPasswordResetToken,
   revokePasswordResetToken,
-} from "@queries/passwordReset.queries";
+} from '@queries/passwordReset.queries'
 import {
   createRefreshToken,
   findRefreshTokenByToken,
   revokeAllRefreshTokensForUser,
   revokeRefreshToken,
-} from "@queries/refreshToken.queries";
+} from '@queries/refreshToken.queries'
 import {
   findUserByEmailAndPassword,
   findUserById,
@@ -49,18 +49,18 @@ import {
   updateUserMfaStatus,
   updateUserPassword,
   updateUserProfile,
-} from "@queries/user.queries";
-import { auditAction, extractRequestContext } from "@services/audit.service";
+} from '@queries/user.queries'
+import { auditAction, extractRequestContext } from '@services/audit.service'
 import {
   queueMfaOtpEmail,
   queuePasswordResetEmail,
   queuePasswordResetSuccessEmail,
-} from "@services/mailQueue.service";
-import { ApiError } from "@utils/ApiError";
-import { ApiResponse } from "@utils/ApiResponse";
-import asyncHandler from "@utils/asyncHandler";
-import { signTokens, verifyRefreshToken } from "@utils/jwt";
-import { verifyBackupCode, verifyTotpToken } from "@utils/totp";
+} from '@services/mailQueue.service'
+import { ApiError } from '@utils/ApiError'
+import { ApiResponse } from '@utils/ApiResponse'
+import asyncHandler from '@utils/asyncHandler'
+import { signTokens, verifyRefreshToken } from '@utils/jwt'
+import { verifyBackupCode, verifyTotpToken } from '@utils/totp'
 
 /**
  * Login controller
@@ -68,46 +68,46 @@ import { verifyBackupCode, verifyTotpToken } from "@utils/totp";
  */
 export const login: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+    const { email, password } = req.body
 
     // Validate credentials and get user
-    const user = await findUserByEmailAndPassword({ email, password });
+    const user = await findUserByEmailAndPassword({ email, password })
 
     // Check if MFA is enabled for this user
     if (user.mfaEnabled) {
       // Check if user has active TOTP authenticator
-      const authenticator = await getUserTotpAuthenticator(user.id);
+      const authenticator = await getUserTotpAuthenticator(user.id)
 
       if (authenticator?.isActiveAndVerified()) {
         // Return response indicating TOTP is required
         res.status(HTTP_STATUS.OK).json(
-          new ApiResponse(HTTP_STATUS.OK, "TOTP verification required", {
+          new ApiResponse(HTTP_STATUS.OK, 'TOTP verification required', {
             requiresMfa: true,
             mfaType: MFA_TYPE.TOTP,
             email: user.email,
-          }),
-        );
-        return;
+          })
+        )
+        return
       }
 
       // Email OTP flow (existing)
       // Generate 6-digit OTP using cryptographically secure random number
-      const otpCode = randomInt(100000, 999999).toString();
+      const otpCode = randomInt(100000, 999999).toString()
       // Store OTP in database
       try {
         await createMfaOtp(
           user.id,
           otpCode,
           SECURITY_RULES.MFA_OTP_EXPIRY_MINUTES,
-          req.headers["user-agent"] ?? null,
-          req.ip ?? null,
-        );
+          req.headers['user-agent'] ?? null,
+          req.ip ?? null
+        )
       } catch (error) {
-        logger.error("Failed to create MFA OTP:", error);
+        logger.error('Failed to create MFA OTP:', error)
         throw new ApiError(
           HTTP_STATUS.INTERNAL_SERVER_ERROR,
-          ERROR_MESSAGES.MFA_OTP_GENERATION_FAILED,
-        );
+          ERROR_MESSAGES.MFA_OTP_GENERATION_FAILED
+        )
       }
 
       // Send OTP email via queue
@@ -117,11 +117,11 @@ export const login: RequestHandler = asyncHandler(
           otpCode,
           expiryMinutes: SECURITY_RULES.MFA_OTP_EXPIRY_MINUTES,
           userName: user.name,
-        });
-        logger.info(`MFA OTP email queued for ${user.email}`);
+        })
+        logger.info(`MFA OTP email queued for ${user.email}`)
       } catch (error) {
         // Log error but don't fail the request (security: don't reveal if email exists)
-        logger.error("Failed to queue MFA OTP email:", error);
+        logger.error('Failed to queue MFA OTP email:', error)
       }
 
       // Return response indicating MFA is required
@@ -130,17 +130,17 @@ export const login: RequestHandler = asyncHandler(
           requiresMfa: true,
           mfaType: MFA_TYPE.EMAIL,
           email: user.email,
-        }),
-      );
-      return;
+        })
+      )
+      return
     }
 
     // Get user with all relations (roles, permissions, tenant)
-    const userWithRelations = await findUserByIdComplete(user.id);
+    const userWithRelations = await findUserByIdComplete(user.id)
 
     // Extract roles and permissions
-    const roles: RoleWithPermissions[] = userWithRelations.roles ?? [];
-    const allPermissionsMap = new Map<string, RolePermission>();
+    const roles: RoleWithPermissions[] = userWithRelations.roles ?? []
+    const allPermissionsMap = new Map<string, RolePermission>()
 
     roles.forEach((role) => {
       if (role.permissions) {
@@ -148,15 +148,15 @@ export const login: RequestHandler = asyncHandler(
           // Only include active, non-deleted permissions
           if (permission.isActive && !permission.deletedAt) {
             if (!allPermissionsMap.has(permission.name)) {
-              allPermissionsMap.set(permission.name, permission);
+              allPermissionsMap.set(permission.name, permission)
             }
           }
-        });
+        })
       }
-    });
+    })
 
     // Convert to array of permission names for JWT (keep lightweight)
-    const permissionNames = Array.from(allPermissionsMap.keys());
+    const permissionNames = Array.from(allPermissionsMap.keys())
 
     // Convert to detailed permission objects for response
     const permissionsData = Array.from(allPermissionsMap.values()).map(
@@ -164,28 +164,28 @@ export const login: RequestHandler = asyncHandler(
         id: permission.id,
         name: permission.name,
         displayName: permission.displayName,
-      }),
-    );
+      })
+    )
 
     // Validate and extract primary role
-    const primaryRole = roles[0];
+    const primaryRole = roles[0]
     if (!primaryRole) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.USER_NO_ROLE,
-      );
+        ERROR_MESSAGES.USER_NO_ROLE
+      )
     }
 
     // Get all tenants with is_primary flag
-    const tenants = userWithRelations.tenants ?? [];
+    const tenants = userWithRelations.tenants ?? []
     const primaryTenant =
-      tenants.find((t) => t.userTenants?.isPrimary === true) ?? tenants[0];
+      tenants.find((t) => t.userTenants?.isPrimary === true) ?? tenants[0]
 
     if (!primaryTenant) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.USER_NO_TENANT,
-      );
+        ERROR_MESSAGES.USER_NO_TENANT
+      )
     }
 
     // Extract role data
@@ -193,14 +193,14 @@ export const login: RequestHandler = asyncHandler(
       id: primaryRole.id,
       name: primaryRole.name,
       displayName: primaryRole.displayName,
-    };
+    }
 
     // Extract all tenants data with isPrimary flag
     const tenantsData: TenantData[] = tenants.map((tenant) => ({
       id: tenant.id,
       name: tenant.name,
       isPrimary: tenant.userTenants?.isPrimary === true,
-    }));
+    }))
 
     // Build JWT user payload
     const payload: JwtUser = {
@@ -210,30 +210,30 @@ export const login: RequestHandler = asyncHandler(
       role: primaryRole.name,
       permissions: permissionNames,
       selectedTenantId: primaryTenant.id,
-    };
+    }
 
     // Generate tokens
-    const { accessToken, refreshToken } = signTokens(payload);
+    const { accessToken, refreshToken } = signTokens(payload)
 
     // Store refresh token in database
     await createRefreshToken({
       userId: user.id,
       token: refreshToken,
-      userAgent: req.headers["user-agent"] ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
       ipAddress: req.ip ?? null,
-    });
+    })
 
     // Store user session data in session store
     // This will automatically save the session to the database via connect-session-knex
     // Modifying req.session automatically triggers a save when resave: false
-    const session = req.session as ExtendedSession;
-    session.user = payload;
+    const session = req.session as ExtendedSession
+    session.user = payload
 
     // Set tokens in HTTP-only cookies
     const cookieOptions = {
       httpOnly: true,
       secure: true,
-    };
+    }
 
     // Prepare user response data (exclude sensitive fields)
     const userData: LoginUserData = {
@@ -244,18 +244,18 @@ export const login: RequestHandler = asyncHandler(
       permissions: permissionsData,
       tenants: tenantsData,
       selectedTenantId: primaryTenant.id,
-    };
+    }
 
     // Prepare login response data
     const responseData: LoginResponseData = {
       accessToken,
       refreshToken,
       user: userData,
-    };
+    }
 
     // Audit log for login
     try {
-      const requestContext = extractRequestContext(req);
+      const requestContext = extractRequestContext(req)
       await auditAction(
         AUDIT_ACTIONS.USER_LOGGED_IN,
         [
@@ -269,31 +269,31 @@ export const login: RequestHandler = asyncHandler(
           requestContext,
           tenantId: primaryTenant.id,
           actor: {
-            type: "user",
+            type: 'user',
             id: user.id,
             email: user.email,
             name: user.name,
           },
-        },
-      );
+        }
+      )
     } catch (error) {
-      logger.error("Failed to create audit log for user login:", error);
+      logger.error('Failed to create audit log for user login:', error)
       // Don't fail the request if audit logging fails
     }
 
     res
-      .cookie("refreshToken", refreshToken, cookieOptions)
-      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie('refreshToken', refreshToken, cookieOptions)
+      .cookie('accessToken', accessToken, cookieOptions)
       .status(HTTP_STATUS.OK)
       .json(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Refresh token controller
@@ -303,75 +303,69 @@ export const refreshToken: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     // Get refresh token from cookie or request body
     const refreshTokenFromRequest =
-      req.cookies?.["refreshToken"] ?? req.body?.["refreshToken"];
+      req.cookies?.['refreshToken'] ?? req.body?.['refreshToken']
 
     if (!refreshTokenFromRequest) {
       throw new ApiError(
         HTTP_STATUS.UNAUTHORIZED,
-        ERROR_MESSAGES.REFRESH_TOKEN_REQUIRED,
-      );
+        ERROR_MESSAGES.REFRESH_TOKEN_REQUIRED
+      )
     }
 
     // Verify refresh token JWT
-    let tokenPayload;
+    let tokenPayload
     try {
-      tokenPayload = await verifyRefreshToken(refreshTokenFromRequest);
+      tokenPayload = await verifyRefreshToken(refreshTokenFromRequest)
     } catch {
-      throw new ApiError(
-        HTTP_STATUS.UNAUTHORIZED,
-        ERROR_MESSAGES.INVALID_TOKEN,
-      );
+      throw new ApiError(HTTP_STATUS.UNAUTHORIZED, ERROR_MESSAGES.INVALID_TOKEN)
     }
 
     // Check if refresh token exists in database and is valid
     const storedRefreshToken = await findRefreshTokenByToken(
-      refreshTokenFromRequest,
-    );
+      refreshTokenFromRequest
+    )
 
     if (!storedRefreshToken) {
-      throw new ApiError(
-        HTTP_STATUS.UNAUTHORIZED,
-        ERROR_MESSAGES.INVALID_TOKEN,
-      );
+      throw new ApiError(HTTP_STATUS.UNAUTHORIZED, ERROR_MESSAGES.INVALID_TOKEN)
     }
 
     // Get user with all relations (roles, permissions, tenant)
-    const userWithRelations = await findUserByIdComplete(tokenPayload.id);
+    const userWithRelations = await findUserByIdComplete(tokenPayload.id)
 
     // Extract roles and permissions
-    const roles: RoleWithPermissions[] = userWithRelations.roles ?? [];
-    const allPermissions = new Set<string>();
+    const roles: RoleWithPermissions[] = userWithRelations.roles ?? []
+    const allPermissions = new Set<string>()
 
     roles.forEach((role) => {
       if (role.permissions) {
         role.permissions.forEach((permission) => {
           // Only include active, non-deleted permissions
           if (permission.isActive && !permission.deletedAt) {
-            allPermissions.add(permission.name);
+            allPermissions.add(permission.name)
           }
-        });
+        })
       }
-    });
+    })
 
     // Validate and extract primary role
-    const primaryRole = roles[0];
+    const primaryRole = roles[0]
     if (!primaryRole) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.USER_NO_ROLE,
-      );
+        ERROR_MESSAGES.USER_NO_ROLE
+      )
     }
 
     // Get all tenants with is_primary flag
-    const tenants = userWithRelations.tenants ?? [];
+    const tenants = userWithRelations.tenants ?? []
     const primaryTenant =
-      tenants.find((t) => t.userTenants?.isPrimary === true) ?? tenants[0];
+      tenants.find((t) => t.userTenants?.isPrimary === true) ?? tenants[0]
 
     if (!primaryTenant) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.USER_NO_TENANT,
-      );
+        ERROR_MESSAGES.USER_NO_TENANT
+      )
     }
 
     // Build JWT user payload
@@ -382,51 +376,51 @@ export const refreshToken: RequestHandler = asyncHandler(
       role: primaryRole.name,
       permissions: Array.from(allPermissions),
       selectedTenantId: primaryTenant.id,
-    };
+    }
 
     // Generate new tokens
-    const { accessToken, refreshToken: newRefreshToken } = signTokens(payload);
+    const { accessToken, refreshToken: newRefreshToken } = signTokens(payload)
 
     // Revoke old refresh token
-    await revokeRefreshToken(refreshTokenFromRequest);
+    await revokeRefreshToken(refreshTokenFromRequest)
 
     // Store new refresh token in database
     await createRefreshToken({
       userId: userWithRelations.id,
       token: newRefreshToken,
-      userAgent: req.headers["user-agent"] ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
       ipAddress: req.ip ?? null,
-    });
+    })
 
     // Update session with new user data
-    const session = req.session as ExtendedSession;
-    session.user = payload;
+    const session = req.session as ExtendedSession
+    session.user = payload
 
     // Set tokens in HTTP-only cookies
     const cookieOptions = {
       httpOnly: true,
       secure: true,
-    };
+    }
 
     // Prepare refresh token response data
     const responseData: RefreshTokenResponseData = {
       accessToken,
       refreshToken: newRefreshToken,
-    };
+    }
 
     res
-      .cookie("refreshToken", newRefreshToken, cookieOptions)
-      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie('refreshToken', newRefreshToken, cookieOptions)
+      .cookie('accessToken', accessToken, cookieOptions)
       .status(HTTP_STATUS.OK)
       .json(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TOKEN_REFRESHED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Logout controller
@@ -434,22 +428,22 @@ export const refreshToken: RequestHandler = asyncHandler(
  */
 export const logout: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser;
+    const user = req.user as JwtUser
 
     // Clear authentication cookies
     const cookieOptions = {
       httpOnly: true,
       secure: true,
-    };
+    }
 
     // Revoke all refresh tokens for the user (logout from all devices)
     if (user) {
-      await revokeAllRefreshTokensForUser(user.id);
+      await revokeAllRefreshTokensForUser(user.id)
 
       // Audit log for logout
       try {
-        const requestContext = extractRequestContext(req);
-        const tenantId = user.selectedTenantId;
+        const requestContext = extractRequestContext(req)
+        const tenantId = user.selectedTenantId
         if (tenantId) {
           await auditAction(
             AUDIT_ACTIONS.USER_LOGGED_OUT,
@@ -464,34 +458,34 @@ export const logout: RequestHandler = asyncHandler(
               requestContext,
               tenantId,
               actor: {
-                type: "user",
+                type: 'user',
                 id: user.id,
                 email: user.email,
               },
-            },
-          );
+            }
+          )
         }
       } catch (error) {
-        logger.error("Failed to create audit log for user logout:", error);
+        logger.error('Failed to create audit log for user logout:', error)
         // Don't fail the request if audit logging fails
       }
     }
 
     req.session.destroy((err) => {
       if (err) {
-        logger.error("Error destroying session:", err);
+        logger.error('Error destroying session:', err)
       }
-    });
+    })
 
     res
-      .clearCookie("refreshToken", cookieOptions)
-      .clearCookie("accessToken", cookieOptions)
+      .clearCookie('refreshToken', cookieOptions)
+      .clearCookie('accessToken', cookieOptions)
       .status(HTTP_STATUS.OK)
       .json(
-        new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.LOGOUT_SUCCESSFUL, {}),
-      );
-  },
-);
+        new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.LOGOUT_SUCCESSFUL, {})
+      )
+  }
+)
 
 /**
  * Forgot password controller
@@ -499,10 +493,10 @@ export const logout: RequestHandler = asyncHandler(
  */
 export const forgotPassword: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const { email } = req.body;
+    const { email } = req.body
 
     // Find user by email
-    const user = await User.findByEmail(email);
+    const user = await User.findByEmail(email)
 
     // Always return success to prevent email enumeration
     // Don't reveal if email exists or not
@@ -513,38 +507,38 @@ export const forgotPassword: RequestHandler = asyncHandler(
           new ApiResponse(
             HTTP_STATUS.OK,
             SUCCESS_MESSAGES.PASSWORD_RESET_EMAIL_SENT,
-            {},
-          ),
-        );
-      return;
+            {}
+          )
+        )
+      return
     }
 
     // Generate secure random token using crypto
-    const plainToken = randomBytes(32).toString("hex");
+    const plainToken = randomBytes(32).toString('hex')
 
     // Hash the token using SHA-256 before storing
-    const hashedToken = createHash("sha256").update(plainToken).digest("hex");
+    const hashedToken = createHash('sha256').update(plainToken).digest('hex')
 
     // Store password reset token (hashed version)
     await createPasswordResetToken({
       email: user.email,
       token: hashedToken,
       expiresInMinutes: SECURITY_RULES.PASSWORD_RESET_TOKEN_EXPIRY_MINUTES,
-    });
+    })
 
     // Send password reset email via queue
     try {
-      const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${plainToken}&email=${encodeURIComponent(user.email)}`;
+      const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${plainToken}&email=${encodeURIComponent(user.email)}`
       await queuePasswordResetEmail({
         to: user.email,
         resetUrl,
         expiryMinutes: SECURITY_RULES.PASSWORD_RESET_TOKEN_EXPIRY_MINUTES,
         userName: user.name,
-      });
-      logger.info(`Password reset email queued for ${user.email}`);
+      })
+      logger.info(`Password reset email queued for ${user.email}`)
     } catch (error) {
       // Log error but don't fail the request (security: don't reveal if email exists)
-      logger.error("Failed to queue password reset email:", error);
+      logger.error('Failed to queue password reset email:', error)
     }
 
     res
@@ -553,11 +547,11 @@ export const forgotPassword: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.PASSWORD_RESET_EMAIL_SENT,
-          {},
-        ),
-      );
-  },
-);
+          {}
+        )
+      )
+  }
+)
 
 /**
  * Reset password controller
@@ -565,49 +559,49 @@ export const forgotPassword: RequestHandler = asyncHandler(
  */
 export const resetPassword: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const { email, token, password } = req.body;
+    const { email, token, password } = req.body
 
     // Find user by email
-    const user = await User.findByEmail(email);
+    const user = await User.findByEmail(email)
 
     if (!user) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND);
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND)
     }
 
     // Hash the provided token to compare with stored hash
-    const hashedToken = createHash("sha256").update(token).digest("hex");
+    const hashedToken = createHash('sha256').update(token).digest('hex')
 
     // Find password reset token (compare hashed tokens)
-    const passwordReset = await findPasswordResetToken(email, hashedToken);
+    const passwordReset = await findPasswordResetToken(email, hashedToken)
 
     if (!passwordReset) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        ERROR_MESSAGES.INVALID_RESET_TOKEN,
-      );
+        ERROR_MESSAGES.INVALID_RESET_TOKEN
+      )
     }
 
     // Hash new password
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10)
 
     // Update user password
-    await updateUserPassword(user.id, passwordHash);
+    await updateUserPassword(user.id, passwordHash)
 
     // Revoke the used password reset token (use hashed token)
-    await revokePasswordResetToken(hashedToken);
+    await revokePasswordResetToken(hashedToken)
 
     // Send password reset success email via queue
     try {
-      const loginUrl = `${env.FRONTEND_URL}/login`;
+      const loginUrl = `${env.FRONTEND_URL}/login`
       await queuePasswordResetSuccessEmail({
         to: user.email,
         userName: user.name,
         loginUrl,
-      });
-      logger.info(`Password reset success email queued for ${user.email}`);
+      })
+      logger.info(`Password reset success email queued for ${user.email}`)
     } catch (error) {
       // Log error but don't fail the request
-      logger.error("Failed to queue password reset success email:", error);
+      logger.error('Failed to queue password reset success email:', error)
     }
 
     res
@@ -616,11 +610,11 @@ export const resetPassword: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.PASSWORD_RESET_SUCCESSFUL,
-          {},
-        ),
-      );
-  },
-);
+          {}
+        )
+      )
+  }
+)
 
 /**
  * Change password controller
@@ -628,69 +622,69 @@ export const resetPassword: RequestHandler = asyncHandler(
  */
 export const changePassword: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser;
+    const user = req.user as JwtUser
 
     // Get validated body data
     const { currentPassword, newPassword } = (
       req as AuthenticatedRequest & {
         validatedData: {
-          currentPassword: string;
-          newPassword: string;
-        };
+          currentPassword: string
+          newPassword: string
+        }
       }
-    ).validatedData;
+    ).validatedData
 
     // Find user by ID
     const userDetails = await User.query()
-      .modify("notDeleted")
-      .findById(user.id);
+      .modify('notDeleted')
+      .findById(user.id)
 
     if (!userDetails) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND);
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND)
     }
 
     // Verify current password
     const isPasswordValid = await bcrypt.compare(
       currentPassword,
-      userDetails.passwordHash,
-    );
+      userDetails.passwordHash
+    )
 
     if (!isPasswordValid) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        ERROR_MESSAGES.INVALID_EMAIL_OR_PASSWORD,
-      );
+        ERROR_MESSAGES.INVALID_EMAIL_OR_PASSWORD
+      )
     }
 
     // Hash new password
-    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const passwordHash = await bcrypt.hash(newPassword, 10)
 
     // Update user password
-    await updateUserPassword(user.id, passwordHash);
+    await updateUserPassword(user.id, passwordHash)
 
     // Send password change success email via queue
     try {
-      const loginUrl = `${env.FRONTEND_URL}/login`;
+      const loginUrl = `${env.FRONTEND_URL}/login`
       await queuePasswordResetSuccessEmail({
         to: userDetails.email,
         userName: userDetails.name,
         loginUrl,
-      });
+      })
       logger.info(
-        `Password change success email queued for ${userDetails.email}`,
-      );
+        `Password change success email queued for ${userDetails.email}`
+      )
     } catch (error) {
       // Log error but don't fail the request
-      logger.error("Failed to queue password change success email:", error);
+      logger.error('Failed to queue password change success email:', error)
     }
 
     res
       .status(HTTP_STATUS.OK)
       .json(
-        new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.PASSWORD_CHANGED, {}),
-      );
-  },
-);
+        new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.PASSWORD_CHANGED, {})
+      )
+  }
+)
 
 /**
  * Get user profile controller
@@ -698,14 +692,14 @@ export const changePassword: RequestHandler = asyncHandler(
  */
 export const getProfile: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser;
+    const user = req.user as JwtUser
 
     // Get user with all relations (roles, permissions, tenant)
-    const userWithRelations = await findUserByIdComplete(user.id);
+    const userWithRelations = await findUserByIdComplete(user.id)
 
     // Extract roles and permissions
-    const roles: RoleWithPermissions[] = userWithRelations.roles ?? [];
-    const allPermissionsMap = new Map<string, RolePermission>();
+    const roles: RoleWithPermissions[] = userWithRelations.roles ?? []
+    const allPermissionsMap = new Map<string, RolePermission>()
 
     roles.forEach((role) => {
       if (role.permissions) {
@@ -713,41 +707,41 @@ export const getProfile: RequestHandler = asyncHandler(
           // Only include active, non-deleted permissions
           if (permission.isActive && !permission.deletedAt) {
             if (!allPermissionsMap.has(permission.name)) {
-              allPermissionsMap.set(permission.name, permission);
+              allPermissionsMap.set(permission.name, permission)
             }
           }
-        });
+        })
       }
-    });
+    })
 
     // Convert to detailed permission objects for response
     const permissionsData: PermissionData[] = Array.from(
-      allPermissionsMap.values(),
+      allPermissionsMap.values()
     ).map((permission) => ({
       id: permission.id,
       name: permission.name,
       displayName: permission.displayName,
-    }));
+    }))
 
     // Validate and extract primary role
-    const primaryRole = roles[0];
+    const primaryRole = roles[0]
     if (!primaryRole) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.USER_NO_ROLE,
-      );
+        ERROR_MESSAGES.USER_NO_ROLE
+      )
     }
 
     // Get all tenants with is_primary flag
-    const tenants = userWithRelations.tenants ?? [];
+    const tenants = userWithRelations.tenants ?? []
     const primaryTenant =
-      tenants.find((t) => t.userTenants?.isPrimary === true) ?? tenants[0];
+      tenants.find((t) => t.userTenants?.isPrimary === true) ?? tenants[0]
 
     if (!primaryTenant) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.USER_NO_TENANT,
-      );
+        ERROR_MESSAGES.USER_NO_TENANT
+      )
     }
 
     // Extract role data
@@ -755,14 +749,14 @@ export const getProfile: RequestHandler = asyncHandler(
       id: primaryRole.id,
       name: primaryRole.name,
       displayName: primaryRole.displayName,
-    };
+    }
 
     // Extract all tenants data with isPrimary flag
     const tenantsData: TenantData[] = tenants.map((tenant) => ({
       id: tenant.id,
       name: tenant.name,
       isPrimary: tenant.userTenants?.isPrimary === true,
-    }));
+    }))
 
     // Prepare user response data (exclude sensitive fields)
     const userData: LoginUserData = {
@@ -773,7 +767,7 @@ export const getProfile: RequestHandler = asyncHandler(
       permissions: permissionsData,
       tenants: tenantsData,
       selectedTenantId: primaryTenant.id,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -781,11 +775,11 @@ export const getProfile: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.USER_PROFILE_RETRIEVED,
-          userData,
-        ),
-      );
-  },
-);
+          userData
+        )
+      )
+  }
+)
 
 /**
  * Update user profile controller
@@ -793,24 +787,24 @@ export const getProfile: RequestHandler = asyncHandler(
  */
 export const updateProfile: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser;
+    const user = req.user as JwtUser
 
     // Get validated body data
     const { name } = (
       req as AuthenticatedRequest & {
-        validatedData: { name: string };
+        validatedData: { name: string }
       }
-    ).validatedData;
+    ).validatedData
 
     // Update user profile (only name can be updated)
-    const updatedUser = await updateUserProfile(user.id, { name });
+    const updatedUser = await updateUserProfile(user.id, { name })
 
     // Get updated user with all relations (roles, permissions, tenant)
-    const userWithRelations = await findUserByIdComplete(updatedUser.id);
+    const userWithRelations = await findUserByIdComplete(updatedUser.id)
 
     // Extract roles and permissions
-    const roles: RoleWithPermissions[] = userWithRelations.roles ?? [];
-    const allPermissionsMap = new Map<string, RolePermission>();
+    const roles: RoleWithPermissions[] = userWithRelations.roles ?? []
+    const allPermissionsMap = new Map<string, RolePermission>()
 
     roles.forEach((role) => {
       if (role.permissions) {
@@ -819,41 +813,41 @@ export const updateProfile: RequestHandler = asyncHandler(
           // Use Map to avoid duplicates (same permission from multiple roles)
           if (permission.isActive && !permission.deletedAt) {
             if (!allPermissionsMap.has(permission.name)) {
-              allPermissionsMap.set(permission.name, permission);
+              allPermissionsMap.set(permission.name, permission)
             }
           }
-        });
+        })
       }
-    });
+    })
 
     // Convert to detailed permission objects for response
     const permissionsData: PermissionData[] = Array.from(
-      allPermissionsMap.values(),
+      allPermissionsMap.values()
     ).map((permission) => ({
       id: permission.id,
       name: permission.name,
       displayName: permission.displayName,
-    }));
+    }))
 
     // Validate and extract primary role
-    const primaryRole = roles[0];
+    const primaryRole = roles[0]
     if (!primaryRole) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.USER_NO_ROLE,
-      );
+        ERROR_MESSAGES.USER_NO_ROLE
+      )
     }
 
     // Get all tenants with is_primary flag
-    const tenants = userWithRelations.tenants ?? [];
+    const tenants = userWithRelations.tenants ?? []
     const primaryTenant =
-      tenants.find((t) => t.userTenants?.isPrimary === true) ?? tenants[0];
+      tenants.find((t) => t.userTenants?.isPrimary === true) ?? tenants[0]
 
     if (!primaryTenant) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.USER_NO_TENANT,
-      );
+        ERROR_MESSAGES.USER_NO_TENANT
+      )
     }
 
     // Extract role data
@@ -861,14 +855,14 @@ export const updateProfile: RequestHandler = asyncHandler(
       id: primaryRole.id,
       name: primaryRole.name,
       displayName: primaryRole.displayName,
-    };
+    }
 
     // Extract all tenants data with isPrimary flag
     const tenantsData: TenantData[] = tenants.map((tenant) => ({
       id: tenant.id,
       name: tenant.name,
       isPrimary: tenant.userTenants?.isPrimary === true,
-    }));
+    }))
 
     // Prepare user response data (exclude sensitive fields)
     const userData: LoginUserData = {
@@ -879,7 +873,7 @@ export const updateProfile: RequestHandler = asyncHandler(
       permissions: permissionsData,
       tenants: tenantsData,
       selectedTenantId: primaryTenant.id,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -887,11 +881,11 @@ export const updateProfile: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.USER_PROFILE_UPDATED,
-          userData,
-        ),
-      );
-  },
-);
+          userData
+        )
+      )
+  }
+)
 
 /**
  * MFA verify controller
@@ -899,32 +893,32 @@ export const updateProfile: RequestHandler = asyncHandler(
  */
 export const verifyMfa: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const { email, code } = req.body;
+    const { email, code } = req.body
 
     // Find user by email
-    const user = await User.findByEmail(email);
+    const user = await User.findByEmail(email)
 
     if (!user) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND);
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND)
     }
 
     // Check if user has MFA enabled
     if (!user.mfaEnabled) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        ERROR_MESSAGES.MFA_NOT_ENABLED,
-      );
+        ERROR_MESSAGES.MFA_NOT_ENABLED
+      )
     }
 
     // Verify OTP
-    await verifyMfaOtp(user.id, code);
+    await verifyMfaOtp(user.id, code)
 
     // Get user with all relations (roles, permissions, tenant)
-    const userWithRelations = await findUserByIdComplete(user.id);
+    const userWithRelations = await findUserByIdComplete(user.id)
 
     // Extract roles and permissions
-    const roles: RoleWithPermissions[] = userWithRelations.roles ?? [];
-    const allPermissionsMap = new Map<string, RolePermission>();
+    const roles: RoleWithPermissions[] = userWithRelations.roles ?? []
+    const allPermissionsMap = new Map<string, RolePermission>()
 
     roles.forEach((role) => {
       if (role.permissions) {
@@ -932,15 +926,15 @@ export const verifyMfa: RequestHandler = asyncHandler(
           // Only include active, non-deleted permissions
           if (permission.isActive && !permission.deletedAt) {
             if (!allPermissionsMap.has(permission.name)) {
-              allPermissionsMap.set(permission.name, permission);
+              allPermissionsMap.set(permission.name, permission)
             }
           }
-        });
+        })
       }
-    });
+    })
 
     // Convert to array of permission names for JWT (keep lightweight)
-    const permissionNames = Array.from(allPermissionsMap.keys());
+    const permissionNames = Array.from(allPermissionsMap.keys())
 
     // Convert to detailed permission objects for response
     const permissionsData = Array.from(allPermissionsMap.values()).map(
@@ -948,28 +942,28 @@ export const verifyMfa: RequestHandler = asyncHandler(
         id: permission.id,
         name: permission.name,
         displayName: permission.displayName,
-      }),
-    );
+      })
+    )
 
     // Validate and extract primary role
-    const primaryRole = roles[0];
+    const primaryRole = roles[0]
     if (!primaryRole) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.USER_NO_ROLE,
-      );
+        ERROR_MESSAGES.USER_NO_ROLE
+      )
     }
 
     // Get all tenants with is_primary flag
-    const tenants = userWithRelations.tenants ?? [];
+    const tenants = userWithRelations.tenants ?? []
     const primaryTenant =
-      tenants.find((t) => t.userTenants?.isPrimary === true) ?? tenants[0];
+      tenants.find((t) => t.userTenants?.isPrimary === true) ?? tenants[0]
 
     if (!primaryTenant) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.USER_NO_TENANT,
-      );
+        ERROR_MESSAGES.USER_NO_TENANT
+      )
     }
 
     // Extract role data
@@ -977,14 +971,14 @@ export const verifyMfa: RequestHandler = asyncHandler(
       id: primaryRole.id,
       name: primaryRole.name,
       displayName: primaryRole.displayName,
-    };
+    }
 
     // Extract all tenants data with isPrimary flag
     const tenantsData: TenantData[] = tenants.map((tenant) => ({
       id: tenant.id,
       name: tenant.name,
       isPrimary: tenant.userTenants?.isPrimary === true,
-    }));
+    }))
 
     // Build JWT user payload
     const payload: JwtUser = {
@@ -994,28 +988,28 @@ export const verifyMfa: RequestHandler = asyncHandler(
       role: primaryRole.name,
       permissions: permissionNames,
       selectedTenantId: primaryTenant.id,
-    };
+    }
 
     // Generate tokens
-    const { accessToken, refreshToken } = signTokens(payload);
+    const { accessToken, refreshToken } = signTokens(payload)
 
     // Store refresh token in database
     await createRefreshToken({
       userId: user.id,
       token: refreshToken,
-      userAgent: req.headers["user-agent"] ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
       ipAddress: req.ip ?? null,
-    });
+    })
 
     // Store user session data in session store (includes tenants for quick access)
-    const session = req.session as ExtendedSession;
-    session.user = payload;
+    const session = req.session as ExtendedSession
+    session.user = payload
 
     // Set tokens in HTTP-only cookies
     const cookieOptions = {
       httpOnly: true,
       secure: true,
-    };
+    }
 
     // Prepare user response data (exclude sensitive fields)
     const userData: LoginUserData = {
@@ -1026,18 +1020,18 @@ export const verifyMfa: RequestHandler = asyncHandler(
       permissions: permissionsData,
       tenants: tenantsData,
       selectedTenantId: primaryTenant.id,
-    };
+    }
 
     // Prepare login response data
     const responseData: LoginResponseData = {
       accessToken,
       refreshToken,
       user: userData,
-    };
+    }
 
     // Audit log for login (MFA OTP)
     try {
-      const requestContext = extractRequestContext(req);
+      const requestContext = extractRequestContext(req)
       await auditAction(
         AUDIT_ACTIONS.USER_LOGGED_IN,
         [
@@ -1051,34 +1045,34 @@ export const verifyMfa: RequestHandler = asyncHandler(
           requestContext,
           tenantId: primaryTenant.id,
           actor: {
-            type: "user",
+            type: 'user',
             id: user.id,
             email: user.email,
             name: user.name,
           },
-        },
-      );
+        }
+      )
     } catch (error) {
       logger.error(
-        "Failed to create audit log for user login (MFA OTP):",
-        error,
-      );
+        'Failed to create audit log for user login (MFA OTP):',
+        error
+      )
       // Don't fail the request if audit logging fails
     }
 
     res
-      .cookie("refreshToken", refreshToken, cookieOptions)
-      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie('refreshToken', refreshToken, cookieOptions)
+      .cookie('accessToken', accessToken, cookieOptions)
       .status(HTTP_STATUS.OK)
       .json(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.MFA_VERIFIED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Enable email OTP MFA controller
@@ -1086,18 +1080,18 @@ export const verifyMfa: RequestHandler = asyncHandler(
  */
 export const enableMfa: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser;
+    const user = req.user as JwtUser
 
     // Update MFA status to enabled
-    const updatedUser = await updateUserMfaStatus(user.id, true);
+    const updatedUser = await updateUserMfaStatus(user.id, true)
 
     res.status(HTTP_STATUS.OK).json(
       new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.MFA_ENABLED, {
         mfaEnabled: updatedUser.mfaEnabled,
-      }),
-    );
-  },
-);
+      })
+    )
+  }
+)
 
 /**
  * Disable email OTP MFA controller
@@ -1105,18 +1099,18 @@ export const enableMfa: RequestHandler = asyncHandler(
  */
 export const disableMfa: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser;
+    const user = req.user as JwtUser
 
     // Update MFA status to disabled
-    const updatedUser = await updateUserMfaStatus(user.id, false);
+    const updatedUser = await updateUserMfaStatus(user.id, false)
 
     res.status(HTTP_STATUS.OK).json(
       new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.MFA_DISABLED, {
         mfaEnabled: updatedUser.mfaEnabled,
-      }),
-    );
-  },
-);
+      })
+    )
+  }
+)
 
 /**
  * Get MFA status controller
@@ -1124,18 +1118,18 @@ export const disableMfa: RequestHandler = asyncHandler(
  */
 export const getMfaStatus: RequestHandler = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const user = req.user as JwtUser;
+    const user = req.user as JwtUser
 
     // Get user with MFA status
-    const userWithMfa = await findUserById(user.id);
+    const userWithMfa = await findUserById(user.id)
 
     res.status(HTTP_STATUS.OK).json(
       new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.MFA_STATUS_RETRIEVED, {
         mfaEnabled: userWithMfa.mfaEnabled,
-      }),
-    );
-  },
-);
+      })
+    )
+  }
+)
 
 /**
  * Verify TOTP code controller (for login)
@@ -1143,82 +1137,82 @@ export const getMfaStatus: RequestHandler = asyncHandler(
  */
 export const verifyTotp: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const { email, code, isBackupCode } = req.body;
+    const { email, code, isBackupCode } = req.body
 
     // Find user by email
-    const user = await User.findByEmail(email);
+    const user = await User.findByEmail(email)
 
     if (!user) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND);
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND)
     }
 
     // Check if user has MFA enabled
     if (!user.mfaEnabled) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        ERROR_MESSAGES.MFA_NOT_ENABLED,
-      );
+        ERROR_MESSAGES.MFA_NOT_ENABLED
+      )
     }
 
     // Get user's active authenticator
-    const authenticator = await getUserTotpAuthenticator(user.id);
+    const authenticator = await getUserTotpAuthenticator(user.id)
 
     if (!authenticator?.isActiveAndVerified()) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        ERROR_MESSAGES.MFA_TOTP_NOT_ENABLED,
-      );
+        ERROR_MESSAGES.MFA_TOTP_NOT_ENABLED
+      )
     }
 
-    let isValid = false;
+    let isValid = false
 
     // Verify backup code if specified
     if (isBackupCode) {
       if (!authenticator.backupCodes) {
         throw new ApiError(
           HTTP_STATUS.BAD_REQUEST,
-          ERROR_MESSAGES.MFA_BACKUP_CODE_INVALID,
-        );
+          ERROR_MESSAGES.MFA_BACKUP_CODE_INVALID
+        )
       }
 
       const { isValid: backupCodeValid, updatedCodes } = verifyBackupCode(
         code,
-        authenticator.backupCodes,
-      );
+        authenticator.backupCodes
+      )
 
       if (!backupCodeValid) {
         throw new ApiError(
           HTTP_STATUS.UNAUTHORIZED,
-          ERROR_MESSAGES.MFA_BACKUP_CODE_INVALID,
-        );
+          ERROR_MESSAGES.MFA_BACKUP_CODE_INVALID
+        )
       }
 
       // Update backup codes (remove used code)
-      await updateUserBackupCodes(user.id, updatedCodes);
-      isValid = true;
+      await updateUserBackupCodes(user.id, updatedCodes)
+      isValid = true
     } else {
       // Verify TOTP code
-      isValid = verifyTotpToken(code, authenticator.secret);
+      isValid = verifyTotpToken(code, authenticator.secret)
 
       if (!isValid) {
         throw new ApiError(
           HTTP_STATUS.UNAUTHORIZED,
-          ERROR_MESSAGES.MFA_TOTP_INVALID,
-        );
+          ERROR_MESSAGES.MFA_TOTP_INVALID
+        )
       }
     }
 
     // Update last used timestamp
     if (isValid) {
-      await updateAuthenticatorLastUsed(authenticator.id);
+      await updateAuthenticatorLastUsed(authenticator.id)
     }
 
     // Get user with all relations (roles, permissions, tenant)
-    const userWithRelations = await findUserByIdComplete(user.id);
+    const userWithRelations = await findUserByIdComplete(user.id)
 
     // Extract roles and permissions
-    const roles: RoleWithPermissions[] = userWithRelations.roles ?? [];
-    const allPermissionsMap = new Map<string, RolePermission>();
+    const roles: RoleWithPermissions[] = userWithRelations.roles ?? []
+    const allPermissionsMap = new Map<string, RolePermission>()
 
     roles.forEach((role) => {
       if (role.permissions) {
@@ -1226,15 +1220,15 @@ export const verifyTotp: RequestHandler = asyncHandler(
           // Only include active, non-deleted permissions
           if (permission.isActive && !permission.deletedAt) {
             if (!allPermissionsMap.has(permission.name)) {
-              allPermissionsMap.set(permission.name, permission);
+              allPermissionsMap.set(permission.name, permission)
             }
           }
-        });
+        })
       }
-    });
+    })
 
     // Convert to array of permission names for JWT (keep lightweight)
-    const permissionNames = Array.from(allPermissionsMap.keys());
+    const permissionNames = Array.from(allPermissionsMap.keys())
 
     // Convert to detailed permission objects for response
     const permissionsData = Array.from(allPermissionsMap.values()).map(
@@ -1242,28 +1236,28 @@ export const verifyTotp: RequestHandler = asyncHandler(
         id: permission.id,
         name: permission.name,
         displayName: permission.displayName,
-      }),
-    );
+      })
+    )
 
     // Validate and extract primary role
-    const primaryRole = roles[0];
+    const primaryRole = roles[0]
     if (!primaryRole) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.USER_NO_ROLE,
-      );
+        ERROR_MESSAGES.USER_NO_ROLE
+      )
     }
 
     // Get all tenants with is_primary flag
-    const tenants = userWithRelations.tenants ?? [];
+    const tenants = userWithRelations.tenants ?? []
     const primaryTenant =
-      tenants.find((t) => t.userTenants?.isPrimary === true) ?? tenants[0];
+      tenants.find((t) => t.userTenants?.isPrimary === true) ?? tenants[0]
 
     if (!primaryTenant) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.USER_NO_TENANT,
-      );
+        ERROR_MESSAGES.USER_NO_TENANT
+      )
     }
 
     // Extract role data
@@ -1271,14 +1265,14 @@ export const verifyTotp: RequestHandler = asyncHandler(
       id: primaryRole.id,
       name: primaryRole.name,
       displayName: primaryRole.displayName,
-    };
+    }
 
     // Extract all tenants data with isPrimary flag
     const tenantsData: TenantData[] = tenants.map((tenant) => ({
       id: tenant.id,
       name: tenant.name,
       isPrimary: tenant.userTenants?.isPrimary === true,
-    }));
+    }))
 
     // Build JWT user payload
     const payload: JwtUser = {
@@ -1288,28 +1282,28 @@ export const verifyTotp: RequestHandler = asyncHandler(
       role: primaryRole.name,
       permissions: permissionNames,
       selectedTenantId: primaryTenant.id,
-    };
+    }
 
     // Generate tokens
-    const { accessToken, refreshToken } = signTokens(payload);
+    const { accessToken, refreshToken } = signTokens(payload)
 
     // Store refresh token in database
     await createRefreshToken({
       userId: user.id,
       token: refreshToken,
-      userAgent: req.headers["user-agent"] ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
       ipAddress: req.ip ?? null,
-    });
+    })
 
     // Store user session data in session store (includes tenants for quick access)
-    const session = req.session as ExtendedSession;
-    session.user = payload;
+    const session = req.session as ExtendedSession
+    session.user = payload
 
     // Set tokens in HTTP-only cookies
     const cookieOptions = {
       httpOnly: true,
       secure: true,
-    };
+    }
 
     // Prepare user response data (exclude sensitive fields)
     const userData: LoginUserData = {
@@ -1320,18 +1314,18 @@ export const verifyTotp: RequestHandler = asyncHandler(
       permissions: permissionsData,
       tenants: tenantsData,
       selectedTenantId: primaryTenant.id,
-    };
+    }
 
     // Prepare login response data
     const responseData: LoginResponseData = {
       accessToken,
       refreshToken,
       user: userData,
-    };
+    }
 
     // Audit log for login (TOTP)
     try {
-      const requestContext = extractRequestContext(req);
+      const requestContext = extractRequestContext(req)
       await auditAction(
         AUDIT_ACTIONS.USER_LOGGED_IN,
         [
@@ -1345,28 +1339,28 @@ export const verifyTotp: RequestHandler = asyncHandler(
           requestContext,
           tenantId: primaryTenant.id,
           actor: {
-            type: "user",
+            type: 'user',
             id: user.id,
             email: user.email,
             name: user.name,
           },
-        },
-      );
+        }
+      )
     } catch (error) {
-      logger.error("Failed to create audit log for user login (TOTP):", error);
+      logger.error('Failed to create audit log for user login (TOTP):', error)
       // Don't fail the request if audit logging fails
     }
 
     res
-      .cookie("refreshToken", refreshToken, cookieOptions)
-      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie('refreshToken', refreshToken, cookieOptions)
+      .cookie('accessToken', accessToken, cookieOptions)
       .status(HTTP_STATUS.OK)
       .json(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.MFA_VERIFIED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)

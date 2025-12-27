@@ -3,10 +3,10 @@
  * Reusable Zod validation schemas for pagination, filtering, and sorting
  */
 
-import { z } from "zod";
+import { z } from 'zod'
 
-import { PAGINATION_DEFAULTS, SORT_ORDER } from "@constants/pagination";
-import { VALIDATION_MESSAGES, VALIDATION_RULES } from "@constants/validation";
+import { PAGINATION_DEFAULTS, SORT_ORDER } from '@constants/pagination'
+import { VALIDATION_MESSAGES, VALIDATION_RULES } from '@constants/validation'
 
 /**
  * Reusable field validation schemas
@@ -18,10 +18,10 @@ import { VALIDATION_MESSAGES, VALIDATION_RULES } from "@constants/validation";
  */
 export const emailSchema = z
   .string()
-  .email({ message: "Invalid email format" })
+  .email({ message: 'Invalid email format' })
   .max(VALIDATION_RULES.EMAIL_MAX_LENGTH, {
     message: `Email must not exceed ${VALIDATION_RULES.EMAIL_MAX_LENGTH} characters`,
-  });
+  })
 
 /**
  * Password validation schema
@@ -34,13 +34,13 @@ export const passwordSchema = z
   })
   .max(VALIDATION_RULES.PASSWORD_MAX_LENGTH, {
     message: VALIDATION_MESSAGES.PASSWORD_MAX_LENGTH,
-  });
+  })
 
 /**
  * Token validation schema
  * Reusable token field validation (for invitation tokens, reset tokens, etc.)
  */
-export const tokenSchema = z.string().min(1, { message: "Token is required" });
+export const tokenSchema = z.string().min(1, { message: 'Token is required' })
 
 /**
  * Base pagination schema
@@ -52,23 +52,23 @@ export const paginationSchema = z.object({
     .optional()
     .default(String(PAGINATION_DEFAULTS.PAGE_DEFAULT))
     .transform((val) => {
-      const page = Number.parseInt(val, 10);
+      const page = Number.parseInt(val, 10)
       return Number.isNaN(page) || page < PAGINATION_DEFAULTS.PAGE_MIN
         ? PAGINATION_DEFAULTS.PAGE_DEFAULT
-        : page;
+        : page
     }),
   limit: z
     .string()
     .optional()
     .default(String(PAGINATION_DEFAULTS.LIMIT_DEFAULT))
     .transform((val) => {
-      const limit = Number.parseInt(val, 10);
+      const limit = Number.parseInt(val, 10)
       if (Number.isNaN(limit) || limit < PAGINATION_DEFAULTS.LIMIT_MIN) {
-        return PAGINATION_DEFAULTS.LIMIT_DEFAULT;
+        return PAGINATION_DEFAULTS.LIMIT_DEFAULT
       }
-      return Math.min(limit, PAGINATION_DEFAULTS.LIMIT_MAX);
+      return Math.min(limit, PAGINATION_DEFAULTS.LIMIT_MAX)
     }),
-});
+})
 
 /**
  * Base sorting schema
@@ -80,7 +80,7 @@ export const sortingSchema = z.object({
     .enum([SORT_ORDER.ASC, SORT_ORDER.DESC])
     .optional()
     .default(SORT_ORDER.ASC),
-});
+})
 
 /**
  * Base search/filter schema
@@ -89,10 +89,10 @@ export const sortingSchema = z.object({
 export const searchSchema = z.object({
   search: z
     .string()
-    .min(1, { message: "Search term must not be empty" })
-    .max(255, { message: "Search term must not exceed 255 characters" })
+    .min(1, { message: 'Search term must not be empty' })
+    .max(255, { message: 'Search term must not exceed 255 characters' })
     .optional(),
-});
+})
 
 /**
  * Date range filter schema
@@ -107,7 +107,7 @@ export const dateRangeSchema = z.object({
     .string()
     .datetime({ message: 'Invalid date format for "to" date' })
     .optional(),
-});
+})
 
 /**
  * Status filter schema
@@ -116,23 +116,23 @@ export const dateRangeSchema = z.object({
 export const statusFilterSchema = z.object({
   isActive: z
     .string()
-    .transform((val) => val === "true")
+    .transform((val) => val === 'true')
     .pipe(z.boolean())
     .optional(),
-});
+})
 
 /**
  * Combined pagination and sorting schema
  * Most common combination for list endpoints
  */
-export const paginationSortingSchema = paginationSchema.merge(sortingSchema);
+export const paginationSortingSchema = paginationSchema.merge(sortingSchema)
 
 /**
  * Combined pagination, sorting, and search schema
  * Full-featured schema for advanced list endpoints
  */
 export const paginationSortingSearchSchema =
-  paginationSortingSchema.merge(searchSchema);
+  paginationSortingSchema.merge(searchSchema)
 
 /**
  * Complete filtering schema
@@ -140,56 +140,56 @@ export const paginationSortingSearchSchema =
  */
 export const completeFilterSchema = paginationSortingSearchSchema
   .merge(dateRangeSchema)
-  .merge(statusFilterSchema);
+  .merge(statusFilterSchema)
 
 /**
  * Type inference for pagination schema
  */
-export type PaginationInput = z.infer<typeof paginationSchema>;
+export type PaginationInput = z.infer<typeof paginationSchema>
 
 /**
  * Type inference for sorting schema
  */
-export type SortingInput = z.infer<typeof sortingSchema>;
+export type SortingInput = z.infer<typeof sortingSchema>
 
 /**
  * Type inference for search schema
  */
-export type SearchInput = z.infer<typeof searchSchema>;
+export type SearchInput = z.infer<typeof searchSchema>
 
 /**
  * Type inference for date range schema
  */
-export type DateRangeInput = z.infer<typeof dateRangeSchema>;
+export type DateRangeInput = z.infer<typeof dateRangeSchema>
 
 /**
  * Type inference for status filter schema
  */
-export type StatusFilterInput = z.infer<typeof statusFilterSchema>;
+export type StatusFilterInput = z.infer<typeof statusFilterSchema>
 
 /**
  * Type inference for pagination and sorting schema
  */
-export type PaginationSortingInput = z.infer<typeof paginationSortingSchema>;
+export type PaginationSortingInput = z.infer<typeof paginationSortingSchema>
 
 /**
  * Type inference for pagination, sorting, and search schema
  */
 export type PaginationSortingSearchInput = z.infer<
   typeof paginationSortingSearchSchema
->;
+>
 
 /**
  * Type inference for complete filter schema
  */
-export type CompleteFilterInput = z.infer<typeof completeFilterSchema>;
+export type CompleteFilterInput = z.infer<typeof completeFilterSchema>
 
 /**
  * Helper function to calculate offset from page and limit
  */
 export const calculateOffset = (page: number, limit: number): number => {
-  return (page - 1) * limit;
-};
+  return (page - 1) * limit
+}
 
 /**
  * Helper function to get pagination metadata
@@ -197,10 +197,10 @@ export const calculateOffset = (page: number, limit: number): number => {
 export const getPaginationMetadata = (
   page: number,
   limit: number,
-  total: number,
+  total: number
 ) => {
-  const totalPages = Math.ceil(total / limit);
-  const offset = calculateOffset(page, limit);
+  const totalPages = Math.ceil(total / limit)
+  const offset = calculateOffset(page, limit)
 
   return {
     page,
@@ -210,5 +210,5 @@ export const getPaginationMetadata = (
     totalPages,
     hasNextPage: page < totalPages,
     hasPreviousPage: page > 1,
-  };
-};
+  }
+}

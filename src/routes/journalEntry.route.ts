@@ -1,4 +1,4 @@
-import { Router, type Router as RouterType } from "express";
+import { Router, type Router as RouterType } from 'express'
 
 import {
   createJournalEntryController,
@@ -11,13 +11,13 @@ import {
   reverseJournalEntryController,
   updateJournalEntryController,
   voidJournalEntryController,
-} from "@controllers/journalEntry.controller";
-import { authenticate } from "@middlewares/auth.middleware";
+} from '@controllers/journalEntry.controller'
+import { authenticate } from '@middlewares/auth.middleware'
 import {
   requireTenantContext,
   setTenantContext,
-} from "@middlewares/tenantContext.middleware";
-import { validate } from "@middlewares/validate.middleware";
+} from '@middlewares/tenantContext.middleware'
+import { validate } from '@middlewares/validate.middleware'
 import {
   createJournalEntrySchema,
   duplicateJournalEntrySchema,
@@ -27,9 +27,9 @@ import {
   reverseJournalEntrySchema,
   updateJournalEntrySchema,
   voidJournalEntrySchema,
-} from "@schema/journalEntry.schema";
+} from '@schema/journalEntry.schema'
 
-const router: RouterType = Router();
+const router: RouterType = Router()
 
 /**
  * @swagger
@@ -176,13 +176,13 @@ const router: RouterType = Router();
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/",
+  '/',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(journalEntryListSchema, "query"),
-  getAllJournalEntries,
-);
+  validate(journalEntryListSchema, 'query'),
+  getAllJournalEntries
+)
 
 /**
  * @swagger
@@ -266,13 +266,13 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(journalEntryIdSchema, "params"),
-  getJournalEntryById,
-);
+  validate(journalEntryIdSchema, 'params'),
+  getJournalEntryById
+)
 
 /**
  * @swagger
@@ -429,13 +429,13 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/",
+  '/',
   authenticate,
   setTenantContext,
   requireTenantContext,
   validate(createJournalEntrySchema),
-  createJournalEntryController,
-);
+  createJournalEntryController
+)
 
 /**
  * @swagger
@@ -570,14 +570,14 @@ router.post(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(journalEntryIdSchema, "params"),
+  validate(journalEntryIdSchema, 'params'),
   validate(updateJournalEntrySchema),
-  updateJournalEntryController,
-);
+  updateJournalEntryController
+)
 
 /**
  * @swagger
@@ -674,14 +674,14 @@ router.put(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/:id/post",
+  '/:id/post',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(journalEntryIdSchema, "params"),
-  validate(postJournalEntrySchema, "body"),
-  postJournalEntryController,
-);
+  validate(journalEntryIdSchema, 'params'),
+  validate(postJournalEntrySchema, 'body'),
+  postJournalEntryController
+)
 
 /**
  * @swagger
@@ -771,14 +771,14 @@ router.post(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/:id/void",
+  '/:id/void',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(journalEntryIdSchema, "params"),
-  validate(voidJournalEntrySchema, "body"),
-  voidJournalEntryController,
-);
+  validate(journalEntryIdSchema, 'params'),
+  validate(voidJournalEntrySchema, 'body'),
+  voidJournalEntryController
+)
 
 /**
  * @swagger
@@ -891,14 +891,14 @@ router.post(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/:id/reverse",
+  '/:id/reverse',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(journalEntryIdSchema, "params"),
-  validate(reverseJournalEntrySchema, "body"),
-  reverseJournalEntryController,
-);
+  validate(journalEntryIdSchema, 'params'),
+  validate(reverseJournalEntrySchema, 'body'),
+  reverseJournalEntryController
+)
 
 /**
  * @swagger
@@ -969,13 +969,13 @@ router.post(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(journalEntryIdSchema, "params"),
-  deleteJournalEntryById,
-);
+  validate(journalEntryIdSchema, 'params'),
+  deleteJournalEntryById
+)
 
 /**
  * @swagger
@@ -1048,13 +1048,13 @@ router.delete(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/restore",
+  '/:id/restore',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(journalEntryIdSchema, "params"),
-  restoreJournalEntryById,
-);
+  validate(journalEntryIdSchema, 'params'),
+  restoreJournalEntryById
+)
 
 /**
  * @swagger
@@ -1160,13 +1160,13 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/:id/duplicate",
+  '/:id/duplicate',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(journalEntryIdSchema, "params"),
-  validate(duplicateJournalEntrySchema, "body"),
-  duplicateJournalEntryController,
-);
+  validate(journalEntryIdSchema, 'params'),
+  validate(duplicateJournalEntrySchema, 'body'),
+  duplicateJournalEntryController
+)
 
-export default router;
+export default router

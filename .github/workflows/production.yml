@@ -1,0 +1,86 @@
+name: Production Build & Deploy
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # -----------------------------------------------------------------------------
+  # Job 1: Quality Checks (Lint, Type Check, Test)
+  # -----------------------------------------------------------------------------
+  quality-check:
+    name: Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type Check
+        run: pnpm type-check
+
+      - name: Test
+        run: pnpm test
+
+  # -----------------------------------------------------------------------------
+  # Job 2: Deploy to Production Server
+  # Requires secrets: PROD_HOST, PROD_USERNAME, PROD_SSH_KEY
+  # -----------------------------------------------------------------------------
+  deploy:
+    name: Deploy to Production
+    needs: quality-check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USERNAME }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            # Stop script if any command fails
+            set -e
+
+            echo "🚀 Deploying to production..."
+
+            # Navigate to app directory
+            # Ensure this path matches your server's directory
+            cd /app/bkeep-backend || mkdir -p /app/bkeep-backend && cd /app/bkeep-backend
+
+            # Pull the latest code
+            echo "📥 Pulling latest code..."
+            git pull origin main
+
+            # Build and restart services
+            echo "� Building and restarting services..."
+            # Note: We use --build to ensure the image is rebuilt from the latest code
+            docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+
+            # Cleanup unused images
+            echo "🧹 Cleaning up..."
+            docker image prune -f
+
+            echo "✅ Deployment successful!"

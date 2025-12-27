@@ -1,4 +1,4 @@
-import { Router, type Router as RouterType } from "express";
+import { Router, type Router as RouterType } from 'express'
 
 import {
   calculateTaxGroupController,
@@ -11,22 +11,22 @@ import {
   getTaxGroupById,
   restoreTaxGroupById,
   updateTaxGroupController,
-} from "@controllers/taxGroup.controller";
-import { authenticate } from "@middlewares/auth.middleware";
+} from '@controllers/taxGroup.controller'
+import { authenticate } from '@middlewares/auth.middleware'
 import {
   requireTenantContext,
   setTenantContext,
-} from "@middlewares/tenantContext.middleware";
-import { validate } from "@middlewares/validate.middleware";
+} from '@middlewares/tenantContext.middleware'
+import { validate } from '@middlewares/validate.middleware'
 import {
   calculateTaxGroupSchema,
   createTaxGroupSchema,
   taxGroupIdSchema,
   taxGroupListSchema,
   updateTaxGroupSchema,
-} from "@schema/taxGroup.schema";
+} from '@schema/taxGroup.schema'
 
-const router: RouterType = Router();
+const router: RouterType = Router()
 
 /**
  * @swagger
@@ -152,13 +152,13 @@ const router: RouterType = Router();
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/",
+  '/',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxGroupListSchema, "query"),
-  getAllTaxGroups,
-);
+  validate(taxGroupListSchema, 'query'),
+  getAllTaxGroups
+)
 
 /**
  * @swagger
@@ -214,12 +214,12 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/active",
+  '/active',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  getActiveTaxGroups,
-);
+  getActiveTaxGroups
+)
 
 /**
  * @swagger
@@ -299,13 +299,13 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxGroupIdSchema, "params"),
-  getTaxGroupById,
-);
+  validate(taxGroupIdSchema, 'params'),
+  getTaxGroupById
+)
 
 /**
  * @swagger
@@ -391,13 +391,13 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/",
+  '/',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(createTaxGroupSchema, "body"),
-  createTaxGroupController,
-);
+  validate(createTaxGroupSchema, 'body'),
+  createTaxGroupController
+)
 
 /**
  * @swagger
@@ -485,14 +485,14 @@ router.post(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxGroupIdSchema, "params"),
-  validate(updateTaxGroupSchema, "body"),
-  updateTaxGroupController,
-);
+  validate(taxGroupIdSchema, 'params'),
+  validate(updateTaxGroupSchema, 'body'),
+  updateTaxGroupController
+)
 
 /**
  * @swagger
@@ -551,13 +551,13 @@ router.put(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxGroupIdSchema, "params"),
-  deleteTaxGroupById,
-);
+  validate(taxGroupIdSchema, 'params'),
+  deleteTaxGroupById
+)
 
 /**
  * @swagger
@@ -616,13 +616,13 @@ router.delete(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/enable",
+  '/:id/enable',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxGroupIdSchema, "params"),
-  enableTaxGroup,
-);
+  validate(taxGroupIdSchema, 'params'),
+  enableTaxGroup
+)
 
 /**
  * @swagger
@@ -681,13 +681,13 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/disable",
+  '/:id/disable',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxGroupIdSchema, "params"),
-  disableTaxGroup,
-);
+  validate(taxGroupIdSchema, 'params'),
+  disableTaxGroup
+)
 
 /**
  * @swagger
@@ -746,13 +746,13 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/restore",
+  '/:id/restore',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxGroupIdSchema, "params"),
-  restoreTaxGroupById,
-);
+  validate(taxGroupIdSchema, 'params'),
+  restoreTaxGroupById
+)
 
 /**
  * @swagger
@@ -855,13 +855,13 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/:id/calculate",
+  '/:id/calculate',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxGroupIdSchema, "params"),
-  validate(calculateTaxGroupSchema, "body"),
-  calculateTaxGroupController,
-);
+  validate(taxGroupIdSchema, 'params'),
+  validate(calculateTaxGroupSchema, 'body'),
+  calculateTaxGroupController
+)
 
-export default router;
+export default router

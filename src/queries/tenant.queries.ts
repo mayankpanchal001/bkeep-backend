@@ -1,19 +1,19 @@
-import { ERROR_MESSAGES } from "@constants/errors";
-import { HTTP_STATUS } from "@constants/http";
-import { PAGINATION_DEFAULTS } from "@constants/pagination";
-import { Tenant } from "@models/Tenant";
-import { UserRole } from "@models/UserRole";
-import { UserTenant } from "@models/UserTenant";
-import { calculateOffset } from "@schema/shared.schema";
-import type { TenantListInput } from "@schema/tenant.schema";
-import { ApiError } from "@utils/ApiError";
+import { ERROR_MESSAGES } from '@constants/errors'
+import { HTTP_STATUS } from '@constants/http'
+import { PAGINATION_DEFAULTS } from '@constants/pagination'
+import { Tenant } from '@models/Tenant'
+import { UserRole } from '@models/UserRole'
+import { UserTenant } from '@models/UserTenant'
+import { calculateOffset } from '@schema/shared.schema'
+import type { TenantListInput } from '@schema/tenant.schema'
+import { ApiError } from '@utils/ApiError'
 
 /**
  * Interface for tenant query result with pagination
  */
 export interface TenantQueryResult {
-  tenants: Tenant[];
-  total: number;
+  tenants: Tenant[]
+  total: number
 }
 
 /**
@@ -21,16 +21,16 @@ export interface TenantQueryResult {
  */
 const mapSortField = (field: string): string => {
   const fieldMap: Record<string, string> = {
-    name: "name",
-    schemaName: "schema_name",
-    isActive: "is_active",
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-  };
+    name: 'name',
+    schemaName: 'schema_name',
+    isActive: 'is_active',
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+  }
 
   // eslint-disable-next-line security/detect-object-injection
-  return fieldMap[field] ?? "created_at";
-};
+  return fieldMap[field] ?? 'created_at'
+}
 
 /**
  * Find tenants with pagination, sorting, search, and filtering
@@ -40,56 +40,56 @@ const mapSortField = (field: string): string => {
  */
 export const findTenants = async (
   filters: TenantListInput,
-  userId?: string,
+  userId?: string
 ): Promise<TenantQueryResult> => {
   const {
     page = PAGINATION_DEFAULTS.PAGE_DEFAULT,
     limit = PAGINATION_DEFAULTS.LIMIT_DEFAULT,
-    sort = "createdAt",
-    order = "asc",
+    sort = 'createdAt',
+    order = 'asc',
     search,
     isActive,
-  } = filters;
+  } = filters
 
-  const offset = calculateOffset(page, limit);
-  const sortColumn = mapSortField(sort);
+  const offset = calculateOffset(page, limit)
+  const sortColumn = mapSortField(sort)
 
   // Build base query
-  let query = Tenant.query().modify("notDeleted");
+  let query = Tenant.query().modify('notDeleted')
 
   // Filter by user membership if userId is provided
   if (userId) {
     query = query
-      .join("user_tenants", "tenants.id", "user_tenants.tenant_id")
-      .where("user_tenants.user_id", userId)
-      .groupBy("tenants.id");
+      .join('user_tenants', 'tenants.id', 'user_tenants.tenant_id')
+      .where('user_tenants.user_id', userId)
+      .groupBy('tenants.id')
   }
 
   // Apply active filter if provided
   if (isActive !== undefined) {
     if (isActive) {
-      query = query.modify("active");
+      query = query.modify('active')
     } else {
-      query = query.modify("inactive");
+      query = query.modify('inactive')
     }
   }
 
   // Apply search if provided
   if (search) {
-    query = query.modify("search", search);
+    query = query.modify('search', search)
   }
 
   // Get total count before pagination
-  const total = await query.resultSize();
+  const total = await query.resultSize()
 
   // Apply pagination and sorting
   const tenants = await query
     .orderBy(sortColumn, order)
     .limit(limit)
-    .offset(offset);
+    .offset(offset)
 
-  return { tenants, total };
-};
+  return { tenants, total }
+}
 
 /**
  * Find tenant by ID
@@ -98,14 +98,14 @@ export const findTenants = async (
  * @throws ApiError if tenant not found
  */
 export const findTenantById = async (tenantId: string): Promise<Tenant> => {
-  const tenant = await Tenant.query().modify("notDeleted").findById(tenantId);
+  const tenant = await Tenant.query().modify('notDeleted').findById(tenantId)
 
   if (!tenant) {
-    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TENANT_NOT_FOUND);
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TENANT_NOT_FOUND)
   }
 
-  return tenant;
-};
+  return tenant
+}
 
 /**
  * Find tenant by schema name
@@ -113,10 +113,10 @@ export const findTenantById = async (tenantId: string): Promise<Tenant> => {
  * @returns Tenant object or undefined
  */
 export const findTenantBySchemaName = async (
-  schemaName: string,
+  schemaName: string
 ): Promise<Tenant | undefined> => {
-  return Tenant.findBySchemaName(schemaName);
-};
+  return Tenant.findBySchemaName(schemaName)
+}
 
 /**
  * Create tenant
@@ -124,27 +124,27 @@ export const findTenantBySchemaName = async (
  * @returns Created tenant
  */
 export const createTenant = async (data: {
-  name: string;
-  schemaName: string;
-  isActive?: boolean;
+  name: string
+  schemaName: string
+  isActive?: boolean
 }): Promise<Tenant> => {
   // Check if schema name already exists
-  const existingTenant = await findTenantBySchemaName(data.schemaName);
+  const existingTenant = await findTenantBySchemaName(data.schemaName)
   if (existingTenant) {
     throw new ApiError(
       HTTP_STATUS.CONFLICT,
-      ERROR_MESSAGES.TENANT_SCHEMA_ALREADY_EXISTS,
-    );
+      ERROR_MESSAGES.TENANT_SCHEMA_ALREADY_EXISTS
+    )
   }
 
   const tenant = await Tenant.query().insert({
     name: data.name,
     schemaName: data.schemaName,
     isActive: data.isActive ?? true,
-  });
+  })
 
-  return tenant;
-};
+  return tenant
+}
 
 /**
  * Update tenant
@@ -155,16 +155,16 @@ export const createTenant = async (data: {
 export const updateTenant = async (
   tenantId: string,
   data: {
-    name?: string;
-    isActive?: boolean;
-  },
+    name?: string
+    isActive?: boolean
+  }
 ): Promise<Tenant> => {
-  const tenant = await findTenantById(tenantId);
+  const tenant = await findTenantById(tenantId)
 
-  const updatedTenant = await tenant.$query().patchAndFetch(data);
+  const updatedTenant = await tenant.$query().patchAndFetch(data)
 
-  return updatedTenant;
-};
+  return updatedTenant
+}
 
 /**
  * Delete tenant (soft delete)
@@ -172,20 +172,20 @@ export const updateTenant = async (
  * @returns Deleted tenant
  */
 export const deleteTenant = async (tenantId: string): Promise<Tenant> => {
-  const tenant = await findTenantById(tenantId);
+  const tenant = await findTenantById(tenantId)
 
   // Soft delete the tenant
-  await tenant.softDelete();
+  await tenant.softDelete()
 
   // Reload the tenant directly (without notDeleted modifier) to get the updated data
-  const deletedTenant = await Tenant.query().findById(tenantId);
+  const deletedTenant = await Tenant.query().findById(tenantId)
 
   if (!deletedTenant) {
-    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TENANT_NOT_FOUND);
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TENANT_NOT_FOUND)
   }
 
-  return deletedTenant;
-};
+  return deletedTenant
+}
 
 /**
  * Restore tenant (un-soft delete)
@@ -194,29 +194,29 @@ export const deleteTenant = async (tenantId: string): Promise<Tenant> => {
  */
 export const restoreTenant = async (tenantId: string): Promise<Tenant> => {
   const tenant = await Tenant.query()
-    .where("id", tenantId)
-    .whereNotNull("deleted_at")
-    .first();
+    .where('id', tenantId)
+    .whereNotNull('deleted_at')
+    .first()
 
   if (!tenant) {
     throw new ApiError(
       HTTP_STATUS.NOT_FOUND,
-      ERROR_MESSAGES.TENANT_NOT_FOUND_OR_NOT_DELETED,
-    );
+      ERROR_MESSAGES.TENANT_NOT_FOUND_OR_NOT_DELETED
+    )
   }
 
   // Restore the tenant
-  await tenant.restore();
+  await tenant.restore()
 
   // Reload to get updated data
-  const restoredTenant = await Tenant.query().findById(tenantId);
+  const restoredTenant = await Tenant.query().findById(tenantId)
 
   if (!restoredTenant) {
-    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TENANT_NOT_FOUND);
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TENANT_NOT_FOUND)
   }
 
-  return restoredTenant;
-};
+  return restoredTenant
+}
 
 /**
  * Associate user with tenant
@@ -228,28 +228,28 @@ export const restoreTenant = async (tenantId: string): Promise<Tenant> => {
 export const associateUserWithTenant = async (
   userId: string,
   tenantId: string,
-  isPrimary: boolean = false,
+  isPrimary: boolean = false
 ): Promise<void> => {
   // Check if association already exists
   const existing = await UserTenant.query()
-    .where("userId", userId)
-    .where("tenantId", tenantId)
-    .first();
+    .where('userId', userId)
+    .where('tenantId', tenantId)
+    .first()
 
   if (existing) {
     // Update is_primary if needed
     if (existing.isPrimary !== isPrimary) {
-      await existing.$query().patch({ isPrimary });
+      await existing.$query().patch({ isPrimary })
     }
-    return;
+    return
   }
 
   // If this is primary, unset other primary tenants for this user
   if (isPrimary) {
     await UserTenant.query()
-      .where("userId", userId)
-      .where("isPrimary", true)
-      .patch({ isPrimary: false });
+      .where('userId', userId)
+      .where('isPrimary', true)
+      .patch({ isPrimary: false })
   }
 
   // Create association
@@ -257,8 +257,8 @@ export const associateUserWithTenant = async (
     userId: userId,
     tenantId: tenantId,
     isPrimary: isPrimary,
-  });
-};
+  })
+}
 
 /**
  * Switch user's primary tenant
@@ -270,32 +270,32 @@ export const associateUserWithTenant = async (
  */
 export const switchUserTenant = async (
   userId: string,
-  tenantId: string,
+  tenantId: string
 ): Promise<void> => {
   // Verify user belongs to tenant
-  const userTenant = await UserTenant.findByUserAndTenant(userId, tenantId);
+  const userTenant = await UserTenant.findByUserAndTenant(userId, tenantId)
 
   if (!userTenant) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
-      ERROR_MESSAGES.UNAUTHORIZED_ACCESS,
-    );
+      ERROR_MESSAGES.UNAUTHORIZED_ACCESS
+    )
   }
 
   // If already primary, no need to update
   if (userTenant.isPrimary) {
-    return;
+    return
   }
 
   // Unset all other primary tenants for this user
   await UserTenant.query()
-    .where("user_id", userId)
-    .where("is_primary", true)
-    .patch({ isPrimary: false });
+    .where('user_id', userId)
+    .where('is_primary', true)
+    .patch({ isPrimary: false })
 
   // Set this tenant as primary
-  await userTenant.$query().patch({ isPrimary: true });
-};
+  await userTenant.$query().patch({ isPrimary: true })
+}
 
 /**
  * Assign role to user for tenant
@@ -307,8 +307,8 @@ export const switchUserTenant = async (
 export const assignRoleToUserForTenant = async (
   userId: string,
   roleId: string,
-  tenantId: string,
+  tenantId: string
 ): Promise<void> => {
   // Assign role using UserRole model (idempotent)
-  await UserRole.assignRole(userId, roleId, tenantId);
-};
+  await UserRole.assignRole(userId, roleId, tenantId)
+}

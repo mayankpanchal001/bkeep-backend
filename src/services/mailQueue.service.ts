@@ -11,15 +11,15 @@ import {
   TotpSetupMailData,
   UserInvitationMailData,
   WelcomeMailData,
-} from "@/types/mail.type";
-import { MAIL_SUBJECTS } from "@constants/mail";
-import { addMailJob } from "@queues/mail.queue";
+} from '@/types/mail.type'
+import { MAIL_SUBJECTS } from '@constants/mail'
+import { addMailJob } from '@queues/mail.queue'
 
 /**
  * Queue password reset email
  */
 export async function queuePasswordResetEmail(
-  data: PasswordResetMailData,
+  data: PasswordResetMailData
 ): Promise<void> {
   await addMailJob({
     to: data.to,
@@ -28,9 +28,9 @@ export async function queuePasswordResetEmail(
     context: {
       resetUrl: data.resetUrl,
       expiryMinutes: data.expiryMinutes,
-      userName: data.userName ?? "User",
+      userName: data.userName ?? 'User',
     },
-  });
+  })
 }
 
 /**
@@ -44,20 +44,20 @@ export async function queueMfaOtpEmail(data: MfaOtpMailData): Promise<void> {
     context: {
       otpCode: data.otpCode,
       expiryMinutes: data.expiryMinutes,
-      userName: data.userName ?? "User",
+      userName: data.userName ?? 'User',
     },
-  });
+  })
 }
 
 /**
  * Queue user invitation email
  */
 export async function queueUserInvitationEmail(
-  data: UserInvitationMailData,
+  data: UserInvitationMailData
 ): Promise<void> {
-  const subjectFn = MAIL_SUBJECTS[MailTemplate.INVITATION];
+  const subjectFn = MAIL_SUBJECTS[MailTemplate.INVITATION]
   const subject =
-    typeof subjectFn === "function" ? subjectFn(data.tenantName) : subjectFn;
+    typeof subjectFn === 'function' ? subjectFn(data.tenantName) : subjectFn
 
   await addMailJob({
     to: data.to,
@@ -67,19 +67,19 @@ export async function queueUserInvitationEmail(
       acceptUrl: data.acceptUrl,
       tenantName: data.tenantName,
       expiryDays: data.expiryDays,
-      userName: data.userName ?? "User",
-      invitedBy: data.invitedBy ?? "the organization",
+      userName: data.userName ?? 'User',
+      invitedBy: data.invitedBy ?? 'the organization',
     },
-  });
+  })
 }
 
 /**
  * Queue welcome email
  */
 export async function queueWelcomeEmail(data: WelcomeMailData): Promise<void> {
-  const subjectFn = MAIL_SUBJECTS[MailTemplate.WELCOME];
+  const subjectFn = MAIL_SUBJECTS[MailTemplate.WELCOME]
   const subject =
-    typeof subjectFn === "function" ? subjectFn(data.tenantName) : subjectFn;
+    typeof subjectFn === 'function' ? subjectFn(data.tenantName) : subjectFn
 
   await addMailJob({
     to: data.to,
@@ -90,31 +90,31 @@ export async function queueWelcomeEmail(data: WelcomeMailData): Promise<void> {
       tenantName: data.tenantName,
       loginUrl: data.loginUrl,
     },
-  });
+  })
 }
 
 /**
  * Queue password reset success email
  */
 export async function queuePasswordResetSuccessEmail(
-  data: PasswordResetSuccessMailData,
+  data: PasswordResetSuccessMailData
 ): Promise<void> {
   await addMailJob({
     to: data.to,
     subject: MAIL_SUBJECTS[MailTemplate.PASSWORD_RESET_SUCCESS],
     template: MailTemplate.PASSWORD_RESET_SUCCESS,
     context: {
-      userName: data.userName ?? "User",
+      userName: data.userName ?? 'User',
       loginUrl: data.loginUrl,
     },
-  });
+  })
 }
 
 /**
  * Queue TOTP setup email
  */
 export async function queueTotpSetupEmail(
-  data: TotpSetupMailData,
+  data: TotpSetupMailData
 ): Promise<void> {
   await addMailJob({
     to: data.to,
@@ -125,5 +125,5 @@ export async function queueTotpSetupEmail(
       recoveryCodesUrl: data.recoveryCodesUrl,
       disableTotpUrl: data.disableTotpUrl,
     },
-  });
+  })
 }

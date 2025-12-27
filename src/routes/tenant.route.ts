@@ -1,6 +1,6 @@
-import { Router, type Router as RouterType } from "express";
+import { Router, type Router as RouterType } from 'express'
 
-import { ROLES } from "@constants/roles";
+import { ROLES } from '@constants/roles'
 import {
   createTenantController,
   deleteTenantById,
@@ -10,17 +10,17 @@ import {
   restoreTenantById,
   switchTenant,
   updateTenantController,
-} from "@controllers/tenant.controller";
-import { authenticate, authorize } from "@middlewares/auth.middleware";
-import { validate } from "@middlewares/validate.middleware";
+} from '@controllers/tenant.controller'
+import { authenticate, authorize } from '@middlewares/auth.middleware'
+import { validate } from '@middlewares/validate.middleware'
 import {
   createTenantSchema,
   tenantIdSchema,
   tenantListSchema,
   updateTenantSchema,
-} from "@schema/tenant.schema";
+} from '@schema/tenant.schema'
 
-const router: RouterType = Router();
+const router: RouterType = Router()
 
 /**
  * @swagger
@@ -109,12 +109,12 @@ const router: RouterType = Router();
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/all",
+  '/all',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN] }),
-  validate(tenantListSchema, "query"),
-  getAllTenants,
-);
+  validate(tenantListSchema, 'query'),
+  getAllTenants
+)
 
 /**
  * @swagger
@@ -197,11 +197,11 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/",
+  '/',
   authenticate,
-  validate(tenantListSchema, "query"),
-  getUserTenants,
-);
+  validate(tenantListSchema, 'query'),
+  getUserTenants
+)
 
 /**
  * @swagger
@@ -276,12 +276,12 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/",
+  '/',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN] }),
   validate(createTenantSchema),
-  createTenantController,
-);
+  createTenantController
+)
 
 /**
  * @swagger
@@ -336,12 +336,12 @@ router.post(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/:id",
+  '/:id',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN] }),
-  validate(tenantIdSchema, "params"),
-  getTenantById,
-);
+  validate(tenantIdSchema, 'params'),
+  getTenantById
+)
 
 /**
  * @swagger
@@ -418,13 +418,13 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id",
+  '/:id',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN] }),
-  validate(tenantIdSchema, "params"),
+  validate(tenantIdSchema, 'params'),
   validate(updateTenantSchema),
-  updateTenantController,
-);
+  updateTenantController
+)
 
 /**
  * @swagger
@@ -480,12 +480,12 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete(
-  "/:id",
+  '/:id',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN] }),
-  validate(tenantIdSchema, "params"),
-  deleteTenantById,
-);
+  validate(tenantIdSchema, 'params'),
+  deleteTenantById
+)
 
 /**
  * @swagger
@@ -540,12 +540,12 @@ router.delete(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/restore",
+  '/:id/restore',
   authenticate,
   authorize({ roles: [ROLES.SUPERADMIN] }),
-  validate(tenantIdSchema, "params"),
-  restoreTenantById,
-);
+  validate(tenantIdSchema, 'params'),
+  restoreTenantById
+)
 
 /**
  * @swagger
@@ -607,10 +607,10 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/:id/switch",
+  '/:id/switch',
   authenticate,
-  validate(tenantIdSchema, "params"),
-  switchTenant,
-);
+  validate(tenantIdSchema, 'params'),
+  switchTenant
+)
 
-export default router;
+export default router

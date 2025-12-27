@@ -1,29 +1,29 @@
-import type { Knex } from "knex";
+import type { Knex } from 'knex'
 
-import { ERROR_MESSAGES } from "@constants/errors";
-import { HTTP_STATUS } from "@constants/http";
-import { Tax, TaxType } from "@models/Tax";
-import { calculateOffset } from "@schema/shared.schema";
-import type { TaxListInput } from "@schema/tax.schema";
-import { ApiError } from "@utils/ApiError";
-import { getCurrentDate } from "@utils/date";
-import { withTenantSchema } from "@utils/tenantQuery";
+import { ERROR_MESSAGES } from '@constants/errors'
+import { HTTP_STATUS } from '@constants/http'
+import { Tax, TaxType } from '@models/Tax'
+import { calculateOffset } from '@schema/shared.schema'
+import type { TaxListInput } from '@schema/tax.schema'
+import { ApiError } from '@utils/ApiError'
+import { getCurrentDate } from '@utils/date'
+import { withTenantSchema } from '@utils/tenantQuery'
 
 /**
  * Map sort field to database column
  */
 const mapTaxSortField = (field: string): string => {
   const fieldMap: Record<string, string> = {
-    name: "name",
-    type: "type",
-    rate: "rate",
-    isActive: "is_active",
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-  };
+    name: 'name',
+    type: 'type',
+    rate: 'rate',
+    isActive: 'is_active',
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
+  }
   // eslint-disable-next-line security/detect-object-injection
-  return fieldMap[field] ?? "name";
-};
+  return fieldMap[field] ?? 'name'
+}
 
 /**
  * Find taxes with pagination, sorting, search, and filtering
@@ -35,59 +35,59 @@ const mapTaxSortField = (field: string): string => {
 export const findTaxes = async (
   tenantId: string,
   schemaName: string,
-  filters: TaxListInput,
+  filters: TaxListInput
 ): Promise<{ taxes: Tax[]; total: number }> => {
   const {
     page,
     limit,
-    sort = "name",
-    order = "asc",
+    sort = 'name',
+    order = 'asc',
     search,
     isActive,
     type,
-  } = filters;
+  } = filters
 
-  const offset = calculateOffset(page, limit);
-  const sortColumn = mapTaxSortField(sort);
+  const offset = calculateOffset(page, limit)
+  const sortColumn = mapTaxSortField(sort)
 
   return withTenantSchema(schemaName, async (trx) => {
     // Build base query
-    let query = Tax.query(trx).modify("notDeleted");
+    let query = Tax.query(trx).modify('notDeleted')
 
     // Filter by tenant
-    query = query.modify("byTenant", tenantId);
+    query = query.modify('byTenant', tenantId)
 
     // Apply active filter if provided
     if (isActive !== undefined) {
       if (isActive) {
-        query = query.modify("active");
+        query = query.modify('active')
       } else {
-        query = query.where("is_active", false);
+        query = query.where('is_active', false)
       }
     }
 
     // Apply type filter if provided
     if (type) {
-      query = query.modify("byType", type);
+      query = query.modify('byType', type)
     }
 
     // Apply search if provided
     if (search) {
-      query = query.where("name", "ilike", `%${search}%`);
+      query = query.where('name', 'ilike', `%${search}%`)
     }
 
     // Get total count before pagination
-    const total = await query.resultSize();
+    const total = await query.resultSize()
 
     // Apply pagination and sorting
     const taxes = await query
       .orderBy(sortColumn, order)
       .limit(limit)
-      .offset(offset);
+      .offset(offset)
 
-    return { taxes, total };
-  });
-};
+    return { taxes, total }
+  })
+}
 
 /**
  * Find tax by ID
@@ -102,27 +102,27 @@ export const findTaxById = async (
   tenantId: string,
   schemaName: string,
   taxId: string,
-  trx?: Knex.Transaction,
+  trx?: Knex.Transaction
 ): Promise<Tax> => {
   const execute = async (transaction: Knex.Transaction) => {
     const tax = await Tax.query(transaction)
-      .modify("notDeleted")
-      .modify("byTenant", tenantId)
-      .findById(taxId);
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
+      .findById(taxId)
 
     if (!tax) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TAX_NOT_FOUND);
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TAX_NOT_FOUND)
     }
 
-    return tax;
-  };
-
-  if (trx) {
-    return execute(trx);
+    return tax
   }
 
-  return withTenantSchema(schemaName, execute);
-};
+  if (trx) {
+    return execute(trx)
+  }
+
+  return withTenantSchema(schemaName, execute)
+}
 
 /**
  * Create a new tax
@@ -137,13 +137,13 @@ export const createTax = async (
   tenantId: string,
   schemaName: string,
   data: {
-    name: string;
-    type: TaxType;
-    rate: number;
-    isActive?: boolean;
+    name: string
+    type: TaxType
+    rate: number
+    isActive?: boolean
   },
   createdBy: string,
-  trx?: Knex.Transaction,
+  trx?: Knex.Transaction
 ): Promise<Tax> => {
   const execute = async (transaction: Knex.Transaction) => {
     return Tax.query(transaction).insert({
@@ -151,15 +151,15 @@ export const createTax = async (
       tenantId,
       createdBy,
       isActive: data.isActive ?? true,
-    });
-  };
-
-  if (trx) {
-    return execute(trx);
+    })
   }
 
-  return withTenantSchema(schemaName, execute);
-};
+  if (trx) {
+    return execute(trx)
+  }
+
+  return withTenantSchema(schemaName, execute)
+}
 
 /**
  * Update a tax
@@ -176,27 +176,27 @@ export const updateTax = async (
   schemaName: string,
   taxId: string,
   data: {
-    name?: string;
-    type?: TaxType;
-    rate?: number;
-    isActive?: boolean;
+    name?: string
+    type?: TaxType
+    rate?: number
+    isActive?: boolean
   },
-  trx?: Knex.Transaction,
+  trx?: Knex.Transaction
 ): Promise<Tax> => {
   const execute = async (transaction: Knex.Transaction) => {
     // Verify tax exists and belongs to tenant
-    await findTaxById(tenantId, schemaName, taxId, transaction);
+    await findTaxById(tenantId, schemaName, taxId, transaction)
 
     // Update tax
-    return Tax.query(transaction).patchAndFetchById(taxId, data);
-  };
-
-  if (trx) {
-    return execute(trx);
+    return Tax.query(transaction).patchAndFetchById(taxId, data)
   }
 
-  return withTenantSchema(schemaName, execute);
-};
+  if (trx) {
+    return execute(trx)
+  }
+
+  return withTenantSchema(schemaName, execute)
+}
 
 /**
  * Soft delete a tax
@@ -209,28 +209,28 @@ export const updateTax = async (
 export const deleteTax = async (
   tenantId: string,
   schemaName: string,
-  taxId: string,
+  taxId: string
 ): Promise<Tax> => {
   return withTenantSchema(schemaName, async (trx) => {
     // Verify tax exists and belongs to tenant
-    await findTaxById(tenantId, schemaName, taxId, trx);
+    await findTaxById(tenantId, schemaName, taxId, trx)
 
     // Soft delete using direct Knex update
-    await trx("taxes").where("id", taxId).where("tenant_id", tenantId).update({
+    await trx('taxes').where('id', taxId).where('tenant_id', tenantId).update({
       deleted_at: getCurrentDate(),
       updated_at: getCurrentDate(),
-    });
+    })
 
     // Reload tax to get updated deleted_at
-    const deletedTax = await Tax.query(trx).findById(taxId);
+    const deletedTax = await Tax.query(trx).findById(taxId)
 
     if (!deletedTax) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TAX_NOT_FOUND);
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TAX_NOT_FOUND)
     }
 
-    return deletedTax;
-  });
-};
+    return deletedTax
+  })
+}
 
 /**
  * Restore a soft-deleted tax
@@ -243,46 +243,46 @@ export const deleteTax = async (
 export const restoreTax = async (
   tenantId: string,
   schemaName: string,
-  taxId: string,
+  taxId: string
 ): Promise<Tax> => {
   return withTenantSchema(schemaName, async (trx) => {
     // Find tax (including deleted ones)
     const tax = await Tax.query(trx)
-      .modify("byTenant", tenantId)
-      .findById(taxId);
+      .modify('byTenant', tenantId)
+      .findById(taxId)
 
     if (!tax) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TAX_NOT_FOUND);
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TAX_NOT_FOUND)
     }
 
     if (!tax.deletedAt) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        ERROR_MESSAGES.TAX_NOT_DELETED,
-      );
+        ERROR_MESSAGES.TAX_NOT_DELETED
+      )
     }
 
     // Tax is deleted, proceed with restoration
 
     // Restore using direct Knex update
-    await trx("taxes").where("id", taxId).where("tenant_id", tenantId).update({
+    await trx('taxes').where('id', taxId).where('tenant_id', tenantId).update({
       deleted_at: null,
       updated_at: getCurrentDate(),
-    });
+    })
 
     // Reload tax
     const restoredTax = await Tax.query(trx)
-      .modify("notDeleted")
-      .modify("byTenant", tenantId)
-      .findById(taxId);
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
+      .findById(taxId)
 
     if (!restoredTax) {
-      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TAX_NOT_FOUND);
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TAX_NOT_FOUND)
     }
 
-    return restoredTax;
-  });
-};
+    return restoredTax
+  })
+}
 
 /**
  * Update tax activation status
@@ -297,10 +297,10 @@ export const updateTaxActivationStatus = async (
   tenantId: string,
   schemaName: string,
   taxId: string,
-  isActive: boolean,
+  isActive: boolean
 ): Promise<Tax> => {
-  return updateTax(tenantId, schemaName, taxId, { isActive });
-};
+  return updateTax(tenantId, schemaName, taxId, { isActive })
+}
 
 /**
  * Find active taxes
@@ -310,38 +310,38 @@ export const updateTaxActivationStatus = async (
  */
 export const findActiveTaxes = async (
   tenantId: string,
-  schemaName: string,
+  schemaName: string
 ): Promise<Tax[]> => {
   return withTenantSchema(schemaName, async (trx) => {
     return Tax.query(trx)
-      .modify("notDeleted")
-      .modify("byTenant", tenantId)
-      .modify("active")
-      .orderBy("name", "asc");
-  });
-};
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
+      .modify('active')
+      .orderBy('name', 'asc')
+  })
+}
 
 /**
  * Interface for tax statistics
  */
 export interface TaxStatistics {
-  total: number;
-  active: number;
-  inactive: number;
+  total: number
+  active: number
+  inactive: number
   byType: {
-    normal: number;
-    compound: number;
-    withholding: number;
-  };
-  averageRate: number;
+    normal: number
+    compound: number
+    withholding: number
+  }
+  averageRate: number
   recentTaxes: Array<{
-    id: string;
-    name: string;
-    type: string;
-    rate: number;
-    isActive: boolean;
-    createdAt: Date;
-  }>;
+    id: string
+    name: string
+    type: string
+    rate: number
+    isActive: boolean
+    createdAt: Date
+  }>
 }
 
 /**
@@ -352,67 +352,67 @@ export interface TaxStatistics {
  */
 export const getTaxStatistics = async (
   tenantId: string,
-  schemaName: string,
+  schemaName: string
 ): Promise<TaxStatistics> => {
   return withTenantSchema(schemaName, async (trx) => {
     // Base query
     const baseQuery = Tax.query(trx)
-      .modify("notDeleted")
-      .modify("byTenant", tenantId);
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
 
     // Get total count
-    const total = await baseQuery.clone().resultSize();
+    const total = await baseQuery.clone().resultSize()
 
     // Get active count
-    const active = await baseQuery.clone().modify("active").resultSize();
+    const active = await baseQuery.clone().modify('active').resultSize()
 
     // Get inactive count
-    const inactive = total - active;
+    const inactive = total - active
 
     // Get counts by type
     const normalCount = await baseQuery
       .clone()
-      .modify("byType", TaxType.NORMAL)
-      .resultSize();
+      .modify('byType', TaxType.NORMAL)
+      .resultSize()
 
     const compoundCount = await baseQuery
       .clone()
-      .modify("byType", TaxType.COMPOUND)
-      .resultSize();
+      .modify('byType', TaxType.COMPOUND)
+      .resultSize()
 
     const withholdingCount = await baseQuery
       .clone()
-      .modify("byType", TaxType.WITHHOLDING)
-      .resultSize();
+      .modify('byType', TaxType.WITHHOLDING)
+      .resultSize()
 
     // Get average rate
     const ratesResult = await baseQuery
       .clone()
-      .select(trx.raw("AVG(rate) as avg_rate"))
-      .first();
+      .select(trx.raw('AVG(rate) as avg_rate'))
+      .first()
 
     const averageRate = ratesResult
       ? Number.parseFloat(
           String(
             (ratesResult as unknown as { avg_rate?: string | number })
-              .avg_rate ?? "0",
-          ),
+              .avg_rate ?? '0'
+          )
         )
-      : 0;
+      : 0
 
     // Get recent taxes (last 5 created)
     const recentTaxesData = await baseQuery
       .clone()
-      .orderBy("created_at", "desc")
+      .orderBy('created_at', 'desc')
       .limit(5)
       .select(
-        "id",
-        "name",
-        "type",
-        "rate",
-        "is_active as isActive",
-        "created_at as createdAt",
-      );
+        'id',
+        'name',
+        'type',
+        'rate',
+        'is_active as isActive',
+        'created_at as createdAt'
+      )
 
     const recentTaxes = recentTaxesData.map((tax) => ({
       id: tax.id,
@@ -421,7 +421,7 @@ export const getTaxStatistics = async (
       rate: tax.rate,
       isActive: (tax as unknown as { isActive: boolean }).isActive,
       createdAt: (tax as unknown as { createdAt: Date }).createdAt,
-    }));
+    }))
 
     return {
       total,
@@ -434,9 +434,9 @@ export const getTaxStatistics = async (
       },
       averageRate: Number.parseFloat(averageRate.toFixed(2)),
       recentTaxes,
-    };
-  });
-};
+    }
+  })
+}
 
 /**
  * Get tax status
@@ -449,17 +449,17 @@ export const getTaxStatistics = async (
 export const getTaxStatus = async (
   tenantId: string,
   schemaName: string,
-  taxId: string,
+  taxId: string
 ): Promise<{
-  id: string;
-  name: string;
-  type: string;
-  rate: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  id: string
+  name: string
+  type: string
+  rate: number
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
 }> => {
-  const tax = await findTaxById(tenantId, schemaName, taxId);
+  const tax = await findTaxById(tenantId, schemaName, taxId)
 
   return {
     id: tax.id,
@@ -469,5 +469,5 @@ export const getTaxStatus = async (
     isActive: tax.isActive,
     createdAt: tax.createdAt,
     updatedAt: tax.updatedAt,
-  };
-};
+  }
+}

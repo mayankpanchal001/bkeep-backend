@@ -1,9 +1,9 @@
-import { Router, type Router as RouterType } from "express";
+import { Router, type Router as RouterType } from 'express'
 
-import { getHealth } from "@controllers/health.controller";
+import { getHealth } from '@controllers/health.controller'
 
-const router: RouterType = Router();
+const router: RouterType = Router()
 
-router.get("/health", getHealth);
+router.get('/health', getHealth)
 
-export default router;
+export default router

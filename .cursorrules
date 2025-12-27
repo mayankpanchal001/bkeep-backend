@@ -1,0 +1,1739 @@
+# Cursor AI Rules for BKeep TypeScript Backend
+
+## 🎯 Project Overview
+
+This is a **multi-tenant TypeScript Express backend** with:
+- **ORM**: Objection.js with Knex query builder
+- **Database**: PostgreSQL with tenant-specific schemas
+- **Authentication**: JWT, Passkey (WebAuthn), TOTP, MFA
+- **Queue**: BullMQ with Redis for background jobs
+- **Email**: AWS SES for transactional emails
+- **Logging**: Winston with daily rotation
+- **Validation**: Zod schemas
+- **Testing**: Jest with ts-jest
+
+---
+
+## 🚨 CRITICAL RULES - ALWAYS APPLY
+
+### 1. Package Management
+- **ALWAYS use `pnpm add <package>`** to install dependencies (never `npm` or `yarn`)
+- For dev dependencies: `pnpm add -D <package>`
+- Package manager is locked to `pnpm@10.20.0`
+
+### 2. Development Workflow
+**After completing any feature, ALWAYS run these commands in order:**
+```bash
+pnpm type-check  # Check TypeScript errors
+pnpm lint:fix    # Fix linting issues
+```
+- **Fix all errors immediately** before considering the feature complete
+- Never commit code with linting or type errors
+- Run `pnpm build` to verify compilation
+- Test the feature before marking as complete
+
+### 3. Error Handling
+**ALWAYS use `ApiError` class - NEVER throw plain `Error` objects**
+```typescript
+import { ApiError } from '@utils/ApiError'
+import { HTTP_STATUS, ERROR_MESSAGES } from '@constants/'
+
+// ✅ CORRECT
+throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND)
+
+// ❌ WRONG
+throw new Error('User not found')
+throw new ApiError(404, 'User not found')  // Don't hardcode
+```
+
+### 4. Logging
+**ALWAYS use `logger` from `@config/logger` - NEVER use `console.log`**
+```typescript
+import logger from '@config/logger'
+
+// ✅ CORRECT - Include context
+logger.info('User logged in', { userId: user.id, email: user.email })
+logger.error('Failed to send email', { error, userId: user.id })
+logger.warn('Rate limit exceeded', { ip: req.ip })
+logger.debug('Processing request', { method: req.method, url: req.url })
+
+// ❌ WRONG
+console.log('User logged in')
+console.error('Error:', error)
+logger.info('User logged in')  // Missing context
+```
+
+### 5. Date Handling
+**ALWAYS use date utilities from `@utils/date` - NEVER use `new Date()` or `moment()` directly**
+```typescript
+import { getCurrentDate, getCurrentISOString, parseToUTCDate } from '@utils/date'
+
+// ✅ CORRECT
+createdAt: getCurrentDate()
+updatedAt: getCurrentDate()
+deletedAt: getCurrentDate()
+
+// ❌ WRONG
+createdAt: new Date()
+updatedAt: moment().toDate()
+```
+**Note:** Date utilities use `moment.js` internally for UTC consistency. When updating timestamps in soft deletes, always use `getCurrentDate()` for both `deleted_at` and `updated_at`. Dates in JSON schema should be `{ type: 'string', format: 'date-time' }`.
+
+### 6. Constants & Types
+**ALWAYS import from centralized locations:**
+```typescript
+// Constants
+import { ERROR_MESSAGES } from '@constants/errors'
+import { SUCCESS_MESSAGES } from '@constants/success'
+import { HTTP_STATUS } from '@constants/http'
+
+// Types
+import type { UserData, LoginData } from '@/types/user.type'
+```
+- **Never hardcode** error messages, HTTP status codes, or success messages
+- **Never define types inline** when they can be centralized in `@/types/`
+
+### 7. Database Operations - Soft Deletes
+**ALWAYS use soft deletes - NEVER hard delete records**
+```typescript
+import { getCurrentDate } from '@utils/date'
+import { withTenantSchema } from '@utils/tenantQuery'
+
+// ✅ CORRECT - Soft delete with direct Knex
+await db('table_name')
+  .where('id', id)
+  .update({
+    deleted_at: getCurrentDate(),
+    updated_at: getCurrentDate(),
+  })
+
+// For tenant-specific tables
+return withTenantSchema(schemaName, async (trx) => {
+  await trx('table_name')
+    .where('id', id)
+    .where('tenant_id', tenantId)
+    .update({
+      deleted_at: getCurrentDate(),
+      updated_at: getCurrentDate(),
+    })
+})
+
+// ❌ WRONG - Hard delete
+await Model.query().deleteById(id)
+```
+**Note:** Always use direct Knex updates for soft deletes to bypass Objection validation.
+
+### 8. Controller Wrapper
+**ALWAYS use `asyncHandler` wrapper for all controller functions**
+```typescript
+import asyncHandler from '@utils/asyncHandler'
+
+// ✅ CORRECT
+export const getUser: RequestHandler = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    // controller logic
+  }
+)
+
+// ❌ WRONG - No asyncHandler wrapper
+export const getUser: RequestHandler = async (req, res) => {
+  // controller logic
+}
+```
+
+### 9. Migrations
+**NEVER run migrations in query/controller code**
+- Migrations should only run during:
+  - Tenant onboarding (via `onboardTenant` service using `runTenantMigrations(schemaName)`)
+  - Deployment/startup scripts
+  - Manual CLI commands (`pnpm db:migrate`)
+- **Never call migration functions** inside query files or controllers
+- **Never create migration files manually** - always use migration commands
+
+---
+
+## 📁 Architecture & Project Structure
+
+### Separation of Concerns
+```
+Controllers → Queries → Models → Database
+    ↓           ↓         ↓
+  HTTP       Business   Schema
+ Layer       Logic     Definition
+```
+
+### File Organization
+```
+src/
+├── app.ts                    # Express app setup
+├── server.ts                 # Server startup
+├── config/                   # Configuration (env, logger, db)
+├── constants/                # All constants (errors, success, http, etc.)
+├── controllers/              # HTTP request handlers
+├── database/
+│   ├── migrations/           # Public schema migrations
+│   └── migrations/tenant/    # Tenant-specific migrations
+├── middlewares/              # Express middlewares
+├── models/                   # Objection.js models
+├── queries/                  # Database query functions
+├── queues/                   # BullMQ queue definitions
+├── routes/                   # Route definitions
+├── schema/                   # Zod validation schemas
+├── services/                 # Business logic services
+├── types/                    # TypeScript type definitions
+├── utils/                    # Utility functions
+└── workers/                  # Background job workers
+```
+
+### Multi-Tenancy Architecture
+- **Public schema**: Users, roles, permissions, tenants, invitations, audit logs, passkeys
+- **Tenant schemas**: Tenant-specific data (accounts, transactions, etc.)
+- Schema naming: `tenant_<schemaName>` (e.g., `tenant_acme_corp`)
+- Always filter by `tenantId` in queries
+- Use `withTenantSchema()` utility for tenant-specific queries
+
+---
+
+## 🔧 TypeScript Conventions
+
+### Strict TypeScript
+```typescript
+// tsconfig.json enforces:
+// - strict: true
+// - noImplicitAny: true
+// - strictNullChecks: true
+// - noUnusedLocals: true
+// - noUnusedParameters: true
+// - noUncheckedIndexedAccess: true
+// - exactOptionalPropertyTypes: true
+```
+
+### Type Definitions
+```typescript
+// Use interfaces for object shapes
+interface UserData {
+  id: string
+  email: string
+  name: string
+}
+
+// Use type for unions/intersections
+type Status = 'active' | 'inactive' | 'deleted'
+
+// Always type function parameters and return types
+export const findUser = async (userId: string): Promise<User> => {
+  // ...
+}
+
+// Use `declare` for model properties
+export class User extends BaseModel {
+  declare id: string
+  declare email: string
+  declare name: string
+}
+```
+
+### Type Extraction
+```typescript
+// Extract parameter types
+type LoginParams = Parameters<typeof login>[0]
+
+// Extract return types
+type UserResult = Awaited<ReturnType<typeof findUserById>>
+```
+
+### Path Aliases
+```typescript
+// Use these path aliases consistently:
+@/          // Root (src/)
+@config/    // Configuration
+@constants/ // Constants
+@models/    // Models
+@queries/   // Queries
+@controllers/ // Controllers
+@utils/     // Utilities
+@middlewares/ // Middlewares
+@routes/    // Routes
+@schema/    // Zod schemas
+@services/  // Services
+@/types/    // Type definitions
+```
+
+---
+
+## 🗄️ Database & Models
+
+### BaseModel
+All models extend `BaseModel` which provides:
+- UUID primary keys (`id`)
+- Timestamps (`createdAt`, `updatedAt`)
+- Soft deletes (`deletedAt`)
+- Snake case column mapping
+- Query modifiers (`notDeleted`, `deleted`)
+
+### Model Structure
+```typescript
+import { BaseModel } from './BaseModel'
+
+export class User extends BaseModel {
+  // Properties with declare keyword
+  declare email: string
+  declare name: string
+  declare passwordHash: string
+
+  // Table name
+  static override get tableName(): string {
+    return 'users'
+  }
+
+  // JSON schema for validation
+  static override get jsonSchema() {
+    return {
+      type: 'object',
+      required: ['email', 'name'],
+      properties: {
+        email: { type: 'string', format: 'email' },
+        name: { type: 'string', minLength: 1, maxLength: 255 },
+        passwordHash: { type: 'string' },
+        // Dates as strings with date-time format
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' },
+      },
+    }
+  }
+
+  // Query modifiers
+  static override get modifiers() {
+    return {
+      ...super.modifiers,
+      active(query: QueryBuilder<User>) {
+        query.where('is_active', true)
+      },
+      // For tenant-specific models, add byTenant modifier
+      byTenant(query: QueryBuilder<User>, tenantId: string) {
+        query.where('tenant_id', tenantId)
+      },
+    }
+  }
+
+  // Relations
+  static get relationMappings() {
+    return {
+      roles: {
+        relation: Model.ManyToManyRelation,
+        modelClass: Role,
+        join: {
+          from: 'users.id',
+          through: {
+            from: 'user_roles.user_id',
+            to: 'user_roles.role_id',
+          },
+          to: 'roles.id',
+        },
+      },
+    }
+  }
+}
+```
+
+### Migrations
+**ALWAYS use commands to generate migrations - NEVER create manually**
+```bash
+# Public schema migration
+pnpm db:migrate:make migration_name
+
+# Tenant schema migration
+pnpm db:migrate:tenant:make migration_name
+```
+
+Migration structure:
+```typescript
+import type { Knex } from 'knex'
+
+export async function up(knex: Knex): Promise<void> {
+  await knex.schema.createTable('table_name', (table) => {
+    // UUID primary key
+    table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'))
+    
+    // Columns
+    table.string('name', 255).notNullable()
+    table.text('description').nullable()
+    
+    // Foreign keys
+    table.uuid('user_id').notNullable()
+    table.foreign('user_id').references('users.id').onDelete('CASCADE')
+    
+    // Timestamps
+    table.timestamp('created_at').defaultTo(knex.fn.now()).notNullable()
+    table.timestamp('updated_at').defaultTo(knex.fn.now()).notNullable()
+    table.timestamp('deleted_at').nullable()
+    
+    // Indexes
+    table.index(['user_id', 'deleted_at'])
+  })
+}
+
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.dropTableIfExists('table_name')
+}
+```
+
+---
+
+## 🎮 Controllers
+
+**Controller Rules:**
+- All controllers use `asyncHandler` wrapper (see Critical Rule #8)
+- Extract user from `AuthenticatedRequest` and validate authentication
+- Use validated data from `req.body`, `req.query`, or `req.params` (validated by Zod middleware)
+- Transform model data to response format, excluding internal fields:
+  - **Always exclude**: `deletedAt`, `tenantId`, `createdBy`
+  - **Include**: `id`, business fields, `createdAt`, `updatedAt`
+- Use `ApiResponse` class for all responses
+- Use `HTTP_STATUS` constants for status codes
+- Use `SUCCESS_MESSAGES` and `ERROR_MESSAGES` constants
+
+### Controller Structure
+```typescript
+import type { RequestHandler } from 'express'
+import { Request, Response } from 'express'
+
+import type { AuthenticatedRequest } from '@middlewares/auth.middleware'
+import { ApiError } from '@utils/ApiError'
+import { ApiResponse } from '@utils/ApiResponse'
+import asyncHandler from '@utils/asyncHandler'
+import { HTTP_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES } from '@constants/'
+
+export const getResource: RequestHandler = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    // 1. Extract and validate user
+    const user = req.user
+    if (!user) {
+      throw new ApiError(HTTP_STATUS.UNAUTHORIZED, ERROR_MESSAGES.USER_NOT_AUTHENTICATED)
+    }
+
+    // 2. Extract tenant context
+    const tenantId = req.user?.selectedTenantId
+    if (!tenantId) {
+      throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED)
+    }
+
+    // 3. Get validated data from request
+    const filters = req.query
+
+    // 4. Call query function
+    const result = await findResources(filters, tenantId)
+
+    // 5. Transform response (exclude internal fields)
+    const transformedData = result.map(item => ({
+      id: item.id,
+      name: item.name,
+      // Include business fields
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      // Exclude: deletedAt, tenantId, createdBy
+    }))
+
+    // 6. Return ApiResponse
+    res.status(HTTP_STATUS.OK).json(
+      new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.RESOURCE_FETCHED, transformedData)
+    )
+  }
+)
+```
+
+### Tenant Context Extraction
+
+**Use `req.user?.selectedTenantId` when:**
+- ✅ Only tenant ID is needed
+- ✅ No schema name required
+- ✅ Public schema tables (users, invitations, audit logs)
+- ✅ Route requires: Only `authenticate` middleware
+
+**Use `getTenantContext()` when:**
+- ✅ Schema name is required for tenant-specific queries
+- ✅ Tenant-specific tables (accounts, transactions)
+- ✅ Route requires: `setTenantContext` + `requireTenantContext` middleware
+
+```typescript
+// Public schema example (invitations)
+export const listInvitations: RequestHandler = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const tenantId = req.user?.selectedTenantId
+    if (!tenantId) {
+      throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED)
+    }
+    const result = await findInvitations(filters, tenantId)
+    // ...
+  }
+)
+
+// Tenant schema example (accounts)
+export const listAccounts: RequestHandler = asyncHandler(
+  async (req: TenantRequest, res: Response) => {
+    const tenantContext = getTenantContext(req) as TenantContext
+    const result = await findAccounts(
+      tenantContext.tenantId,
+      tenantContext.schemaName,
+      filters
+    )
+    // ...
+  }
+)
+```
+
+---
+
+## 🔍 Queries
+
+**Important Query Rules:**
+- Place all database queries in `src/queries/` directory
+- Use `.modify('notDeleted')` to exclude soft-deleted records
+- Use `.modify('deleted')` to query only soft-deleted records (e.g., restore operations)
+- For tenant-specific models, always use `.modify('byTenant', tenantId)` to filter by tenant
+- Use direct Knex updates for soft deletes to bypass Objection validation
+- Use `withTenantSchema()` utility for tenant-specific queries (handles connection management)
+
+### Query Structure - Public Schema
+```typescript
+import { User } from '@models/User'
+import { ApiError } from '@utils/ApiError'
+import { HTTP_STATUS, ERROR_MESSAGES } from '@constants/'
+
+export const findUserById = async (userId: string): Promise<User> => {
+  const user = await User.query()
+    .modify('notDeleted')
+    .findById(userId)
+    .withGraphFetched('roles')
+
+  if (!user) {
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND)
+  }
+
+  return user
+}
+```
+
+### Query Structure - Tenant Schema
+```typescript
+import { withTenantSchema } from '@utils/tenantQuery'
+import { Account } from '@models/Account'
+
+export const findAccounts = async (
+  tenantId: string,
+  schemaName: string,
+  filters: AccountListInput
+): Promise<AccountQueryResult> => {
+  return withTenantSchema(schemaName, async (trx) => {
+    let query = Account.query(trx)
+      .modify('notDeleted')
+      .modify('byTenant', tenantId)
+
+    // Apply filters
+    if (filters.search) {
+      query = query.where('name', 'ilike', `%${filters.search}%`)
+    }
+
+    // Pagination
+    const total = await query.resultSize()
+    const accounts = await query
+      .limit(filters.limit)
+      .offset(filters.offset)
+
+    return { accounts, total }
+  })
+}
+```
+
+### Soft Delete Pattern
+```typescript
+import { getCurrentDate } from '@utils/date'
+import { withTenantSchema } from '@utils/tenantQuery'
+import db from '@database/connection'
+
+// Public schema soft delete
+export const softDeleteUser = async (userId: string): Promise<void> => {
+  await db('users')
+    .where('id', userId)
+    .update({
+      deleted_at: getCurrentDate(),
+      updated_at: getCurrentDate(),
+    })
+}
+
+// Tenant schema soft delete
+export const softDeleteAccount = async (
+  accountId: string,
+  tenantId: string,
+  schemaName: string
+): Promise<void> => {
+  return withTenantSchema(schemaName, async (trx) => {
+    await trx('accounts')
+      .where('id', accountId)
+      .where('tenant_id', tenantId)
+      .update({
+        deleted_at: getCurrentDate(),
+        updated_at: getCurrentDate(),
+      })
+  })
+}
+```
+
+---
+
+## ✅ Validation (Zod)
+
+### Schema Structure
+```typescript
+import { z } from 'zod'
+import { paginationSchema } from '@schema/shared.schema'
+
+// Input validation
+export const createUserSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email format'),
+    name: z.string().min(1, 'Name is required').max(255, 'Name too long'),
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    roleId: z.string().uuid('Invalid role ID'),
+  }),
+})
+
+// Query validation
+export const listUsersSchema = z.object({
+  query: paginationSchema.extend({
+    search: z.string().optional(),
+    status: z.enum(['active', 'inactive']).optional(),
+  }),
+})
+
+// Param validation
+export const userIdParamSchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Invalid user ID'),
+  }),
+})
+
+// Type extraction
+export type CreateUserInput = z.infer<typeof createUserSchema>['body']
+export type ListUsersInput = z.infer<typeof listUsersSchema>['query']
+```
+
+### Using Validation in Routes
+```typescript
+import { validate } from '@middlewares/validate.middleware'
+import { createUserSchema } from '@schema/user.schema'
+
+router.post(
+  '/',
+  authenticate,
+  validate(createUserSchema),
+  createUser
+)
+```
+
+---
+
+## 🛡️ Security Best Practices
+
+### 1. Authentication & Authorization
+```typescript
+// Always verify user authentication
+const user = req.user
+if (!user) {
+  throw new ApiError(HTTP_STATUS.UNAUTHORIZED, ERROR_MESSAGES.USER_NOT_AUTHENTICATED)
+}
+
+// Always verify tenant context
+const tenantId = req.user?.selectedTenantId
+if (!tenantId) {
+  throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED)
+}
+
+// Use authorize middleware for role/permission checks
+router.get(
+  '/admin',
+  authenticate,
+  authorize({ roles: ['admin', 'superadmin'] }),
+  handler
+)
+```
+
+### 2. Input Validation
+- **Always use Zod schemas** for request validation
+- **Validate all inputs**: body, query, params
+- **Never trust user input** - sanitize and validate
+
+### 3. SQL Injection Prevention
+- **Use parameterized queries** (Knex handles this automatically)
+- **Never concatenate SQL strings**
+```typescript
+// ✅ CORRECT - Parameterized
+await db('users').where('email', email)
+
+// ❌ WRONG - SQL injection risk
+await db.raw(`SELECT * FROM users WHERE email = '${email}'`)
+```
+
+### 4. Sensitive Data
+```typescript
+// Never expose these fields in API responses:
+// - deletedAt
+// - passwordHash
+// - tenantId (except when explicitly needed)
+// - createdBy (except when explicitly needed)
+// - mfaSecret
+// - backupCodes
+
+// Transform data before returning
+const userData = {
+  id: user.id,
+  email: user.email,
+  name: user.name,
+  isActive: user.isActive,
+  createdAt: user.createdAt,
+  // Exclude: passwordHash, deletedAt, etc.
+}
+```
+
+---
+
+## 📧 Mail Queue & Background Jobs
+
+### Queueing Emails
+```typescript
+import { queueUserInvitationEmail } from '@services/mailQueue.service'
+import logger from '@config/logger'
+
+// Always wrap in try/catch - don't fail request if email fails
+try {
+  await queueUserInvitationEmail({
+    to: user.email,
+    acceptUrl: `${env.FRONTEND_URL}/accept-invitation?token=${token}`,
+    tenantName: tenant.name,
+    expiryDays: 7,
+  })
+  logger.info(`Invitation email queued for ${user.email}`)
+} catch (error) {
+  logger.error('Failed to queue invitation email:', error)
+  // Continue with request - don't throw
+}
+```
+
+### Mail Queue Architecture
+**Use BullMQ (not Bull) with three separate instances:**
+- **Queue** (`src/queues/mail.queue.ts`): For adding jobs to the queue
+- **Worker** (`src/workers/mail.worker.ts`): Separate process for processing jobs
+- **QueueEvents** (`src/queues/mail.queue.ts`): For monitoring job events
+
+**Important Rules:**
+- Always use `addMailJob()` from `@services/mailQueue.service` to queue emails
+- **Never call `sendMail()` directly** from controllers - always queue it
+- Use **AWS SES API** (not SMTP) for sending emails via `@aws-sdk/client-ses`
+- Check `env.MAIL_QUEUE_ENABLED` before queuing (falls back to direct send if disabled)
+- Always handle email failures gracefully - log errors but don't fail the request
+
+**Mail Constants** (in `@constants/mail`):
+- `MAIL_TEMPLATES` - Template file mappings
+- `MAIL_SUBJECTS` - Email subject lines
+- `MAIL_QUEUE_NAME` - Queue name
+- `MAIL_JOB_NAMES` - Job type names
+- `MAIL_WORKER_CONCURRENCY` - Worker concurrency setting
+
+**Mail Service** (`src/services/mail.service.ts`):
+- Uses AWS SES `SESClient` and `SendEmailCommand`
+- Renders HTML templates from `public/templates/`
+- Returns `MailJobResult` with success status and messageId
+
+**Worker Process** (`src/workers/mail.worker.ts`):
+- Standalone process for processing mail jobs
+- Initializes Queue, QueueEvents, and Worker
+- Handles graceful shutdown
+- Run with: `pnpm worker:mail` (production) or `pnpm worker:mail:dev` (development)
+
+**Queue Jobs:**
+- Use `MailOptions` type for job data
+- Include `template`, `to`, `context` fields
+- Optional: `from`, `subject`, `cc`, `bcc`, `replyTo`, `attachments`
+
+---
+
+## 🔐 Passkey/WebAuthn Implementation
+
+### Registration Flow
+```typescript
+// 1. Generate options
+const options = await generatePasskeyRegistrationOptions(
+  user.id,
+  user.email,
+  user.name,
+  existingCredentials
+)
+
+// 2. Store challenge temporarily (5 min expiry)
+challenges.set(`reg-${user.id}`, {
+  challenge: options.challenge,
+  timestamp: Date.now()
+})
+
+// 3. Return options to frontend
+// 4. Verify credential response
+const verification = await verifyPasskeyRegistration(
+  credential,
+  storedChallenge,
+  env.WEBAUTHN_RP_ID,
+  env.FRONTEND_URL
+)
+
+// 5. Store passkey
+await createPasskey({
+  userId: user.id,
+  credentialId: bufferToBase64url(verification.registrationInfo.credential.id),
+  publicKey: bufferToBase64url(verification.registrationInfo.credential.publicKey),
+  counter: verification.registrationInfo.credential.counter,
+  // ...
+})
+```
+
+### Authentication Flow
+```typescript
+// 1. Generate auth options
+const options = await generatePasskeyAuthenticationOptions(allowedCredentials)
+
+// 2. Store challenge
+// 3. Verify authentication
+const verification = await verifyPasskeyAuthentication(
+  credential,
+  storedChallenge,
+  authenticator
+)
+
+// 4. Update counter (replay attack protection)
+await updatePasskeyCounter(passkey.id, verification.authenticationInfo.newCounter)
+
+// 5. Generate JWT and login
+const tokens = signTokens(payload)
+```
+
+---
+
+## 📝 Response Format
+
+### Standard API Response
+```typescript
+import { ApiResponse } from '@utils/ApiResponse'
+import { HTTP_STATUS, SUCCESS_MESSAGES } from '@constants/'
+
+// Single resource
+res.status(HTTP_STATUS.OK).json(
+  new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.USER_FETCHED, userData)
+)
+
+// List with pagination
+res.status(HTTP_STATUS.OK).json(
+  new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.USERS_FETCHED, {
+    items: users,
+    pagination: {
+      page: filters.page,
+      limit: filters.limit,
+      total,
+      totalPages: Math.ceil(total / filters.limit),
+    },
+  })
+)
+
+// Success without data
+res.status(HTTP_STATUS.OK).json(
+  new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.USER_DELETED, undefined)
+)
+```
+
+### Response Structure
+```typescript
+{
+  success: boolean,      // Auto-calculated from statusCode
+  statusCode: number,    // HTTP status code
+  message: string,       // Human-readable message
+  data: T | undefined    // Response data (optional)
+}
+```
+
+---
+
+## 🧪 Testing
+
+### Test Structure
+```typescript
+import request from 'supertest'
+import app from '@/app'
+
+describe('GET /api/v1/users', () => {
+  it('should return list of users', async () => {
+    const response = await request(app)
+      .get('/api/v1/users')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200)
+
+    expect(response.body).toHaveProperty('success', true)
+    expect(response.body).toHaveProperty('data')
+    expect(Array.isArray(response.body.data.items)).toBe(true)
+  })
+
+  it('should return 401 without auth token', async () => {
+    await request(app)
+      .get('/api/v1/users')
+      .expect(401)
+  })
+})
+```
+
+---
+
+## 📖 Documentation Standards
+
+### Feature Documentation
+**ALWAYS create a single comprehensive document for each feature in `docs/` directory**
+
+**Required sections (in order):**
+1. **Overview** - Brief description and purpose
+2. **Features Implemented** - Checklist of what was built
+3. **Database Schema** - Tables, fields, indexes, relationships
+4. **Architecture** - Tech stack, file structure, design patterns
+5. **API Endpoints** - Complete list with request/response examples
+6. **Code Examples** - Frontend and backend integration examples
+7. **Configuration** - Environment variables and settings
+8. **Security Considerations** - Security features and best practices
+9. **Testing** - How to test (manual and automated)
+10. **Troubleshooting** - Common issues and solutions
+11. **Migration Guide** - Database migrations and upgrade steps
+12. **Future Enhancements** - Potential improvements
+
+**Examples:** `docs/PASSKEY_AUTHENTICATION.md`, `docs/USER_INVITATIONS.md`, `docs/TOTP_IMPLEMENTATION.md`
+
+---
+
+## 📦 Code Organization
+
+### Directory Structure & Responsibilities
+
+- **Controllers** (`src/controllers/`): Handle HTTP requests/responses, extract user/tenant context, call queries
+- **Queries** (`src/queries/`): All database operations, tenant-specific logic, business queries
+- **Models** (`src/models/`): Objection.js models with schema, modifiers, relations, and query builders
+- **Schema** (`src/schema/`): Zod validation schemas for request validation
+- **Utils** (`src/utils/`): Reusable utilities (ApiError, ApiResponse, asyncHandler, jwt, date utilities)
+- **Constants** (`src/constants/`): Error messages, HTTP status codes, success messages, validation constants, mail configuration
+- **Types** (`src/types/`): TypeScript type definitions and interfaces
+- **Middlewares** (`src/middlewares/`): Authentication, validation, error handling, rate limiting, tenant context
+- **Queues** (`src/queues/`): BullMQ queue definitions and job processors
+- **Workers** (`src/workers/`): Standalone worker processes for background jobs (mail, etc.)
+- **Services** (`src/services/`): Business logic services including mail queue service, audit service, tenant service
+- **Routes** (`src/routes/`): Route definitions with middleware chains
+- **Database** (`src/database/`): Migrations (public and tenant schemas), connection configuration
+
+### Naming Conventions
+
+```typescript
+// Files: kebab-case
+user.controller.ts
+account.queries.ts
+auth.middleware.ts
+
+// Classes: PascalCase
+class User extends BaseModel
+class ApiError extends Error
+
+// Functions: camelCase
+const findUserById = async () => {}
+const createAccount = async () => {}
+
+// Constants: UPPER_SNAKE_CASE
+const ERROR_MESSAGES = {}
+const HTTP_STATUS = {}
+const MAX_LOGIN_ATTEMPTS = 5
+
+// Interfaces: PascalCase
+interface UserData {}
+interface LoginCredentials {}
+
+// Types: PascalCase
+type Status = 'active' | 'inactive'
+type UserRole = 'admin' | 'user'
+
+// Database columns: snake_case (auto-mapped by Objection)
+created_at → createdAt
+user_id → userId
+is_active → isActive
+```
+
+---
+
+## 🎨 Code Style & Formatting
+
+### Prettier Configuration
+```json
+{
+  "printWidth": 80,
+  "tabWidth": 2,
+  "semi": false,
+  "singleQuote": true,
+  "trailingComma": "es5",
+  "bracketSpacing": true
+}
+```
+
+### ESLint Rules (Key Points)
+- No `console.log` - use `logger`
+- No debugger statements
+- No unused variables (except prefixed with `_`)
+- Prefer nullish coalescing (`??`)
+- Prefer optional chaining (`?.`)
+- No floating promises
+- Import order: builtin → external → internal → parent → sibling
+
+---
+
+## 🔄 Common Patterns
+
+### Pattern 1: Creating Resource (Public Schema - Only Needs TenantId)
+
+**Steps:**
+1. Use only `authenticate` middleware in route
+2. Validate input with Zod schema
+3. Extract tenantId: `const tenantId = req.user?.selectedTenantId`
+4. Validate tenantId exists
+5. Extract user from request
+6. Call query function with `tenantId` and data (no schema name)
+7. Transform response (exclude internal fields)
+8. Return ApiResponse
+
+**Implementation:**
+```typescript
+import type { RequestHandler } from 'express'
+import { Response } from 'express'
+
+import type { AuthenticatedRequest } from '@middlewares/auth.middleware'
+import type { JwtUser } from '@/types/jwt.type'
+import { ApiError } from '@utils/ApiError'
+import { ApiResponse } from '@utils/ApiResponse'
+import asyncHandler from '@utils/asyncHandler'
+import { HTTP_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES } from '@constants/'
+
+export const createInvitation: RequestHandler = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    // 1. Middleware: authenticate (already applied in route)
+    // 2. Validate: Zod schema (already applied via validate middleware)
+    const data = req.body
+    
+    // 3. Extract tenantId
+    const tenantId = req.user?.selectedTenantId
+    
+    // 4. Validate tenantId exists
+    if (!tenantId) {
+      throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED)
+    }
+    
+    // 5. Extract user
+    const user = req.user as JwtUser
+    
+    // 6. Call query function (no schema name needed for public schema)
+    const invitation = await createInvitationQuery(tenantId, data, user.id)
+    
+    // 7. Transform response (exclude internal fields)
+    const responseData = {
+      id: invitation.id,
+      email: invitation.email,
+      role: invitation.role,
+      status: invitation.status,
+      createdAt: invitation.createdAt,
+      // Exclude: deletedAt, tenantId, token, createdBy
+    }
+    
+    // 8. Return ApiResponse
+    res.status(HTTP_STATUS.CREATED).json(
+      new ApiResponse(HTTP_STATUS.CREATED, SUCCESS_MESSAGES.INVITATION_SENT, responseData)
+    )
+  }
+)
+```
+
+### Pattern 2: Creating Resource (Tenant Schema - Needs Schema Name)
+
+**Steps:**
+1. Use `setTenantContext` + `requireTenantContext` middleware in route
+2. Validate input with Zod schema
+3. Extract tenant context: `const tenantContext = getTenantContext(req) as TenantContext`
+4. Extract user from request
+5. Call query function with `tenantContext.tenantId`, `tenantContext.schemaName`, and data
+6. Transform response (exclude internal fields)
+7. Return ApiResponse
+
+**Implementation:**
+```typescript
+import type { RequestHandler } from 'express'
+import { Response } from 'express'
+
+import type { TenantRequest } from '@middlewares/tenantContext.middleware'
+import type { TenantContext } from '@/types/tenant.type'
+import type { JwtUser } from '@/types/jwt.type'
+import { getTenantContext } from '@middlewares/tenantContext.middleware'
+import { ApiResponse } from '@utils/ApiResponse'
+import asyncHandler from '@utils/asyncHandler'
+import { HTTP_STATUS, SUCCESS_MESSAGES } from '@constants/'
+
+export const createAccount: RequestHandler = asyncHandler(
+  async (req: TenantRequest, res: Response) => {
+    // 1. Middleware: setTenantContext + requireTenantContext (already in route)
+    // 2. Validate: Zod schema (already applied via validate middleware)
+    const data = req.body
+    
+    // 3. Extract tenant context (includes schemaName)
+    const tenantContext = getTenantContext(req) as TenantContext
+    
+    // 4. Extract user
+    const user = req.user as JwtUser
+    
+    // 5. Call query function WITH schema name
+    const account = await createAccountQuery(
+      tenantContext.tenantId,
+      tenantContext.schemaName,
+      data,
+      user.id
+    )
+    
+    // 6. Transform response (exclude internal fields)
+    const responseData = {
+      id: account.id,
+      name: account.name,
+      type: account.type,
+      createdAt: account.createdAt,
+      updatedAt: account.updatedAt,
+      // Exclude: deletedAt, tenantId, createdBy
+    }
+    
+    // 7. Return ApiResponse
+    res.status(HTTP_STATUS.CREATED).json(
+      new ApiResponse(HTTP_STATUS.CREATED, SUCCESS_MESSAGES.ACCOUNT_CREATED, responseData)
+    )
+  }
+)
+```
+
+### Pattern 3: Updating Resource (Public Schema)
+
+**Steps:**
+1. Use only `authenticate` middleware in route
+2. Validate input with Zod schema
+3. Extract tenantId: `const tenantId = req.user?.selectedTenantId`
+4. Extract resource ID from params
+5. Verify resource exists and belongs to tenant (via findById with tenantId only)
+6. Call update query function with `tenantId` (no schema name)
+7. Transform response (exclude internal fields)
+8. Return ApiResponse
+
+**Implementation:**
+```typescript
+export const updateInvitation: RequestHandler = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    // 1. Middleware: authenticate (already in route)
+    // 2. Validate: Zod schema (already applied)
+    const data = req.body
+    
+    // 3. Extract tenantId
+    const tenantId = req.user?.selectedTenantId
+    if (!tenantId) {
+      throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED)
+    }
+    
+    // 4. Extract resource ID
+    const { id } = req.params
+    
+    // 5. Verify resource exists and belongs to tenant
+    const existingInvitation = await findInvitationById(id, tenantId)
+    
+    // 6. Call update query function (no schema name)
+    const updatedInvitation = await updateInvitationQuery(id, tenantId, data)
+    
+    // 7. Transform response
+    const responseData = {
+      id: updatedInvitation.id,
+      email: updatedInvitation.email,
+      role: updatedInvitation.role,
+      status: updatedInvitation.status,
+      updatedAt: updatedInvitation.updatedAt,
+    }
+    
+    // 8. Return ApiResponse
+    res.status(HTTP_STATUS.OK).json(
+      new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.INVITATION_UPDATED, responseData)
+    )
+  }
+)
+```
+
+### Pattern 4: Updating Resource (Tenant Schema)
+
+**Steps:**
+1. Use `setTenantContext` + `requireTenantContext` middleware in route
+2. Validate input with Zod schema
+3. Extract tenant context: `const tenantContext = getTenantContext(req) as TenantContext`
+4. Extract resource ID from params
+5. Verify resource exists and belongs to tenant (via findById with schema name)
+6. Call update query function with `tenantContext.tenantId` and `tenantContext.schemaName`
+7. Transform response (exclude internal fields)
+8. Return ApiResponse
+
+**Implementation:**
+```typescript
+export const updateAccount: RequestHandler = asyncHandler(
+  async (req: TenantRequest, res: Response) => {
+    // 1. Middleware: setTenantContext + requireTenantContext (already in route)
+    // 2. Validate: Zod schema (already applied)
+    const data = req.body
+    
+    // 3. Extract tenant context
+    const tenantContext = getTenantContext(req) as TenantContext
+    
+    // 4. Extract resource ID
+    const { id } = req.params
+    
+    // 5. Verify resource exists and belongs to tenant
+    const existingAccount = await findAccountById(
+      id,
+      tenantContext.tenantId,
+      tenantContext.schemaName
+    )
+    
+    // 6. Call update query function WITH schema name
+    const updatedAccount = await updateAccountQuery(
+      id,
+      tenantContext.tenantId,
+      tenantContext.schemaName,
+      data
+    )
+    
+    // 7. Transform response
+    const responseData = {
+      id: updatedAccount.id,
+      name: updatedAccount.name,
+      type: updatedAccount.type,
+      updatedAt: updatedAccount.updatedAt,
+    }
+    
+    // 8. Return ApiResponse
+    res.status(HTTP_STATUS.OK).json(
+      new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.ACCOUNT_UPDATED, responseData)
+    )
+  }
+)
+```
+
+### Pattern 5: Soft Deleting Resource (Public Schema)
+
+**Steps:**
+1. Use only `authenticate` middleware in route
+2. Extract tenantId: `const tenantId = req.user?.selectedTenantId`
+3. Extract resource ID from params
+4. Verify resource exists (via findById with tenantId only)
+5. Use direct Knex update to set deleted_at
+6. Reload resource without notDeleted modifier
+7. Transform response (exclude internal fields)
+8. Return ApiResponse
+
+**Implementation:**
+```typescript
+import db from '@database/connection'
+import { getCurrentDate } from '@utils/date'
+
+export const deleteInvitation: RequestHandler = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    // 1. Middleware: authenticate (already in route)
+    
+    // 2. Extract tenantId
+    const tenantId = req.user?.selectedTenantId
+    if (!tenantId) {
+      throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.TENANT_CONTEXT_REQUIRED)
+    }
+    
+    // 3. Extract resource ID
+    const { id } = req.params
+    
+    // 4. Verify resource exists
+    const invitation = await findInvitationById(id, tenantId)
+    
+    // 5. Use direct Knex update for soft delete
+    await db('user_invitations')
+      .where('id', id)
+      .where('tenant_id', tenantId)
+      .update({
+        deleted_at: getCurrentDate(),
+        updated_at: getCurrentDate(),
+      })
+    
+    // 6. Reload resource (without notDeleted modifier)
+    const deletedInvitation = await UserInvitation.query().findById(id)
+    
+    // 7. Transform response
+    const responseData = {
+      id: deletedInvitation.id,
+      email: deletedInvitation.email,
+      deletedAt: deletedInvitation.deletedAt,
+    }
+    
+    // 8. Return ApiResponse
+    res.status(HTTP_STATUS.OK).json(
+      new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.INVITATION_DELETED, responseData)
+    )
+  }
+)
+```
+
+### Pattern 6: Soft Deleting Resource (Tenant Schema)
+
+**Steps:**
+1. Use `setTenantContext` + `requireTenantContext` middleware in route
+2. Extract tenant context: `const tenantContext = getTenantContext(req) as TenantContext`
+3. Extract resource ID from params
+4. Verify resource exists (via findById with schema name)
+5. Use direct Knex update with `withTenantSchema()` to set deleted_at
+6. Reload resource without notDeleted modifier
+7. Transform response (exclude internal fields)
+8. Return ApiResponse
+
+**Implementation:**
+```typescript
+import { withTenantSchema } from '@utils/tenantQuery'
+import { getCurrentDate } from '@utils/date'
+
+export const deleteAccount: RequestHandler = asyncHandler(
+  async (req: TenantRequest, res: Response) => {
+    // 1. Middleware: setTenantContext + requireTenantContext (already in route)
+    
+    // 2. Extract tenant context
+    const tenantContext = getTenantContext(req) as TenantContext
+    
+    // 3. Extract resource ID
+    const { id } = req.params
+    
+    // 4. Verify resource exists
+    const account = await findAccountById(
+      id,
+      tenantContext.tenantId,
+      tenantContext.schemaName
+    )
+    
+    // 5. Use direct Knex update with withTenantSchema for soft delete
+    await withTenantSchema(tenantContext.schemaName, async (trx) => {
+      await trx('accounts')
+        .where('id', id)
+        .where('tenant_id', tenantContext.tenantId)
+        .update({
+          deleted_at: getCurrentDate(),
+          updated_at: getCurrentDate(),
+        })
+    })
+    
+    // 6. Reload resource (without notDeleted modifier)
+    const deletedAccount = await withTenantSchema(
+      tenantContext.schemaName,
+      async (trx) => {
+        return await Account.query(trx).findById(id)
+      }
+    )
+    
+    // 7. Transform response
+    const responseData = {
+      id: deletedAccount.id,
+      name: deletedAccount.name,
+      deletedAt: deletedAccount.deletedAt,
+    }
+    
+    // 8. Return ApiResponse
+    res.status(HTTP_STATUS.OK).json(
+      new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.ACCOUNT_DELETED, responseData)
+    )
+  }
+)
+```
+
+### Pattern 7: Sending Email
+
+**Steps:**
+1. Import mail queue service: `import { queueXxxEmail } from '@services/mailQueue.service'`
+2. Prepare email data with template, recipient, and context
+3. Wrap in try/catch block (don't fail request if email fails)
+4. Call appropriate queue function (e.g., `queueUserInvitationEmail()`)
+5. Log success/failure but continue with request
+
+**Implementation:**
+```typescript
+import { queueUserInvitationEmail } from '@services/mailQueue.service'
+import logger from '@config/logger'
+
+// Inside your controller function
+try {
+  await queueUserInvitationEmail({
+    to: user.email,
+    acceptUrl: `${env.FRONTEND_URL}/accept-invitation?token=${token}`,
+    tenantName: tenant.name,
+    expiryDays: 7,
+  })
+  logger.info('Invitation email queued', { 
+    userId: user.id, 
+    email: user.email,
+    tenantId 
+  })
+} catch (error) {
+  logger.error('Failed to queue invitation email', { 
+    error, 
+    userId: user.id,
+    email: user.email 
+  })
+  // Don't throw - continue with request
+  // Email failure should not fail the main operation
+}
+```
+
+**Additional Email Patterns:**
+```typescript
+// Password reset email
+try {
+  await queuePasswordResetEmail({
+    to: user.email,
+    resetUrl: `${env.FRONTEND_URL}/reset-password?token=${resetToken}`,
+    userName: user.name,
+  })
+} catch (error) {
+  logger.error('Failed to queue password reset email', { error, userId: user.id })
+}
+
+// TOTP setup email
+try {
+  await queueTotpSetupEmail({
+    to: user.email,
+    userName: user.name,
+  })
+} catch (error) {
+  logger.error('Failed to queue TOTP setup email', { error, userId: user.id })
+}
+
+// MFA OTP email
+try {
+  await queueMfaOtpEmail({
+    to: user.email,
+    otp: otpCode,
+    userName: user.name,
+    expiryMinutes: 10,
+  })
+} catch (error) {
+  logger.error('Failed to queue MFA OTP email', { error, userId: user.id })
+}
+```
+
+---
+
+## ❌ Anti-Patterns to Avoid
+
+### 1. DON'T Hardcode Values
+```typescript
+// ❌ WRONG
+throw new ApiError(404, 'User not found')
+res.status(200).json({ message: 'Success' })
+
+// ✅ CORRECT
+throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.USER_NOT_FOUND)
+res.status(HTTP_STATUS.OK).json(
+  new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.USER_FETCHED, data)
+)
+```
+
+### 2. DON'T Use Console Methods
+```typescript
+// ❌ WRONG
+console.log('User created:', user)
+console.error('Error:', error)
+
+// ✅ CORRECT
+logger.info('User created', { userId: user.id, email: user.email })
+logger.error('Error occurred', { error, context: 'user-creation' })
+```
+
+### 3. DON'T Create Date Objects Directly
+```typescript
+// ❌ WRONG
+createdAt: new Date()
+updatedAt: moment().toDate()
+
+// ✅ CORRECT
+createdAt: getCurrentDate()
+updatedAt: getCurrentDate()
+```
+
+### 4. DON'T Throw Plain Errors
+```typescript
+// ❌ WRONG
+throw new Error('Something went wrong')
+
+// ✅ CORRECT
+throw new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, ERROR_MESSAGES.INTERNAL_SERVER_ERROR)
+```
+
+### 5. DON'T Hard Delete
+```typescript
+// ❌ WRONG
+await User.query().deleteById(userId)
+
+// ✅ CORRECT
+await db('users').where('id', userId).update({
+  deleted_at: getCurrentDate(),
+  updated_at: getCurrentDate(),
+})
+```
+
+### 6. DON'T Expose Internal Fields
+```typescript
+// ❌ WRONG
+res.json({ success: true, data: user }) // Includes passwordHash, deletedAt, etc.
+
+// ✅ CORRECT
+const userData = {
+  id: user.id,
+  email: user.email,
+  name: user.name,
+  createdAt: user.createdAt,
+  // Exclude: passwordHash, deletedAt, tenantId, etc.
+}
+res.status(HTTP_STATUS.OK).json(
+  new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.USER_FETCHED, userData)
+)
+```
+
+### 7. DON'T Use Tenant Context Unnecessarily
+```typescript
+// ❌ WRONG - Using getTenantContext for public schema
+export const listInvitations: RequestHandler = asyncHandler(
+  async (req: TenantRequest, res: Response) => {
+    const tenantContext = getTenantContext(req) // Not needed!
+    // ...
+  }
+)
+
+// ✅ CORRECT - Use selectedTenantId for public schema
+export const listInvitations: RequestHandler = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const tenantId = req.user?.selectedTenantId
+    // ...
+  }
+)
+```
+
+---
+
+## 🚀 Performance Best Practices
+
+### 1. Database Queries
+- Use `.modify('notDeleted')` to filter soft-deleted records
+- Use `.modify('byTenant', tenantId)` for tenant-specific queries
+- Use indexes on frequently queried columns
+- Use pagination for list endpoints
+- Use `withGraphFetched()` for eager loading relations
+- Use `select()` to limit returned columns when possible
+
+### 2. Caching
+- Token caching in auth middleware (reduces JWT verification)
+- Use Redis for distributed caching in production
+
+### 3. Connection Pooling
+- Knex handles connection pooling automatically
+- Configure pool size based on expected load
+
+---
+
+## 💎 Best Practices Summary
+
+### Query Best Practices
+- Use `withTenantSchema()` utility for tenant-specific queries (handles connection management automatically)
+- Use `req.user?.selectedTenantId` directly when only tenant ID is needed (no schema name required)
+- Use `getTenantContext()` only when schema name is required (e.g., account APIs with tenant-specific tables)
+- Use query modifiers for common filters (`notDeleted`, `active`, `byTenant`)
+- Never run migrations in query/controller code
+
+### Controller Best Practices
+- Use `asyncHandler` for all async controller functions
+- Use `AuthenticatedRequest` type for routes that only need tenantId (use `authenticate` middleware)
+- Use `TenantRequest` type for routes that need schema name (use `setTenantContext` + `requireTenantContext` middleware)
+- Don't use tenant context middleware unnecessarily - only when schema name is required
+- Always verify user authentication and tenant context
+- Transform model data before sending in responses (exclude internal fields)
+
+### Code Organization Best Practices
+- Use constants for all messages and status codes (never hardcode)
+- Document complex functions with JSDoc comments
+- Use TypeScript strict mode features
+- Prefer explicit type annotations over inference for function parameters
+- Place all database operations in `src/queries/` directory
+- Keep controllers thin - business logic goes in queries/services
+
+---
+
+## 🐛 Debugging & Troubleshooting
+
+### Logging Levels
+```typescript
+logger.error()   // Critical errors (status 500, exceptions)
+logger.warn()    // Warning conditions (validation failures, rate limits)
+logger.info()    // Important events (user login, resource creation)
+logger.http()    // HTTP requests (handled by Morgan)
+logger.debug()   // Detailed debugging information
+```
+
+### Error Context
+```typescript
+// Always include context in error logs
+logger.error('Failed to create user', {
+  error: error.message,
+  stack: error.stack,
+  email: userEmail,
+  tenantId,
+  requestId: req.id,
+})
+```
+
+---
+
+## 📦 Environment Variables
+
+### Required Variables
+```env
+# Server
+NODE_ENV=development|production|test
+PORT=8000
+HOST=localhost
+
+# Database
+DATABASE_URL=postgresql://user:pass@host:5432/dbname
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=bkeep
+DB_USER=postgres
+DB_PASSWORD=password
+
+# JWT
+ACCESS_TOKEN_SECRET=your-secret-here
+ACCESS_TOKEN_EXPIRY=1h
+REFRESH_TOKEN_SECRET=your-secret-here
+REFRESH_TOKEN_EXPIRY=7d
+SESSION_SECRET=your-session-secret
+
+# Frontend
+FRONTEND_URL=https://app.bkeep.ca
+CORS_ORIGIN=https://app.bkeep.ca
+
+# WebAuthn
+WEBAUTHN_RP_ID=app.bkeep.ca
+
+# Email
+EMAIL_FROM=info@bkeep.ca
+EMAIL_FROM_NAME=BKeep
+
+# AWS SES
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=your-key
+AWS_SECRET_ACCESS_KEY=your-secret
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=optional
+REDIS_DB=0
+
+# Mail Queue
+MAIL_QUEUE_ENABLED=true
+MAIL_QUEUE_ATTEMPTS=3
+MAIL_QUEUE_BACKOFF_DELAY=5000
+```
+
+---
+
+## 🎯 Quick Reference Commands
+
+```bash
+# Development
+pnpm dev                    # Start dev server with nodemon
+pnpm worker:mail:dev        # Start mail worker in dev mode
+
+# Production
+pnpm build                  # Build TypeScript
+pnpm start                  # Start production server
+pnpm worker:mail            # Start mail worker
+
+# Quality Checks
+pnpm type-check             # Check TypeScript errors
+pnpm lint                   # Check linting issues
+pnpm lint:fix               # Fix linting issues
+pnpm test                   # Run tests
+pnpm test:coverage          # Run tests with coverage
+
+# Database - Public Schema
+pnpm db:migrate:make name   # Create migration
+pnpm db:migrate             # Run migrations
+pnpm db:migrate:rollback    # Rollback last migration
+pnpm db:migrate:list        # List migration status
+
+# Database - Tenant Schema
+pnpm db:migrate:tenant:make name  # Create tenant migration
+
+# Docker
+pnpm docker:dev             # Run dev environment
+pnpm docker:prod            # Run production environment
+```
+
+---
+
+## 📚 Additional Resources
+
+- **API Documentation**: `/api-docs` (Swagger UI)
+- **Feature Docs**: `docs/` directory
+  - `AUTHENTICATION.md` - Auth implementation
+  - `PASSKEY_AUTHENTICATION.md` - WebAuthn/Passkey
+  - `TOTP_IMPLEMENTATION.md` - TOTP/2FA
+  - `USER_INVITATIONS.md` - User invitation flow
+  - `MULTI_TENANCY.md` - Multi-tenancy architecture
+  - `MAIL_QUEUE.md` - Email queue system
+  - `AUDIT_LOGGING.md` - Audit logging
+
+---
+
+## 🔒 Final Checklist
+
+Before marking any feature as complete:
+
+- [ ] Run `pnpm type-check` - No TypeScript errors
+- [ ] Run `pnpm lint:fix` - All linting issues fixed
+- [ ] Run `pnpm test` - All tests passing
+- [ ] Test feature manually - Works as expected
+- [ ] Check error handling - All edge cases covered
+- [ ] Review logging - Appropriate log levels and context
+- [ ] Check security - Auth, validation, sanitization
+- [ ] Transform responses - No sensitive data exposed
+- [ ] Update documentation - Feature documented in `docs/`
+- [ ] Code review ready - Follows all conventions
+
+---
+
+## 💡 Remember
+
+1. **Consistency is key** - Follow established patterns
+2. **Security first** - Always validate, authenticate, authorize
+3. **Error handling** - Use ApiError, provide context
+4. **Logging** - Use logger, include context
+5. **Type safety** - Leverage TypeScript strictly
+6. **Testing** - Write tests for new features
+7. **Documentation** - Update docs for significant changes
+8. **Clean code** - Follow naming conventions and formatting
+9. **Performance** - Think about scalability
+10. **Tenant isolation** - Always filter by tenantId
+
+---
+
+**Last Updated:** December 1, 2025
+**Project:** BKeep TypeScript Backend
+**Version:** 1.0.0

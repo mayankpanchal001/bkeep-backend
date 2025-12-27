@@ -1,14 +1,14 @@
-import type { RequestHandler } from "express";
-import { Response } from "express";
+import type { RequestHandler } from 'express'
+import { Response } from 'express'
 
-import type { JwtUser } from "@/types/jwt.type";
-import { HTTP_STATUS } from "@constants/http";
-import { SUCCESS_MESSAGES } from "@constants/success";
+import type { JwtUser } from '@/types/jwt.type'
+import { HTTP_STATUS } from '@constants/http'
+import { SUCCESS_MESSAGES } from '@constants/success'
 import {
   getTenantContext,
   type TenantContext,
   type TenantRequest,
-} from "@middlewares/tenantContext.middleware";
+} from '@middlewares/tenantContext.middleware'
 import {
   createTaxExemption,
   deleteTaxExemption,
@@ -17,10 +17,10 @@ import {
   restoreTaxExemption,
   updateTaxExemption,
   updateTaxExemptionActivationStatus,
-} from "@queries/taxExemption.queries";
-import { getPaginationMetadata } from "@schema/shared.schema";
-import { ApiResponse } from "@utils/ApiResponse";
-import asyncHandler from "@utils/asyncHandler";
+} from '@queries/taxExemption.queries'
+import { getPaginationMetadata } from '@schema/shared.schema'
+import { ApiResponse } from '@utils/ApiResponse'
+import asyncHandler from '@utils/asyncHandler'
 
 /**
  * Get all tax exemptions controller
@@ -28,21 +28,21 @@ import asyncHandler from "@utils/asyncHandler";
  */
 export const getAllTaxExemptions: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated query parameters
     const filters = (
       req as TenantRequest & {
-        validatedData: Parameters<typeof findTaxExemptions>[2];
+        validatedData: Parameters<typeof findTaxExemptions>[2]
       }
-    ).validatedData;
+    ).validatedData
 
     // Fetch tax exemptions
     const { taxExemptions, total } = await findTaxExemptions(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      filters,
-    );
+      filters
+    )
 
     // Transform tax exemptions to response format
     const responseData = taxExemptions.map((exemption) => ({
@@ -64,17 +64,17 @@ export const getAllTaxExemptions: RequestHandler = asyncHandler(
       isActive: exemption.isActive,
       createdAt: exemption.createdAt,
       updatedAt: exemption.updatedAt,
-    }));
+    }))
 
     // Return response with pagination
     res.status(HTTP_STATUS.OK).json(
       new ApiResponse(HTTP_STATUS.OK, SUCCESS_MESSAGES.TAX_EXEMPTIONS_FETCHED, {
         items: responseData,
         pagination: getPaginationMetadata(filters.page, filters.limit, total),
-      }),
-    );
-  },
-);
+      })
+    )
+  }
+)
 
 /**
  * Get tax exemption by ID controller
@@ -82,17 +82,17 @@ export const getAllTaxExemptions: RequestHandler = asyncHandler(
  */
 export const getTaxExemptionById: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Fetch tax exemption
     const taxExemption = await findTaxExemptionById(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      id,
-    );
+      id
+    )
 
     // Transform tax exemption to response format
     const responseData = {
@@ -114,7 +114,7 @@ export const getTaxExemptionById: RequestHandler = asyncHandler(
       isActive: taxExemption.isActive,
       createdAt: taxExemption.createdAt,
       updatedAt: taxExemption.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -122,11 +122,11 @@ export const getTaxExemptionById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_EXEMPTION_FETCHED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Create tax exemption controller
@@ -134,23 +134,23 @@ export const getTaxExemptionById: RequestHandler = asyncHandler(
  */
 export const createTaxExemptionController: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
-    const user = req.user as JwtUser;
+    const tenantContext = getTenantContext(req) as TenantContext
+    const user = req.user as JwtUser
 
     // Get validated body
     const taxExemptionData = (
       req as TenantRequest & {
-        validatedData: Parameters<typeof createTaxExemption>[2];
+        validatedData: Parameters<typeof createTaxExemption>[2]
       }
-    ).validatedData;
+    ).validatedData
 
     // Create tax exemption
     const taxExemption = await createTaxExemption(
       tenantContext.tenantId,
       tenantContext.schemaName,
       taxExemptionData,
-      user.id,
-    );
+      user.id
+    )
 
     // Transform tax exemption to response format
     const responseData = {
@@ -172,7 +172,7 @@ export const createTaxExemptionController: RequestHandler = asyncHandler(
       isActive: taxExemption.isActive,
       createdAt: taxExemption.createdAt,
       updatedAt: taxExemption.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.CREATED)
@@ -180,11 +180,11 @@ export const createTaxExemptionController: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.CREATED,
           SUCCESS_MESSAGES.TAX_EXEMPTION_CREATED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Update tax exemption controller
@@ -192,24 +192,24 @@ export const createTaxExemptionController: RequestHandler = asyncHandler(
  */
 export const updateTaxExemptionController: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params and body
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     const updateData = (
       req as TenantRequest & {
-        validatedData: Parameters<typeof updateTaxExemption>[3];
+        validatedData: Parameters<typeof updateTaxExemption>[3]
       }
-    ).validatedData;
+    ).validatedData
 
     // Update tax exemption
     const updatedTaxExemption = await updateTaxExemption(
       tenantContext.tenantId,
       tenantContext.schemaName,
       id,
-      updateData,
-    );
+      updateData
+    )
 
     // Transform tax exemption to response format
     const responseData = {
@@ -230,7 +230,7 @@ export const updateTaxExemptionController: RequestHandler = asyncHandler(
       reason: updatedTaxExemption.reason ?? null,
       isActive: updatedTaxExemption.isActive,
       updatedAt: updatedTaxExemption.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -238,11 +238,11 @@ export const updateTaxExemptionController: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_EXEMPTION_UPDATED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Delete tax exemption controller
@@ -250,24 +250,24 @@ export const updateTaxExemptionController: RequestHandler = asyncHandler(
  */
 export const deleteTaxExemptionById: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Delete tax exemption
     const deletedTaxExemption = await deleteTaxExemption(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      id,
-    );
+      id
+    )
 
     // Transform tax exemption to response format
     const responseData = {
       id: deletedTaxExemption.id,
       contactId: deletedTaxExemption.contactId,
       deletedAt: deletedTaxExemption.deletedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -275,11 +275,11 @@ export const deleteTaxExemptionById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_EXEMPTION_DELETED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Restore tax exemption controller
@@ -287,17 +287,17 @@ export const deleteTaxExemptionById: RequestHandler = asyncHandler(
  */
 export const restoreTaxExemptionById: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Restore tax exemption
     const restoredTaxExemption = await restoreTaxExemption(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      id,
-    );
+      id
+    )
 
     // Transform tax exemption to response format
     const responseData = {
@@ -305,7 +305,7 @@ export const restoreTaxExemptionById: RequestHandler = asyncHandler(
       contactId: restoredTaxExemption.contactId,
       isActive: restoredTaxExemption.isActive,
       updatedAt: restoredTaxExemption.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -313,11 +313,11 @@ export const restoreTaxExemptionById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_EXEMPTION_RESTORED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Enable tax exemption controller
@@ -325,18 +325,18 @@ export const restoreTaxExemptionById: RequestHandler = asyncHandler(
  */
 export const enableTaxExemption: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Enable tax exemption
     const enabledTaxExemption = await updateTaxExemptionActivationStatus(
       tenantContext.tenantId,
       tenantContext.schemaName,
       id,
-      true,
-    );
+      true
+    )
 
     // Transform tax exemption to response format
     const responseData = {
@@ -344,7 +344,7 @@ export const enableTaxExemption: RequestHandler = asyncHandler(
       contactId: enabledTaxExemption.contactId,
       isActive: enabledTaxExemption.isActive,
       updatedAt: enabledTaxExemption.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -352,11 +352,11 @@ export const enableTaxExemption: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_EXEMPTION_ENABLED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Disable tax exemption controller
@@ -364,18 +364,18 @@ export const enableTaxExemption: RequestHandler = asyncHandler(
  */
 export const disableTaxExemption: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Disable tax exemption
     const disabledTaxExemption = await updateTaxExemptionActivationStatus(
       tenantContext.tenantId,
       tenantContext.schemaName,
       id,
-      false,
-    );
+      false
+    )
 
     // Transform tax exemption to response format
     const responseData = {
@@ -383,7 +383,7 @@ export const disableTaxExemption: RequestHandler = asyncHandler(
       contactId: disabledTaxExemption.contactId,
       isActive: disabledTaxExemption.isActive,
       updatedAt: disabledTaxExemption.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -391,8 +391,8 @@ export const disableTaxExemption: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.TAX_EXEMPTION_DISABLED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)

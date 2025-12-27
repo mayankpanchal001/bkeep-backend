@@ -1,8 +1,8 @@
-import type { QueryBuilder } from "objection";
+import type { QueryBuilder } from 'objection'
 
-import { BaseModel } from "@models/BaseModel";
-import { Role } from "@models/Role";
-import { Tenant } from "@models/Tenant";
+import { BaseModel } from '@models/BaseModel'
+import { Role } from '@models/Role'
+import { Tenant } from '@models/Tenant'
 
 /**
  * User Model
@@ -11,68 +11,68 @@ import { Tenant } from "@models/Tenant";
 export class User extends BaseModel {
   // Table name
   static override get tableName(): string {
-    return "users";
+    return 'users'
   }
 
   // Model properties (inherits id, createdAt, updatedAt, deletedAt from BaseModel)
-  declare id: string;
-  declare createdAt: Date;
-  declare updatedAt: Date;
-  declare deletedAt?: Date | null;
+  declare id: string
+  declare createdAt: Date
+  declare updatedAt: Date
+  declare deletedAt?: Date | null
 
-  name!: string;
-  email!: string;
-  passwordHash!: string;
-  isVerified!: boolean;
-  verifiedAt?: Date | null;
-  isActive!: boolean;
-  mfaEnabled!: boolean;
-  lastLoggedInAt?: Date | null;
+  name!: string
+  email!: string
+  passwordHash!: string
+  isVerified!: boolean
+  verifiedAt?: Date | null
+  isActive!: boolean
+  mfaEnabled!: boolean
+  lastLoggedInAt?: Date | null
 
   // Relations
   tenants?: Array<{
-    id: string;
-    name: string;
-    schemaName: string;
-    isActive: boolean;
+    id: string
+    name: string
+    schemaName: string
+    isActive: boolean
     userTenants?: {
-      isPrimary: boolean;
-      createdAt: Date;
-    };
-  }>;
+      isPrimary: boolean
+      createdAt: Date
+    }
+  }>
   roles?: Array<{
-    id: string;
-    name: string;
-    displayName: string;
+    id: string
+    name: string
+    displayName: string
     permissions?: Array<{
-      id: string;
-      name: string;
-      displayName: string;
-      isActive: boolean;
-      deletedAt?: Date | null;
-    }>;
-  }>;
+      id: string
+      name: string
+      displayName: string
+      isActive: boolean
+      deletedAt?: Date | null
+    }>
+  }>
 
   // JSON Schema for validation
   static override get jsonSchema() {
     return {
-      type: "object",
-      required: ["name", "email", "passwordHash"],
+      type: 'object',
+      required: ['name', 'email', 'passwordHash'],
       properties: {
-        id: { type: "string", format: "uuid" },
-        name: { type: "string", minLength: 1, maxLength: 255 },
-        email: { type: "string", format: "email", maxLength: 255 },
-        passwordHash: { type: "string", minLength: 1, maxLength: 255 },
-        isVerified: { type: "boolean", default: false },
-        verifiedAt: { type: ["string", "null"], format: "date-time" },
-        isActive: { type: "boolean", default: true },
-        mfaEnabled: { type: "boolean", default: false },
-        lastLoggedInAt: { type: ["string", "null"], format: "date-time" },
-        createdAt: { type: "string", format: "date-time" },
-        updatedAt: { type: "string", format: "date-time" },
-        deletedAt: { type: ["string", "null"], format: "date-time" },
+        id: { type: 'string', format: 'uuid' },
+        name: { type: 'string', minLength: 1, maxLength: 255 },
+        email: { type: 'string', format: 'email', maxLength: 255 },
+        passwordHash: { type: 'string', minLength: 1, maxLength: 255 },
+        isVerified: { type: 'boolean', default: false },
+        verifiedAt: { type: ['string', 'null'], format: 'date-time' },
+        isActive: { type: 'boolean', default: true },
+        mfaEnabled: { type: 'boolean', default: false },
+        lastLoggedInAt: { type: ['string', 'null'], format: 'date-time' },
+        createdAt: { type: 'string', format: 'date-time' },
+        updatedAt: { type: 'string', format: 'date-time' },
+        deletedAt: { type: ['string', 'null'], format: 'date-time' },
       },
-    };
+    }
   }
 
   /**
@@ -84,35 +84,35 @@ export class User extends BaseModel {
         relation: BaseModel.ManyToManyRelation,
         modelClass: Tenant,
         join: {
-          from: "users.id",
+          from: 'users.id',
           through: {
-            from: "user_tenants.user_id",
-            to: "user_tenants.tenant_id",
+            from: 'user_tenants.user_id',
+            to: 'user_tenants.tenant_id',
             extra: {
-              isPrimary: "is_primary",
-              createdAt: "created_at",
+              isPrimary: 'is_primary',
+              createdAt: 'created_at',
             },
           },
-          to: "tenants.id",
+          to: 'tenants.id',
         },
       },
       roles: {
         relation: BaseModel.ManyToManyRelation,
         modelClass: Role,
         join: {
-          from: "users.id",
+          from: 'users.id',
           through: {
-            from: "user_roles.user_id",
-            to: "user_roles.role_id",
+            from: 'user_roles.user_id',
+            to: 'user_roles.role_id',
             extra: {
-              tenantId: "tenant_id",
-              createdAt: "created_at",
+              tenantId: 'tenant_id',
+              createdAt: 'created_at',
             },
           },
-          to: "roles.id",
+          to: 'roles.id',
         },
       },
-    };
+    }
   }
 
   /**
@@ -124,50 +124,50 @@ export class User extends BaseModel {
       ...super.modifiers,
       // Only verified users
       verified(query: QueryBuilder<User>) {
-        query.where("is_verified", true);
+        query.where('is_verified', true)
       },
       // Only unverified users
       unverified(query: QueryBuilder<User>) {
-        query.where("is_verified", false);
+        query.where('is_verified', false)
       },
       // Only active users (is_active = true)
       active(query: QueryBuilder<User>) {
-        query.where("is_active", true);
+        query.where('is_active', true)
       },
       // Only inactive users (is_active = false)
       inactive(query: QueryBuilder<User>) {
-        query.where("is_active", false);
+        query.where('is_active', false)
       },
       // Search by name or email
       search(query: QueryBuilder<User>, searchTerm: string) {
         query.where((builder: QueryBuilder<User>) => {
           builder
-            .where("name", "ilike", `%${searchTerm}%`)
-            .orWhere("email", "ilike", `%${searchTerm}%`);
-        });
+            .where('name', 'ilike', `%${searchTerm}%`)
+            .orWhere('email', 'ilike', `%${searchTerm}%`)
+        })
       },
-    };
+    }
   }
 
   /**
    * Scope: Find by email (only active, non-deleted users)
    */
   static async findByEmail(email: string): Promise<User | undefined> {
-    return this.query().modify("notDeleted").findOne({ email });
+    return this.query().modify('notDeleted').findOne({ email })
   }
 
   /**
    * Scope: Find verified users
    */
   static async findVerified(): Promise<User[]> {
-    return this.query().modify("notDeleted").modify("verified");
+    return this.query().modify('notDeleted').modify('verified')
   }
 
   /**
    * Scope: Search by term (only active, non-deleted users)
    */
   static async search(term: string): Promise<User[]> {
-    return this.query().modify("notDeleted").modify("search", term);
+    return this.query().modify('notDeleted').modify('search', term)
   }
 
   /**
@@ -175,11 +175,11 @@ export class User extends BaseModel {
    * @returns Primary tenant or undefined if no tenant exists
    */
   async getPrimaryTenant(): Promise<Tenant | undefined> {
-    const tenants = (await this.$relatedQuery("tenants")
-      .where("user_tenants.is_primary", true)
-      .limit(1)) as Tenant[];
+    const tenants = (await this.$relatedQuery('tenants')
+      .where('user_tenants.is_primary', true)
+      .limit(1)) as Tenant[]
 
-    return tenants[0];
+    return tenants[0]
   }
 
   /**
@@ -187,9 +187,9 @@ export class User extends BaseModel {
    */
   static async findByTenant(tenantId: string): Promise<User[]> {
     return this.query()
-      .modify("notDeleted")
-      .join("user_tenants", "users.id", "user_tenants.user_id")
-      .where("user_tenants.tenant_id", tenantId);
+      .modify('notDeleted')
+      .join('user_tenants', 'users.id', 'user_tenants.user_id')
+      .where('user_tenants.tenant_id', tenantId)
   }
 
   /**
@@ -197,45 +197,45 @@ export class User extends BaseModel {
    */
   async hasPermission(
     permissionName: string,
-    tenantId?: string,
+    tenantId?: string
   ): Promise<boolean> {
-    const roles = await this.$relatedQuery("roles")
-      .modify("notDeleted")
-      .modify("active")
+    const roles = await this.$relatedQuery('roles')
+      .modify('notDeleted')
+      .modify('active')
       .where((builder: QueryBuilder<Role>) => {
         if (tenantId) {
-          builder.where("user_roles.tenant_id", tenantId);
+          builder.where('user_roles.tenant_id', tenantId)
         }
       })
-      .withGraphFetched("permissions");
+      .withGraphFetched('permissions')
 
     for (const role of roles) {
       if (role.permissions) {
         const hasPermission = role.permissions.some(
           (perm) =>
-            perm.name === permissionName && perm.isActive && !perm.deletedAt,
-        );
-        if (hasPermission) return true;
+            perm.name === permissionName && perm.isActive && !perm.deletedAt
+        )
+        if (hasPermission) return true
       }
     }
 
-    return false;
+    return false
   }
 
   /**
    * Check if user has a specific role
    */
   async hasRole(roleName: string, tenantId?: string): Promise<boolean> {
-    const baseQuery = this.$relatedQuery("roles")
-      .modify("notDeleted")
-      .modify("active")
-      .where("roles.name", roleName);
+    const baseQuery = this.$relatedQuery('roles')
+      .modify('notDeleted')
+      .modify('active')
+      .where('roles.name', roleName)
 
     const query = tenantId
-      ? baseQuery.where("user_roles.tenant_id", tenantId)
-      : baseQuery;
+      ? baseQuery.where('user_roles.tenant_id', tenantId)
+      : baseQuery
 
-    const count = await query.resultSize();
-    return count > 0;
+    const count = await query.resultSize()
+    return count > 0
   }
 }

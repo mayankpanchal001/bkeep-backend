@@ -9,4 +9,4 @@ export const RATE_LIMITS = {
   AUTH_MAX_REQUESTS: 10,
   PASSWORD_RESET_WINDOW_MS: 15 * 60 * 1000,
   PASSWORD_RESET_MAX_REQUESTS: 3,
-} as const;
+} as const

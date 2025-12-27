@@ -1,14 +1,14 @@
-import type { RequestHandler } from "express";
-import { Response } from "express";
+import type { RequestHandler } from 'express'
+import { Response } from 'express'
 
-import type { JwtUser } from "@/types/jwt.type";
-import { HTTP_STATUS } from "@constants/http";
-import { SUCCESS_MESSAGES } from "@constants/success";
+import type { JwtUser } from '@/types/jwt.type'
+import { HTTP_STATUS } from '@constants/http'
+import { SUCCESS_MESSAGES } from '@constants/success'
 import {
   getTenantContext,
   type TenantContext,
   type TenantRequest,
-} from "@middlewares/tenantContext.middleware";
+} from '@middlewares/tenantContext.middleware'
 import {
   createAccount,
   deleteAccount,
@@ -17,10 +17,10 @@ import {
   restoreAccount,
   updateAccount,
   updateAccountActivationStatus,
-} from "@queries/account.queries";
-import { getPaginationMetadata } from "@schema/shared.schema";
-import { ApiResponse } from "@utils/ApiResponse";
-import asyncHandler from "@utils/asyncHandler";
+} from '@queries/account.queries'
+import { getPaginationMetadata } from '@schema/shared.schema'
+import { ApiResponse } from '@utils/ApiResponse'
+import asyncHandler from '@utils/asyncHandler'
 
 /**
  * Get all accounts controller
@@ -29,21 +29,21 @@ import asyncHandler from "@utils/asyncHandler";
  */
 export const getAllAccounts: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated query parameters
     const filters = (
       req as TenantRequest & {
-        validatedData: Parameters<typeof findAccounts>[2];
+        validatedData: Parameters<typeof findAccounts>[2]
       }
-    ).validatedData;
+    ).validatedData
 
     // Fetch accounts
     const { accounts, total } = await findAccounts(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      filters,
-    );
+      filters
+    )
 
     // Transform accounts to response format
     const accountsData = accounts.map((account) => ({
@@ -57,20 +57,16 @@ export const getAllAccounts: RequestHandler = asyncHandler(
       isActive: account.isActive,
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
-    }));
+    }))
 
     // Get pagination metadata
-    const pagination = getPaginationMetadata(
-      filters.page,
-      filters.limit,
-      total,
-    );
+    const pagination = getPaginationMetadata(filters.page, filters.limit, total)
 
     // Prepare response data
     const responseData = {
       items: accountsData,
       pagination,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -78,11 +74,11 @@ export const getAllAccounts: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.ACCOUNTS_RETRIEVED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Get account by ID controller
@@ -90,17 +86,17 @@ export const getAllAccounts: RequestHandler = asyncHandler(
  */
 export const getAccountById: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Fetch account
     const account = await findAccountById(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      id,
-    );
+      id
+    )
 
     // Transform account to response format
     const accountData = {
@@ -114,7 +110,7 @@ export const getAccountById: RequestHandler = asyncHandler(
       isActive: account.isActive,
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -122,11 +118,11 @@ export const getAccountById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.ACCOUNT_RETRIEVED,
-          accountData,
-        ),
-      );
-  },
-);
+          accountData
+        )
+      )
+  }
+)
 
 /**
  * Get account status controller
@@ -134,24 +130,24 @@ export const getAccountById: RequestHandler = asyncHandler(
  */
 export const getAccountStatus: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Fetch account
     const account = await findAccountById(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      id,
-    );
+      id
+    )
 
     // Transform account status to response format
     const statusData = {
       id: account.id,
       name: account.name,
       isActive: account.isActive,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -159,11 +155,11 @@ export const getAccountStatus: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.ACCOUNT_STATUS_RETRIEVED,
-          statusData,
-        ),
-      );
-  },
-);
+          statusData
+        )
+      )
+  }
+)
 
 /**
  * Create account controller
@@ -171,23 +167,23 @@ export const getAccountStatus: RequestHandler = asyncHandler(
  */
 export const createAccountController: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
-    const user = req.user as JwtUser;
+    const tenantContext = getTenantContext(req) as TenantContext
+    const user = req.user as JwtUser
 
     // Get validated body data
     const accountData = (
       req as TenantRequest & {
-        validatedData: Parameters<typeof createAccount>[3];
+        validatedData: Parameters<typeof createAccount>[3]
       }
-    ).validatedData;
+    ).validatedData
 
     // Create account
     const account = await createAccount(
       tenantContext.tenantId,
       tenantContext.schemaName,
       user.id,
-      accountData,
-    );
+      accountData
+    )
 
     // Transform account to response format
     const responseData = {
@@ -201,7 +197,7 @@ export const createAccountController: RequestHandler = asyncHandler(
       isActive: account.isActive,
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.CREATED)
@@ -209,11 +205,11 @@ export const createAccountController: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.CREATED,
           SUCCESS_MESSAGES.ACCOUNT_CREATED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Update account controller
@@ -221,24 +217,24 @@ export const createAccountController: RequestHandler = asyncHandler(
  */
 export const updateAccountController: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params and body
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     const updateData = (
       req as TenantRequest & {
-        validatedData: Parameters<typeof updateAccount>[3];
+        validatedData: Parameters<typeof updateAccount>[3]
       }
-    ).validatedData;
+    ).validatedData
 
     // Update account
     const updatedAccount = await updateAccount(
       tenantContext.tenantId,
       tenantContext.schemaName,
       id,
-      updateData,
-    );
+      updateData
+    )
 
     // Transform account to response format
     const responseData = {
@@ -251,7 +247,7 @@ export const updateAccountController: RequestHandler = asyncHandler(
       isActive: updatedAccount.isActive,
       createdAt: updatedAccount.createdAt,
       updatedAt: updatedAccount.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -259,11 +255,11 @@ export const updateAccountController: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.ACCOUNT_UPDATED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Delete account controller
@@ -271,17 +267,17 @@ export const updateAccountController: RequestHandler = asyncHandler(
  */
 export const deleteAccountById: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Delete account
     const deletedAccount = await deleteAccount(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      id,
-    );
+      id
+    )
 
     // Transform account to response format
     const responseData = {
@@ -295,7 +291,7 @@ export const deleteAccountById: RequestHandler = asyncHandler(
       isActive: deletedAccount.isActive,
       createdAt: deletedAccount.createdAt,
       updatedAt: deletedAccount.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -303,11 +299,11 @@ export const deleteAccountById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.ACCOUNT_DELETED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Activate account controller
@@ -315,18 +311,18 @@ export const deleteAccountById: RequestHandler = asyncHandler(
  */
 export const activateAccount: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Activate account
     const updatedAccount = await updateAccountActivationStatus(
       tenantContext.tenantId,
       tenantContext.schemaName,
       id,
-      true,
-    );
+      true
+    )
 
     // Transform account to response format
     const responseData = {
@@ -340,7 +336,7 @@ export const activateAccount: RequestHandler = asyncHandler(
       isActive: updatedAccount.isActive,
       createdAt: updatedAccount.createdAt,
       updatedAt: updatedAccount.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -348,11 +344,11 @@ export const activateAccount: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.ACCOUNT_ACTIVATED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Deactivate account controller
@@ -360,18 +356,18 @@ export const activateAccount: RequestHandler = asyncHandler(
  */
 export const deactivateAccount: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Deactivate account
     const updatedAccount = await updateAccountActivationStatus(
       tenantContext.tenantId,
       tenantContext.schemaName,
       id,
-      false,
-    );
+      false
+    )
 
     // Transform account to response format
     const responseData = {
@@ -385,7 +381,7 @@ export const deactivateAccount: RequestHandler = asyncHandler(
       isActive: updatedAccount.isActive,
       createdAt: updatedAccount.createdAt,
       updatedAt: updatedAccount.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -393,11 +389,11 @@ export const deactivateAccount: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.ACCOUNT_DEACTIVATED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)
 
 /**
  * Restore account controller
@@ -405,17 +401,17 @@ export const deactivateAccount: RequestHandler = asyncHandler(
  */
 export const restoreAccountById: RequestHandler = asyncHandler(
   async (req: TenantRequest, res: Response) => {
-    const tenantContext = getTenantContext(req) as TenantContext;
+    const tenantContext = getTenantContext(req) as TenantContext
 
     // Get validated params
-    const { id } = (req as TenantRequest & { params: { id: string } }).params;
+    const { id } = (req as TenantRequest & { params: { id: string } }).params
 
     // Restore account
     const restoredAccount = await restoreAccount(
       tenantContext.tenantId,
       tenantContext.schemaName,
-      id,
-    );
+      id
+    )
 
     // Transform account to response format
     const responseData = {
@@ -429,7 +425,7 @@ export const restoreAccountById: RequestHandler = asyncHandler(
       isActive: restoredAccount.isActive,
       createdAt: restoredAccount.createdAt,
       updatedAt: restoredAccount.updatedAt,
-    };
+    }
 
     res
       .status(HTTP_STATUS.OK)
@@ -437,8 +433,8 @@ export const restoreAccountById: RequestHandler = asyncHandler(
         new ApiResponse(
           HTTP_STATUS.OK,
           SUCCESS_MESSAGES.ACCOUNT_RESTORED,
-          responseData,
-        ),
-      );
-  },
-);
+          responseData
+        )
+      )
+  }
+)

@@ -1,4 +1,4 @@
-import { Router, type Router as RouterType } from "express";
+import { Router, type Router as RouterType } from 'express'
 
 import {
   createTaxController,
@@ -12,21 +12,21 @@ import {
   getTaxStatusController,
   restoreTaxById,
   updateTaxController,
-} from "@controllers/tax.controller";
-import { authenticate } from "@middlewares/auth.middleware";
+} from '@controllers/tax.controller'
+import { authenticate } from '@middlewares/auth.middleware'
 import {
   requireTenantContext,
   setTenantContext,
-} from "@middlewares/tenantContext.middleware";
-import { validate } from "@middlewares/validate.middleware";
+} from '@middlewares/tenantContext.middleware'
+import { validate } from '@middlewares/validate.middleware'
 import {
   createTaxSchema,
   taxIdSchema,
   taxListSchema,
   updateTaxSchema,
-} from "@schema/tax.schema";
+} from '@schema/tax.schema'
 
-const router: RouterType = Router();
+const router: RouterType = Router()
 
 /**
  * @swagger
@@ -154,13 +154,13 @@ const router: RouterType = Router();
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/",
+  '/',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxListSchema, "query"),
-  getAllTaxes,
-);
+  validate(taxListSchema, 'query'),
+  getAllTaxes
+)
 
 /**
  * @swagger
@@ -225,12 +225,12 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/active",
+  '/active',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  getActiveTaxes,
-);
+  getActiveTaxes
+)
 
 /**
  * @swagger
@@ -279,12 +279,12 @@ router.get(
  *         description: User not authenticated
  */
 router.get(
-  "/stats",
+  '/stats',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  getTaxStatisticsController,
-);
+  getTaxStatisticsController
+)
 
 /**
  * @swagger
@@ -367,13 +367,13 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxIdSchema, "params"),
-  getTaxById,
-);
+  validate(taxIdSchema, 'params'),
+  getTaxById
+)
 
 /**
  * @swagger
@@ -446,13 +446,13 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.get(
-  "/:id/status",
+  '/:id/status',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxIdSchema, "params"),
-  getTaxStatusController,
-);
+  validate(taxIdSchema, 'params'),
+  getTaxStatusController
+)
 
 /**
  * @swagger
@@ -548,13 +548,13 @@ router.get(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post(
-  "/",
+  '/',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(createTaxSchema, "body"),
-  createTaxController,
-);
+  validate(createTaxSchema, 'body'),
+  createTaxController
+)
 
 /**
  * @swagger
@@ -639,14 +639,14 @@ router.post(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.put(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxIdSchema, "params"),
-  validate(updateTaxSchema, "body"),
-  updateTaxController,
-);
+  validate(taxIdSchema, 'params'),
+  validate(updateTaxSchema, 'body'),
+  updateTaxController
+)
 
 /**
  * @swagger
@@ -705,13 +705,13 @@ router.put(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.delete(
-  "/:id",
+  '/:id',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxIdSchema, "params"),
-  deleteTaxById,
-);
+  validate(taxIdSchema, 'params'),
+  deleteTaxById
+)
 
 /**
  * @swagger
@@ -770,13 +770,13 @@ router.delete(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/enable",
+  '/:id/enable',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxIdSchema, "params"),
-  enableTax,
-);
+  validate(taxIdSchema, 'params'),
+  enableTax
+)
 
 /**
  * @swagger
@@ -835,13 +835,13 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/disable",
+  '/:id/disable',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxIdSchema, "params"),
-  disableTax,
-);
+  validate(taxIdSchema, 'params'),
+  disableTax
+)
 
 /**
  * @swagger
@@ -900,12 +900,12 @@ router.patch(
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.patch(
-  "/:id/restore",
+  '/:id/restore',
   authenticate,
   setTenantContext,
   requireTenantContext,
-  validate(taxIdSchema, "params"),
-  restoreTaxById,
-);
+  validate(taxIdSchema, 'params'),
+  restoreTaxById
+)
 
-export default router;
+export default router

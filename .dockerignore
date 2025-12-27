@@ -1,0 +1,28 @@
+# Node / editor
+node_modules
+npm-debug.log
+yarn-error.log
+.idea
+.vscode
+.pnpm-store
+
+# Logs
+logs
+*.log
+
+# Build outputs
+dist
+coverage
+.turbo
+
+# Local env and misc
+.env
+.env.*
+!.env.example
+Dockerfile*
+docker-compose*.yml
+
+# OS
+.DS_Store
+
+

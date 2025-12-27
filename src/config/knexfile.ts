@@ -1,12 +1,12 @@
-import path from "node:path";
+import path from 'node:path'
 
-import type { Knex } from "knex";
+import type { Knex } from 'knex'
 
-import { env } from "@config/env";
+import { env } from '@config/env'
 
 const config: { [key: string]: Knex.Config } = {
   development: {
-    client: "pg",
+    client: 'pg',
     connection: {
       host: env.DB_HOST,
       port: env.DB_PORT,
@@ -20,16 +20,16 @@ const config: { [key: string]: Knex.Config } = {
       max: 10,
     },
     migrations: {
-      tableName: "knex_migrations",
-      directory: path.join(__dirname, "..", "database", "migrations"),
+      tableName: 'knex_migrations',
+      directory: path.join(__dirname, '..', 'database', 'migrations'),
     },
     seeds: {
-      directory: path.join(__dirname, "..", "database", "seeds"),
+      directory: path.join(__dirname, '..', 'database', 'seeds'),
     },
   },
 
   production: {
-    client: "pg",
+    client: 'pg',
     connection: {
       host: env.DB_HOST,
       port: env.DB_PORT,
@@ -43,16 +43,16 @@ const config: { [key: string]: Knex.Config } = {
       max: 10,
     },
     migrations: {
-      tableName: "knex_migrations",
-      directory: path.join(__dirname, "..", "database", "migrations"),
+      tableName: 'knex_migrations',
+      directory: path.join(__dirname, '..', 'database', 'migrations'),
     },
     seeds: {
-      directory: path.join(__dirname, "..", "database", "seeds"),
+      directory: path.join(__dirname, '..', 'database', 'seeds'),
     },
   },
 
   test: {
-    client: "pg",
+    client: 'pg',
     connection: {
       host: env.DB_HOST,
       port: env.DB_PORT,
@@ -66,13 +66,13 @@ const config: { [key: string]: Knex.Config } = {
       max: 5,
     },
     migrations: {
-      tableName: "knex_migrations",
-      directory: path.join(__dirname, "..", "database", "migrations"),
+      tableName: 'knex_migrations',
+      directory: path.join(__dirname, '..', 'database', 'migrations'),
     },
     seeds: {
-      directory: path.join(__dirname, "..", "database", "seeds"),
+      directory: path.join(__dirname, '..', 'database', 'seeds'),
     },
   },
-};
+}
 
-export default config;
+export default config
