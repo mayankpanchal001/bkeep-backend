@@ -1,0 +1,70 @@
+{"level":"info","message":"Starting mail worker...","timestamp":"2025-11-19 04:22:15:2215"}
+{"level":"info","message":"AWS SES client initialized","timestamp":"2025-11-19 04:22:15:2215"}
+{"level":"info","message":"AWS SES client initialized successfully","timestamp":"2025-11-19 04:22:15:2215"}
+{"level":"info","message":"Mail queue initialized","timestamp":"2025-11-19 04:22:15:2215"}
+{"level":"info","message":"Mail queue events initialized","timestamp":"2025-11-19 04:22:15:2215"}
+{"level":"info","message":"BullMQ worker initialized (concurrency: 5)","timestamp":"2025-11-19 04:22:15:2215"}
+{"level":"info","message":"Mail worker ready - listening for jobs","timestamp":"2025-11-19 04:22:15:2215"}
+{"level":"info","message":"SIGINT received, starting graceful shutdown...","timestamp":"2025-11-19 04:22:34:2234"}
+{"level":"info","message":"Mail queue closed","timestamp":"2025-11-19 04:22:34:2234"}
+{"level":"info","message":"Starting mail worker...","timestamp":"2025-11-19 04:22:37:2237"}
+{"level":"info","message":"AWS SES client initialized","timestamp":"2025-11-19 04:22:37:2237"}
+{"level":"info","message":"AWS SES client initialized successfully","timestamp":"2025-11-19 04:22:37:2237"}
+{"level":"info","message":"Mail queue initialized","timestamp":"2025-11-19 04:22:37:2237"}
+{"level":"info","message":"Mail queue events initialized","timestamp":"2025-11-19 04:22:37:2237"}
+{"level":"info","message":"BullMQ worker initialized (concurrency: 5)","timestamp":"2025-11-19 04:22:37:2237"}
+{"level":"info","message":"Mail worker ready - listening for jobs","timestamp":"2025-11-19 04:22:37:2237"}
+{"level":"info","message":"🚀 Server running at: http://0.0.0.0:8000","timestamp":"2025-11-19 04:22:38:2238"}
+{"level":"info","message":"📚 API Documentation: http://0.0.0.0:8000/api-docs","timestamp":"2025-11-19 04:22:38:2238"}
+{"level":"info","message":"💡 Health check: http://0.0.0.0:8000/health","timestamp":"2025-11-19 04:22:38:2238"}
+{"level":"info","message":"⏳ Environment: development","timestamp":"2025-11-19 04:22:38:2238"}
+{"level":"info","message":"SIGTERM received, starting graceful shutdown...","timestamp":"2025-11-19 04:23:32:2332"}
+{"level":"info","message":"Mail queue closed","timestamp":"2025-11-19 04:23:32:2332"}
+{"level":"info","message":"Starting mail worker...","timestamp":"2025-11-19 04:25:54:2554"}
+{"level":"info","message":"AWS SES client initialized","timestamp":"2025-11-19 04:25:54:2554"}
+{"level":"info","message":"AWS SES client initialized successfully","timestamp":"2025-11-19 04:25:54:2554"}
+{"level":"info","message":"Mail queue initialized","timestamp":"2025-11-19 04:25:54:2554"}
+{"level":"info","message":"Mail queue events initialized","timestamp":"2025-11-19 04:25:54:2554"}
+{"level":"info","message":"BullMQ worker initialized (concurrency: 5)","timestamp":"2025-11-19 04:25:54:2554"}
+{"level":"info","message":"Mail worker ready - listening for jobs","timestamp":"2025-11-19 04:25:54:2554"}
+{"level":"info","message":"🚀 Server running at: http://0.0.0.0:8000","timestamp":"2025-11-19 04:25:55:2555"}
+{"level":"info","message":"📚 API Documentation: http://0.0.0.0:8000/api-docs","timestamp":"2025-11-19 04:25:55:2555"}
+{"level":"info","message":"💡 Health check: http://0.0.0.0:8000/health","timestamp":"2025-11-19 04:25:55:2555"}
+{"level":"info","message":"⏳ Environment: development","timestamp":"2025-11-19 04:25:55:2555"}
+{"level":"error","message":"Route / not found","statusCode":404,"url":"/","method":"GET","stack":"Error: Route / not found\n    at notFoundHandler (/app/src/middlewares/notFoundHandler.middleware.ts:21:5)\n    at Layer.handleRequest (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)\n    at trimPrefix (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:342:13)\n    at /app/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:297:9\n    at processParams (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)\n    at next (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)\n    at /app/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:688:15\n    at next (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:276:14)\n    at Function.handle (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:186:3)\n    at router (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:60:12)","ip":"192.168.65.1","requestId":"5724e1bf-b727-484d-864c-cc6b46ca1e26","userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36","timestamp":"2025-11-19 04:26:09:269"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:26:09 +0000] \"GET / HTTP/1.1\" 404 1014 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:26:09:269"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:26:32 +0000] \"GET /api-docs HTTP/1.1\" 301 158 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:26:32:2632"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:26:32 +0000] \"GET /api-docs/ HTTP/1.1\" 200 3152 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:26:32:2632"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:26:52 +0000] \"GET /api-docs/ HTTP/1.1\" 200 3152 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:26:52:2652"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:26:52 +0000] \"GET /api-docs/swagger-ui-init.js HTTP/1.1\" 200 142731 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:26:52:2652"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:26:52 +0000] \"GET /api-docs/swagger-ui.css HTTP/1.1\" 200 155212 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:26:52:2652"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:26:52 +0000] \"GET /api-docs/swagger-ui-standalone-preset.js HTTP/1.1\" 200 250335 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:26:52:2652"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:26:52 +0000] \"GET /api-docs/swagger-ui-bundle.js HTTP/1.1\" 200 1510159 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:26:52:2652"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:26:52 +0000] \"GET /api-docs/favicon-32x32.png HTTP/1.1\" 200 628 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:26:52:2652"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:29:44 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 1329 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:29:44:2944"}
+{"level":"info","message":"Mail queue initialized","timestamp":"2025-11-19 04:38:08:388"}
+{"level":"info","message":"Mail job 1 added to queue","jobId":"1","to":"mpanchal@bkeep.ca","template":"password-reset","timestamp":"2025-11-19 04:38:08:388"}
+{"level":"info","message":"Password reset email queued for mpanchal@bkeep.ca","timestamp":"2025-11-19 04:38:08:388"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:38:08 +0000] \"POST /api/v1/auth/forgot-password HTTP/1.1\" 200 112 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:38:08:388"}
+{"level":"debug","message":"Mail job 1 is waiting","timestamp":"2025-11-19 04:38:08:388"}
+{"level":"debug","message":"Mail job 1 started processing","timestamp":"2025-11-19 04:38:08:388"}
+{"level":"info","message":"Processing mail job 1","jobId":"1","to":"mpanchal@bkeep.ca","template":"password-reset","attemptsMade":0,"timestamp":"2025-11-19 04:38:08:388"}
+{"level":"info","message":"Email sent successfully: 0100019a9a67dd2c-8720f6ec-df65-4e45-870c-66d1f97d4840-000000","to":"mpanchal@bkeep.ca","template":"password-reset","messageId":"0100019a9a67dd2c-8720f6ec-df65-4e45-870c-66d1f97d4840-000000","timestamp":"2025-11-19 04:38:09:389"}
+{"level":"info","message":"Mail job 1 completed","jobId":"1","success":true,"messageId":"0100019a9a67dd2c-8720f6ec-df65-4e45-870c-66d1f97d4840-000000","timestamp":"2025-11-19 04:38:09:389"}
+{"level":"debug","message":"Worker completed job 1","timestamp":"2025-11-19 04:38:09:389"}
+{"level":"error","message":"User not authenticated","statusCode":401,"url":"/api/v1/tenants?page=1&limit=20&sort=createdAt&order=asc","method":"GET","stack":"Error: User not authenticated\n    at authenticate (/app/src/middlewares/auth.middleware.ts:66:11)\n    at Layer.handleRequest (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)\n    at next (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/route.js:157:13)\n    at Route.dispatch (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/route.js:117:3)\n    at handle (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:435:11)\n    at Layer.handleRequest (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/lib/layer.js:152:17)\n    at /app/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:295:15\n    at processParams (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:582:12)\n    at next (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:291:5)\n    at Function.handle (/app/node_modules/.pnpm/router@2.2.0/node_modules/router/index.js:186:3)","ip":"192.168.65.1","requestId":"7e443a24-0e74-4579-8c20-4aa489babdca","userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36","timestamp":"2025-11-19 04:40:00:400"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:40:00 +0000] \"GET /api/v1/tenants?page=1&limit=20&sort=createdAt&order=asc HTTP/1.1\" 401 1050 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:40:00:400"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:40:30 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 1329 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:40:30:4030"}
+{"level":"info","message":"Mail job 2 added to queue","jobId":"2","to":"mpanchal@bkeep.ca","template":"password-reset-success","timestamp":"2025-11-19 04:41:31:4131"}
+{"level":"info","message":"Password reset success email queued for mpanchal@bkeep.ca","timestamp":"2025-11-19 04:41:31:4131"}
+{"level":"debug","message":"Mail job 2 is waiting","timestamp":"2025-11-19 04:41:31:4131"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:41:31 +0000] \"POST /api/v1/auth/reset-password HTTP/1.1\" 200 81 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:41:31:4131"}
+{"level":"info","message":"Processing mail job 2","jobId":"2","to":"mpanchal@bkeep.ca","template":"password-reset-success","attemptsMade":0,"timestamp":"2025-11-19 04:41:31:4131"}
+{"level":"debug","message":"Mail job 2 started processing","timestamp":"2025-11-19 04:41:31:4131"}
+{"level":"info","message":"Email sent successfully: 0100019a9a6af5db-bfa1707c-9109-4b2c-b777-92c6f4086150-000000","to":"mpanchal@bkeep.ca","template":"password-reset-success","messageId":"0100019a9a6af5db-bfa1707c-9109-4b2c-b777-92c6f4086150-000000","timestamp":"2025-11-19 04:41:32:4132"}
+{"level":"info","message":"Mail job 2 completed","jobId":"2","success":true,"messageId":"0100019a9a6af5db-bfa1707c-9109-4b2c-b777-92c6f4086150-000000","timestamp":"2025-11-19 04:41:32:4132"}
+{"level":"debug","message":"Worker completed job 2","timestamp":"2025-11-19 04:41:32:4132"}
+{"level":"error","message":"Invalid email or password","statusCode":401,"url":"/api/v1/auth/login","method":"POST","stack":"Error: Invalid email or password\n    at findUserByEmailAndPassword (/app/src/queries/user.queries.ts:64:11)\n    at async /app/src/controllers/auth.controller.ts:65:18","ip":"192.168.65.1","requestId":"40b3dc99-ab7a-4aef-b79b-09e51581474c","userAgent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36","timestamp":"2025-11-19 04:41:42:4142"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:41:42 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 401 263 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:41:42:4142"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:41:51 +0000] \"POST /api/v1/auth/login HTTP/1.1\" 200 1329 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:41:51:4151"}
+{"level":"http","message":"192.168.65.1 - - [19/Nov/2025:04:42:40 +0000] \"POST /api/v1/auth/refresh-token HTTP/1.1\" 200 728 \"-\" \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","timestamp":"2025-11-19 04:42:40:4240"}

@@ -1,0 +1,10 @@
+[
+  {
+    "name": "BKeep Admin",
+    "email": "info@bkeep.ca",
+    "_password": "admin123",
+    "is_verified": true,
+    "verified_at": null,
+    "last_logged_in_at": null
+  }
+]

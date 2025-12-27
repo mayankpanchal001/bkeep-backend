@@ -1,0 +1,14 @@
+{"level":"info","message":"Starting mail worker...","timestamp":"2025-11-20 12:38:58:3858"}
+{"level":"info","message":"AWS SES client initialized","timestamp":"2025-11-20 12:38:58:3858"}
+{"level":"info","message":"AWS SES client initialized successfully","timestamp":"2025-11-20 12:38:58:3858"}
+{"level":"info","message":"Mail queue initialized","timestamp":"2025-11-20 12:38:58:3858"}
+{"level":"info","message":"Mail queue events initialized","timestamp":"2025-11-20 12:38:58:3858"}
+{"level":"info","message":"BullMQ worker initialized (concurrency: 5)","timestamp":"2025-11-20 12:38:58:3858"}
+{"level":"info","message":"Mail worker ready - listening for jobs","timestamp":"2025-11-20 12:38:58:3858"}
+{"level":"info","message":"🚀 Server running at: http://0.0.0.0:8000","timestamp":"2025-11-20 12:38:59:3859"}
+{"level":"info","message":"📚 API Documentation: http://0.0.0.0:8000/api-docs","timestamp":"2025-11-20 12:38:59:3859"}
+{"level":"info","message":"💡 Health check: http://0.0.0.0:8000/health","timestamp":"2025-11-20 12:38:59:3859"}
+{"level":"info","message":"⏳ Environment: development","timestamp":"2025-11-20 12:38:59:3859"}
+{"level":"info","message":"SIGTERM received, starting graceful shutdown...","timestamp":"2025-11-20 12:39:34:3934"}
+{"level":"error","message":"Mail worker error: getaddrinfo ENOTFOUND redis","errno":-3008,"code":"ENOTFOUND","syscall":"getaddrinfo","hostname":"redis","stack":"Error: getaddrinfo ENOTFOUND redis\n    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)","timestamp":"2025-11-20 12:39:34:3934"}
+{"level":"info","message":"Received SIGTERM. Starting graceful shutdown...","timestamp":"2025-11-20 15:52:30:5230"}

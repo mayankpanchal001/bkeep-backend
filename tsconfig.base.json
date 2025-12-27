@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    /* Visit https://aka.ms/tsconfig to read more about this file */
+
+    /* Language and Environment */
+    "target": "ES2022",
+    "module": "CommonJS",
+    "lib": ["ES2022"],
+    "skipLibCheck": true,
+
+    /* Modules */
+    "types": ["node", "jest"],
+    "moduleResolution": "node",
+    "allowImportingTsExtensions": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+
+    /* Decorators */
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+
+    /* Class Fields */
+    "useDefineForClassFields": true,
+
+    /* Paths */
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@config/*": ["config/*"],
+      "@database/*": ["database/*"],
+      "@models/*": ["models/*"],
+      "@utils/*": ["utils/*"],
+      "@controllers/*": ["controllers/*"],
+      "@queries/*": ["queries/*"],
+      "@queues/*": ["queues/*"],
+      "@services/*": ["services/*"],
+      "@middlewares/*": ["middlewares/*"],
+      "@routes/*": ["routes/*"],
+      "@schema/*": ["schema/*"],
+      "@constants/*": ["constants/*"]
+    }
+  }
+}

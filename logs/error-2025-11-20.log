@@ -1,0 +1,1 @@
+{"level":"error","message":"Mail worker error: getaddrinfo ENOTFOUND redis","errno":-3008,"code":"ENOTFOUND","syscall":"getaddrinfo","hostname":"redis","stack":"Error: getaddrinfo ENOTFOUND redis\n    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26)","timestamp":"2025-11-20 12:39:34:3934"}

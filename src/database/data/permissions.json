@@ -1,0 +1,20 @@
+[
+  {
+    "name": "view_dashboard",
+    "display_name": "View Dashboard",
+    "description": "View the dashboard",
+    "is_active": true
+  },
+  {
+    "name": "view_users",
+    "display_name": "View Users",
+    "description": "View the users",
+    "is_active": true
+  },
+  {
+    "name": "manage_roles",
+    "display_name": "View Roles",
+    "description": "View the roles",
+    "is_active": true
+  }
+]

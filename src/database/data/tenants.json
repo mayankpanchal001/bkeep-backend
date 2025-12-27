@@ -1,0 +1,7 @@
+[
+  {
+    "name": "Default Tenant",
+    "schema_name": "default",
+    "is_active": true
+  }
+]

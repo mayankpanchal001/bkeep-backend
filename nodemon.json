@@ -1,0 +1,25 @@
+{
+  "watch": ["src"],
+  "ext": "ts,js,json",
+  "exec": "npx ts-node -r dotenv/config --project tsconfig.json ./src/server.ts",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "ignore": [
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "tests/**/*",
+    "dist/**/*",
+    "coverage/**/*",
+    "node_modules/**/*"
+  ],
+  "restartable": "rs",
+  "delay": "500",
+  "verbose": false,
+  "signal": "SIGTERM",
+  "events": {
+    "restart": "echo Application restarted due to file changes..."
+  },
+  "colours": true,
+  "legacy-watch": false
+}

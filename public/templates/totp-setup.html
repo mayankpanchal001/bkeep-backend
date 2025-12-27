@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Two-Factor Authentication Configured</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, sans-serif;
+      background-color: #f5f5f5;
+      line-height: 1.6;
+    "
+  >
+    <table
+      role="presentation"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      width="100%"
+      style="background-color: #f5f5f5; padding: 20px 0"
+    >
+      <tr>
+        <td align="center">
+          <table
+            role="presentation"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            width="600"
+            style="
+              max-width: 600px;
+              background-color: #ffffff;
+              border-radius: 8px;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            "
+          >
+            <!-- Header -->
+            <tr>
+              <td
+                style="
+                  padding: 40px 40px 20px;
+                  text-align: center;
+                  background-color: #fcf8ef;
+                  border-radius: 8px 8px 0 0;
+                "
+              >
+                <div style="margin-bottom: 20px">
+                  <a href="https://bkeep.ca" target="_blank" rel="noopener noreferrer" style="text-decoration: none; color: #1a202c;">
+                    <img
+                      src="https://bkeep.ca/Logo.png"
+                      alt="BKEEP Logo"
+                      style="height: 40px; margin-right: 10px; vertical-align: middle; display: inline-block; border: 0;"
+                    />
+                    <span style="color: #1a202c; font-size: 28px; font-weight: 600; vertical-align: middle; text-decoration: none;">BKEEP</span>
+                  </a>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Content -->
+            <tr>
+              <td style="padding: 40px">
+                <p
+                  style="
+                    margin: 0 0 20px;
+                    color: #333333;
+                    font-size: 16px;
+                  "
+                >
+                  Hello {{userName}},
+                </p>
+
+                <p
+                  style="
+                    margin: 0 0 20px;
+                    color: #333333;
+                    font-size: 16px;
+                  "
+                >
+                  You've just configured two-factor authentication.
+                </p>
+
+                <p
+                  style="
+                    margin: 0 0 20px;
+                    color: #333333;
+                    font-size: 16px;
+                  "
+                >
+                  Please take a moment to check that you have saved your recovery codes in a safe place. You can download your recovery codes at:
+                </p>
+
+                <div style="margin: 30px 0; text-align: center">
+                  <a
+                    href="{{recoveryCodesUrl}}"
+                    style="
+                      display: inline-block;
+                      padding: 12px 24px;
+                      background-color: #c55a11;
+                      color: #ffffff;
+                      text-decoration: none;
+                      border-radius: 6px;
+                      font-weight: 600;
+                      font-size: 16px;
+                    "
+                  >
+                    Download Recovery Codes
+                  </a>
+                </div>
+
+                <p
+                  style="
+                    margin: 20px 0;
+                    color: #333333;
+                    font-size: 16px;
+                    font-weight: 600;
+                  "
+                >
+                  Recovery codes are the only way to access your account again. By saving your recovery codes, you'll be able to regain access if you:
+                </p>
+
+                <ul
+                  style="
+                    margin: 20px 0;
+                    padding-left: 20px;
+                    color: #333333;
+                    font-size: 16px;
+                  "
+                >
+                  <li style="margin-bottom: 10px">Lose your phone</li>
+                  <li style="margin-bottom: 10px">Delete your authenticator app</li>
+                  <li style="margin-bottom: 10px">Change your phone number</li>
+                </ul>
+
+                <p
+                  style="
+                    margin: 20px 0;
+                    color: #666666;
+                    font-size: 14px;
+                    font-style: italic;
+                  "
+                >
+                  BKeep Support will not be able to restore access to your account.
+                </p>
+
+                <p
+                  style="
+                    margin: 30px 0 10px;
+                    color: #333333;
+                    font-size: 16px;
+                  "
+                >
+                  To disable two-factor authentication, visit
+                  <a
+                    href="{{disableTotpUrl}}"
+                    style="color: #c55a11; text-decoration: none"
+                  >
+                    {{disableTotpUrl}}
+                  </a>
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td
+                style="
+                  padding: 20px 40px;
+                  background-color: #f9fafb;
+                  border-radius: 0 0 8px 8px;
+                  text-align: center;
+                "
+              >
+                <p
+                  style="
+                    margin: 0;
+                    color: #666666;
+                    font-size: 12px;
+                  "
+                >
+                  © {{currentYear}} BKeep. All rights reserved.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+

@@ -1,0 +1,32 @@
+[
+  {
+    "name": "superadmin",
+    "display_name": "Super Admin",
+    "description": "Super administrator with full system access",
+    "is_active": true
+  },
+  {
+    "name": "admin",
+    "display_name": "Admin",
+    "description": "Members in admin role can view and do everything.",
+    "is_active": true
+  },
+  {
+    "name": "accountant",
+    "display_name": "Accountant",
+    "description": "Members in accountant role can't connect financial accounts or view account billing information.",
+    "is_active": true
+  },
+  {
+    "name": "bookkeeper",
+    "display_name": "Bookkeeper",
+    "description": "Members in bookkeeper role can't connect financial accounts or view account billing information.",
+    "is_active": true
+  },
+  {
+    "name": "viewer",
+    "display_name": "Viewer",
+    "description": "Members in viewer role can only view transactions and reports.",
+    "is_active": true
+  }
+]

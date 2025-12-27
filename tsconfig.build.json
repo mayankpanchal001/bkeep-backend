@@ -1,0 +1,36 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    /* Output */
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "removeComments": false,
+    "noEmit": false,
+
+    /* Production Optimizations */
+    "incremental": false,
+    "assumeChangesOnlyAffectDirectDependencies": false,
+
+    /* Required for exactOptionalPropertyTypes */
+    "strictNullChecks": true,
+
+    /* Production Modern Settings */
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true
+  },
+  "include": [
+    "src/**/*", 
+    "src/database/data/*.json"
+  ],
+  "exclude": [
+    "node_modules", 
+    "dist", 
+    "coverage",
+    "**/*.test.ts", 
+    "**/*.spec.ts",
+    "tests/**/*"
+  ]
+}
